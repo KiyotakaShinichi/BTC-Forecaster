@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BTC Bayesian Forecaster</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+</head>
+<body>
+  <main class="container">
+    <header class="header">
+      <h1>BTC Bayesian Forecaster</h1>
+      <p>Local dashboard for API-triggered forecasts</p>
+    </header>
+
+    <section class="card grid">
+      <div>
+        <label>Ticker</label>
+        <input id="ticker" value="BTC-USD" />
+      </div>
+      <div>
+        <label>Horizon Days</label>
+        <input id="horizon" type="number" value="90" min="30" max="3650" />
+      </div>
+      <div>
+        <label>Test Days</label>
+        <input id="testdays" type="number" value="60" min="30" max="1000" />
+      </div>
+      <div>
+        <label>Monte Carlo Runs</label>
+        <input id="mc" type="number" value="300" min="100" max="20000" />
+      </div>
+      <div>
+        <label>Bayesian Temperature</label>
+        <input id="temp" type="number" step="0.1" value="2.0" min="0.1" max="10" />
+      </div>
+      <div>
+        <label>Max Lag</label>
+        <input id="maxlag" type="number" value="60" min="5" max="120" />
+      </div>
+      <div>
+        <label>Random State</label>
+        <input id="seed" type="number" value="42" />
+      </div>
+    </section>
+
+    <section class="actions">
+      <button id="runBtn">Run Forecast</button>
+      <button id="refreshBtn" class="ghost">Refresh Status</button>
+      <button id="latestBtn" class="ghost">Load Latest</button>
+    </section>
+
+    <section class="card loading-card" id="loadingCard" style="display:none;">
+      <div class="loading-row">
+        <div class="spinner" aria-hidden="true"></div>
+        <div>
+          <h3>Forecast is running...</h3>
+          <p id="loadingHint">Computing Prophet + XGBoost + GARCH + Monte Carlo. Auto-updates when finished.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="card status-row">
+      <div>
+        <h3>Status</h3>
+        <p id="statusText">Loading...</p>
+      </div>
+      <div>
+        <h3>Last Exit Code</h3>
+        <p id="exitCode">-</p>
+      </div>
+      <div>
+        <h3>Last Error</h3>
+        <p id="lastError">-</p>
+      </div>
+    </section>
+
+    <section class="card">
+      <h3>Latest Forecast Summary</h3>
+      <div class="summary-grid" id="summaryGrid"></div>
+      
+      <div style="margin-top: 16px;">
+        <div id="plotlyChart" style="width: 100%; height: 500px; display: none;"></div>
+      </div>
+
+      <h4>Last Row (Target Date)</h4>
+      <pre id="lastRow">No data yet.</pre>
+    </section>
+
+    <section class="card">
+      <h3>Model Statistics</h3>
+      <div class="stats-grid" id="modelStatsGrid"></div>
+    </section>
+
+    <section class="card">
+      <h3>Artifacts</h3>
+      <ul id="artifactsList"></ul>
+    </section>
+
+    <section class="card">
+      <h3>Activity Log</h3>
+      <pre id="logBox">Ready.</pre>
+    </section>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>

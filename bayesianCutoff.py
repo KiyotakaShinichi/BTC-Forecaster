@@ -21,6 +21,10 @@ All original visualizations preserved!
 import warnings
 warnings.filterwarnings("ignore")
 
+import os
+import sys
+from pathlib import Path
+import json
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -38,14 +42,35 @@ from scipy.special import softmax
 # =========================
 # Config
 # =========================
-TICKER = "BTC-USD"
+TICKER = os.getenv("TICKER", "BTC-USD")
 # START will be determined by Bayesian ensemble
-HORIZON_DAYS = 365
-TEST_LAST_DAYS = 90
-RANDOM_STATE = 42
-MAX_LAG = 60
+HORIZON_DAYS = int(os.getenv("HORIZON_DAYS", "365"))
+TEST_LAST_DAYS = int(os.getenv("TEST_LAST_DAYS", "90"))
+RANDOM_STATE = int(os.getenv("RANDOM_STATE", "42"))
+MAX_LAG = int(os.getenv("MAX_LAG", "60"))
 ROLL_WINDOWS_CANDIDATES = [3, 5, 7, 14, 21, 30, 60]
 EMA_SMA_CANDIDATES = [3, 5, 7, 14, 21, 30]
+MONTE_CARLO_RUNS = int(os.getenv("MONTE_CARLO_RUNS", "1000"))
+BAYESIAN_TEMPERATURE = float(os.getenv("BAYESIAN_TEMPERATURE", "2.0"))
+CUTOFF_FREQ = os.getenv("CUTOFF_FREQ", "MS")
+MIN_CUTOFF_TRAIN_DAYS = int(os.getenv("MIN_CUTOFF_TRAIN_DAYS", "730"))
+MAX_CUTOFF_CANDIDATES = int(os.getenv("MAX_CUTOFF_CANDIDATES", "48"))
+
+OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR", ".")).resolve()
+OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+PLOT_SHOW = os.getenv("PLOT_SHOW", "0").strip().lower() in {"1", "true", "yes"}
+
+if not PLOT_SHOW:
+    plt.switch_backend("Agg")
+
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+
+
+def out_path(filename):
+    return str(OUTPUT_DIR / filename)
 
 xgb_params = {
     "max_depth": 3,
@@ -57,19 +82,29 @@ xgb_params = {
     "verbosity": 0,
 }
 
-MONTE_CARLO_RUNS = 1000
+def generate_cutoff_candidates(index, freq="MS", min_train_days=730, max_candidates=48):
+    """Build cutoff candidates from a date grid (not only year starts)."""
+    start_min = pd.to_datetime(index.min()).normalize()
+    latest_allowed = pd.to_datetime(index.max()).normalize() - pd.Timedelta(days=min_train_days)
 
-# Cutoff candidates for Bayesian ensemble
-CUTOFF_CANDIDATES = [
-    "2017-01-01",
-    "2018-01-01",
-    "2019-01-01",
-    "2020-01-01",
-    "2021-01-01",
-    "2022-01-01",
-]
+    if latest_allowed <= start_min:
+        return [start_min.strftime("%Y-%m-%d")]
 
-BAYESIAN_TEMPERATURE = 2.0  # Controls posterior distribution shape
+    try:
+        date_grid = pd.date_range(start=start_min, end=latest_allowed, freq=freq)
+    except Exception:
+        date_grid = pd.date_range(start=start_min, end=latest_allowed, freq="MS")
+
+    if len(date_grid) == 0:
+        date_grid = pd.DatetimeIndex([start_min])
+
+    date_grid = date_grid.union(pd.DatetimeIndex([start_min, latest_allowed])).sort_values()
+
+    if len(date_grid) > max_candidates:
+        keep_idx = np.linspace(0, len(date_grid) - 1, max_candidates, dtype=int)
+        date_grid = date_grid[keep_idx]
+
+    return [d.strftime("%Y-%m-%d") for d in pd.DatetimeIndex(date_grid).unique()]
 
 print("=" * 80)
 print("🔥 BTC HYBRID FORECASTER WITH BAYESIAN ENSEMBLE + REGIME DETECTION")
@@ -98,6 +133,17 @@ df_full.index = pd.to_datetime(df_full.index)
 df_full = df_full.sort_index()
 
 print(f"✅ Downloaded {len(df_full)} rows")
+
+CUTOFF_CANDIDATES = generate_cutoff_candidates(
+    df_full.index,
+    freq=CUTOFF_FREQ,
+    min_train_days=MIN_CUTOFF_TRAIN_DAYS,
+    max_candidates=MAX_CUTOFF_CANDIDATES,
+)
+print(
+    f"📌 Cutoff grid: freq={CUTOFF_FREQ}, min_train_days={MIN_CUTOFF_TRAIN_DAYS}, "
+    f"candidates={len(CUTOFF_CANDIDATES)}"
+)
 
 
 def quick_cutoff_eval(df_raw, cutoff_date):
@@ -152,6 +198,9 @@ for cutoff in CUTOFF_CANDIDATES:
         print(f"  {cutoff}: Acc={result['acc']:.4f}, Days={result['days']}")
     except:
         pass
+
+if not cutoff_results:
+    raise RuntimeError("No valid cutoff candidates were evaluated. Adjust CUTOFF_FREQ/MIN_CUTOFF_TRAIN_DAYS.")
 
 # Bayesian posterior calculation
 cutoff_names = list(cutoff_results.keys())
@@ -261,9 +310,12 @@ ax.set_xlabel("Lag")
 ax.set_ylabel("Partial Autocorrelation")
 ax.grid(alpha=0.3)
 plt.tight_layout()
-plt.savefig("pacf_diagnostic.png", dpi=150, bbox_inches="tight")
+plt.savefig(out_path("pacf_diagnostic.png"), dpi=150, bbox_inches="tight")
 print("📊 PACF plot saved to pacf_diagnostic.png")
-plt.show()
+if PLOT_SHOW:
+    plt.show()
+else:
+    plt.close()
 
 # --------- Automatic rolling windows selection ---------
 print("🔍 Selecting optimal rolling windows...")
@@ -449,10 +501,15 @@ combined_high_mc = np.percentile(mc_matrix, 97.5, axis=0)
 print("✅ Monte Carlo simulation complete")
 
 result_df = pd.DataFrame({
+    "prophet_baseline": np.exp(prophet_future_log),
+    "xgboost_res": pred_res_future,
     "combined_price": combined_price,
     "combined_low_mc": combined_low_mc,
     "combined_high_mc": combined_high_mc
 }, index=future_dates)
+result_df.index.name = "date"
+
+df["close"].iloc[-365:].to_csv(out_path("historical_prices.csv"), header=["close"], index_label="date")
 
 # =========================
 # 6) Directional accuracy + p-value
@@ -471,6 +528,47 @@ p_value = binomtest(k=(pred_dir==true_dir).sum(), n=len(pred_dir), p=0.5, altern
 
 print(f"✅ Directional accuracy ({TEST_LAST_DAYS}-day test): {dir_acc:.4f} ({dir_acc*100:.2f}%)")
 print(f"✅ p-value: {p_value:.6f} {'(significant)' if p_value < 0.05 else '(not significant)'}")
+
+target_idx_30 = min(29, len(result_df) - 1)
+target_idx_90 = min(89, len(result_df) - 1)
+
+summary_stats = {
+    "ticker": TICKER,
+    "map_cutoff": map_cutoff,
+    "map_posterior": float(cutoff_results[map_cutoff]["posterior"]),
+    "ensemble_members": int(len(cutoff_names)),
+    "regime": regime,
+    "regime_emoji": emoji,
+    "horizon_days": int(HORIZON_DAYS),
+    "test_last_days": int(TEST_LAST_DAYS),
+    "monte_carlo_runs": int(MONTE_CARLO_RUNS),
+    "bayesian_temperature": float(BAYESIAN_TEMPERATURE),
+    "max_lag": int(MAX_LAG),
+    "cutoff_freq": CUTOFF_FREQ,
+    "cutoff_candidates_evaluated": int(len(cutoff_names)),
+    "min_cutoff_train_days": int(MIN_CUTOFF_TRAIN_DAYS),
+    "directional_accuracy": float(dir_acc),
+    "p_value": float(p_value),
+    "significant": bool(p_value < 0.05),
+    "residual_test_mse": float(mse_res),
+    "current_price": float(df["close"].iloc[-1]),
+    "forecast_30d": float(result_df["combined_price"].iloc[target_idx_30]),
+    "forecast_90d": float(result_df["combined_price"].iloc[target_idx_90]),
+    "forecast_target": float(result_df["combined_price"].iloc[-1]),
+    "ci95_low_target": float(result_df["combined_low_mc"].iloc[-1]),
+    "ci95_high_target": float(result_df["combined_high_mc"].iloc[-1]),
+    "cutoff_posteriors": [
+        {
+            "cutoff": cutoff,
+            "accuracy": float(cutoff_results[cutoff]["acc"]),
+            "posterior": float(cutoff_results[cutoff]["posterior"]),
+        }
+        for cutoff in cutoff_names
+    ],
+}
+
+with open(out_path("forecast_summary.json"), "w", encoding="utf-8") as summary_file:
+    json.dump(summary_stats, summary_file, indent=2)
 
 # =========================
 # 7) Plot forecast
@@ -494,9 +592,12 @@ plt.ylabel("Price (USD)", fontsize=12)
 plt.legend(fontsize=10)
 plt.grid(alpha=0.3)
 plt.tight_layout()
-plt.savefig("hybrid_forecast_montecarlo.png", dpi=150, bbox_inches="tight")
+plt.savefig(out_path("hybrid_forecast_montecarlo.png"), dpi=150, bbox_inches="tight")
 print("✅ Forecast plot saved to hybrid_forecast_montecarlo.png")
-plt.show()
+if PLOT_SHOW:
+    plt.show()
+else:
+    plt.close()
 
 # =========================
 # 7.5) Learning Curve
@@ -537,9 +638,12 @@ plt.ylim([0.45, max(max(train_acc), max(test_acc)) + 0.05])
 plt.legend(fontsize=10)
 plt.grid(alpha=0.3)
 plt.tight_layout()
-plt.savefig("learning_curve.png", dpi=150, bbox_inches="tight")
+plt.savefig(out_path("learning_curve.png"), dpi=150, bbox_inches="tight")
 print("✅ Learning curve saved to learning_curve.png")
-plt.show()
+if PLOT_SHOW:
+    plt.show()
+else:
+    plt.close()
 
 # =========================
 # 8) Output
@@ -563,15 +667,16 @@ print(f"   • Significant: {'Yes ✅' if p_value < 0.05 else 'No ❌'}")
 
 print(f"\n🔮 Forecast Summary ({HORIZON_DAYS} days):")
 print(f"   • Current Price: ${df['close'].iloc[-1]:,.2f}")
-print(f"   • Forecast (30 days): ${result_df['combined_price'].iloc[29]:,.2f}")
-print(f"   • Forecast (90 days): ${result_df['combined_price'].iloc[89]:,.2f}")
-print(f"   • Forecast (365 days): ${result_df['combined_price'].iloc[364]:,.2f}")
+print(f"   • Forecast (30 days): ${result_df['combined_price'].iloc[target_idx_30]:,.2f}")
+print(f"   • Forecast (90 days): ${result_df['combined_price'].iloc[target_idx_90]:,.2f}")
+print(f"   • Forecast ({HORIZON_DAYS} days): ${result_df['combined_price'].iloc[-1]:,.2f}")
 
 print("\n📄 First 10 days of forecast:")
 print(result_df.head(10))
 
-result_df.to_csv("nextgen_hybrid_forecast_results_montecarlo.csv")
+result_df.to_csv(out_path("nextgen_hybrid_forecast_results_montecarlo.csv"))
 print("\n✅ Forecast saved to: nextgen_hybrid_forecast_results_montecarlo.csv")
+print("✅ Summary stats saved to: forecast_summary.json")
 print("✅ Plots saved:")
 print("   • pacf_diagnostic.png")
 print("   • hybrid_forecast_montecarlo.png")
