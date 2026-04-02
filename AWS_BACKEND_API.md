@@ -93,6 +93,20 @@ Invoke-RestMethod http://localhost:8010/latest
 - Add CloudWatch alarms for failed runs.
 - Add versioned image tags and rollback policy.
 
+### New environment variables supported by `api_server.py`
+
+- `API_TOKEN`: if set, requests to `POST /run` must include header `X-API-Key: <API_TOKEN>`.
+- `ALLOWED_OUTPUT_ROOT`: restricts `output_dir` to a safe root path.
+- `S3_ARTIFACT_BUCKET`: enables post-run artifact upload to S3.
+- `S3_ARTIFACT_PREFIX`: optional key prefix inside the S3 bucket.
+- `S3_REGION`: optional explicit AWS region for S3 client.
+
+Recommended for ECS task definition:
+
+- Store `API_TOKEN` in AWS Secrets Manager and inject as secret.
+- Set `ALLOWED_OUTPUT_ROOT=/app/out`.
+- Mount writable volume at `/app/out` if you need local retention in addition to S3.
+
 ---
 
 ## Suggested next build

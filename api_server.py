@@ -1,6 +1,8 @@
 import os
 import sys
 import json
+import hmac
+import importlib
 import threading
 import subprocess
 from pathlib import Path
@@ -8,7 +10,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 import pandas as pd
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
@@ -18,6 +20,13 @@ BASE_DIR = Path(__file__).resolve().parent
 FRONTEND_DIR = BASE_DIR / "frontend"
 DEFAULT_OUTPUT_DIR = Path(os.getenv("OUTPUT_DIR", str(BASE_DIR / "out"))).resolve()
 DEFAULT_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+ALLOWED_OUTPUT_ROOT = Path(os.getenv("ALLOWED_OUTPUT_ROOT", str(DEFAULT_OUTPUT_DIR))).resolve()
+ALLOWED_OUTPUT_ROOT.mkdir(parents=True, exist_ok=True)
+
+API_TOKEN = os.getenv("API_TOKEN")
+S3_ARTIFACT_BUCKET = os.getenv("S3_ARTIFACT_BUCKET", "").strip()
+S3_ARTIFACT_PREFIX = os.getenv("S3_ARTIFACT_PREFIX", "").strip().strip("/")
+S3_REGION = os.getenv("S3_REGION", "").strip() or None
 
 RESULT_CSV = "nextgen_hybrid_forecast_results_montecarlo.csv"
 SUMMARY_JSON = "forecast_summary.json"
@@ -34,6 +43,7 @@ _state = {
     "last_finished_at": None,
     "last_exit_code": None,
     "last_error": None,
+    "last_artifact_sync": None,
 }
 
 
@@ -48,14 +58,60 @@ class ForecastRunRequest(BaseModel):
     output_dir: Optional[str] = None
 
 
+def _is_under_root(path: Path, root: Path) -> bool:
+    return path == root or root in path.parents
+
+
+def _resolve_output_dir(output_dir: Optional[str], create: bool = False) -> Path:
+    out_dir = Path(output_dir).resolve() if output_dir else DEFAULT_OUTPUT_DIR
+    if not _is_under_root(out_dir, ALLOWED_OUTPUT_ROOT):
+        raise HTTPException(status_code=400, detail="output_dir must be inside ALLOWED_OUTPUT_ROOT")
+    if create:
+        out_dir.mkdir(parents=True, exist_ok=True)
+    return out_dir
+
+
+def _authorize_run(x_api_key: Optional[str] = Header(default=None, alias="X-API-Key")) -> None:
+    if not API_TOKEN:
+        return
+    if not x_api_key or not hmac.compare_digest(x_api_key, API_TOKEN):
+        raise HTTPException(status_code=401, detail="Invalid API key")
+
+
+def _sync_artifacts_to_s3(out_dir: Path) -> dict:
+    if not S3_ARTIFACT_BUCKET:
+        return {"enabled": False, "uploaded": 0}
+
+    try:
+        boto3 = importlib.import_module("boto3")
+    except Exception as exc:
+        return {"enabled": True, "uploaded": 0, "error": f"boto3 unavailable: {exc}"}
+
+    client = boto3.client("s3", region_name=S3_REGION)
+    uploaded = 0
+
+    for path in sorted(out_dir.glob("*")):
+        if not path.is_file():
+            continue
+        key = f"{S3_ARTIFACT_PREFIX}/{path.name}" if S3_ARTIFACT_PREFIX else path.name
+        client.upload_file(str(path), S3_ARTIFACT_BUCKET, key)
+        uploaded += 1
+
+    return {
+        "enabled": True,
+        "uploaded": uploaded,
+        "bucket": S3_ARTIFACT_BUCKET,
+        "prefix": S3_ARTIFACT_PREFIX,
+    }
+
+
 def _now_iso() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
 def _run_forecast_job(req: ForecastRunRequest) -> None:
     env = os.environ.copy()
-    out_dir = Path(req.output_dir).resolve() if req.output_dir else DEFAULT_OUTPUT_DIR
-    out_dir.mkdir(parents=True, exist_ok=True)
+    out_dir = _resolve_output_dir(req.output_dir, create=True)
 
     env.update(
         {
@@ -106,6 +162,15 @@ def _run_forecast_job(req: ForecastRunRequest) -> None:
             _state["last_exit_code"] = result.returncode
             if result.returncode != 0:
                 _state["last_error"] = f"Forecast process exited with code {result.returncode}"
+            else:
+                try:
+                    _state["last_artifact_sync"] = _sync_artifacts_to_s3(out_dir)
+                except Exception as exc:
+                    _state["last_artifact_sync"] = {
+                        "enabled": bool(S3_ARTIFACT_BUCKET),
+                        "uploaded": 0,
+                        "error": str(exc),
+                    }
     except Exception as exc:
         with _state_lock:
             _state["last_error"] = str(exc)
@@ -136,7 +201,7 @@ def status():
 
 
 @app.post("/run")
-def run_forecast(req: ForecastRunRequest):
+def run_forecast(req: ForecastRunRequest, _auth: None = Depends(_authorize_run)):
     with _state_lock:
         if _state["running"]:
             raise HTTPException(status_code=409, detail="Forecast job already running")
@@ -154,7 +219,7 @@ def run_forecast(req: ForecastRunRequest):
 
 @app.get("/artifacts")
 def artifacts(output_dir: Optional[str] = None):
-    out_dir = Path(output_dir).resolve() if output_dir else DEFAULT_OUTPUT_DIR
+    out_dir = _resolve_output_dir(output_dir)
     if not out_dir.exists():
         return {"files": []}
 
@@ -174,7 +239,7 @@ def artifacts(output_dir: Optional[str] = None):
 
 @app.get("/latest")
 def latest(output_dir: Optional[str] = None):
-    out_dir = Path(output_dir).resolve() if output_dir else DEFAULT_OUTPUT_DIR
+    out_dir = _resolve_output_dir(output_dir)
     csv_path = out_dir / RESULT_CSV
     summary_path = out_dir / SUMMARY_JSON
 

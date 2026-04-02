@@ -147,7 +147,7 @@ print(
 
 
 def quick_cutoff_eval(df_raw, cutoff_date):
-    """Quick evaluation for Bayesian weighting"""
+    """Quick evaluation for Bayesian weighting with strict train-test split."""
     df = df_raw.copy()
     df["return"] = df["close"].pct_change()
     df["log_close"] = np.log(df["close"])
@@ -159,29 +159,94 @@ def quick_cutoff_eval(df_raw, cutoff_date):
 
     df = df.dropna()
 
-    prophet_df = pd.DataFrame({"ds": df.index, "y": df["log_close"].values})
-    m = Prophet(daily_seasonality=False, weekly_seasonality=False, yearly_seasonality=True)
-    m.fit(prophet_df)
-    fc = m.predict(m.make_future_dataframe(periods=0))[["ds","yhat"]].set_index("ds")
-
-    df = df.loc[fc.index]
-    df["residual"] = df["log_close"] - fc["yhat"].values
-
     feature_cols = [c for c in df.columns if c.startswith(("lag_","roll_"))]
-    X, y = df[feature_cols], df["residual"]
 
     split = -90
-    dtrain = xgb.DMatrix(X.iloc[:split], label=y.iloc[:split])
-    dtest = xgb.DMatrix(X.iloc[split:], label=y.iloc[split:])
+    if len(df) <= abs(split) + 30:
+        raise ValueError("Not enough data for cutoff evaluation")
+
+    train_df = df.iloc[:split].copy()
+    test_df = df.iloc[split:].copy()
+
+    prophet_train = pd.DataFrame({"ds": train_df.index, "y": train_df["log_close"].values})
+    m = Prophet(daily_seasonality=False, weekly_seasonality=False, yearly_seasonality=True)
+    m.fit(prophet_train)
+
+    train_yhat = m.predict(pd.DataFrame({"ds": train_df.index}))[["ds", "yhat"]].set_index("ds")
+    test_yhat = m.predict(pd.DataFrame({"ds": test_df.index}))[["ds", "yhat"]].set_index("ds")
+
+    y_train = train_df["log_close"] - train_yhat["yhat"]
+    y_test = test_df["log_close"] - test_yhat["yhat"]
+
+    dtrain = xgb.DMatrix(train_df[feature_cols], label=y_train)
+    dtest = xgb.DMatrix(test_df[feature_cols], label=y_test)
 
     bst = xgb.train(xgb_params, dtrain, num_boost_round=100, verbose_eval=False)
 
-    pred = np.exp(fc.iloc[split:]["yhat"].values + bst.predict(dtest))
-    true = df.iloc[split:]["close"].values
+    pred = np.exp(test_yhat["yhat"].values + bst.predict(dtest))
+    true = test_df["close"].values
 
     return {
         "acc": accuracy_score(np.diff(true) > 0, np.diff(pred) > 0),
         "days": len(df)
+    }
+
+
+def evaluate_walk_forward(df_features, feature_cols, test_window=90, folds=4, min_train_days=730):
+    """Expanding-window walk-forward evaluation without lookahead."""
+    max_start = len(df_features) - test_window
+    if max_start <= min_train_days:
+        return {"folds": 0, "mean_acc": None, "std_acc": None, "fold_metrics": []}
+
+    fold_starts = np.linspace(min_train_days, max_start, folds, dtype=int)
+    fold_starts = sorted(set(int(x) for x in fold_starts))
+
+    fold_metrics = []
+    for train_end in fold_starts:
+        train_slice = df_features.iloc[:train_end].copy()
+        test_slice = df_features.iloc[train_end:train_end + test_window].copy()
+
+        if len(test_slice) < 2:
+            continue
+
+        fold_prophet = Prophet(
+            interval_width=0.95,
+            daily_seasonality=False,
+            weekly_seasonality=True,
+            yearly_seasonality=True,
+        )
+        fold_prophet.fit(pd.DataFrame({"ds": train_slice.index, "y": train_slice["log_close"].values}))
+
+        train_yhat = fold_prophet.predict(pd.DataFrame({"ds": train_slice.index}))["yhat"].values
+        test_yhat = fold_prophet.predict(pd.DataFrame({"ds": test_slice.index}))["yhat"].values
+
+        y_train_res = train_slice["log_close"].values - train_yhat
+        dtrain = xgb.DMatrix(train_slice[feature_cols], label=y_train_res)
+        dtest = xgb.DMatrix(test_slice[feature_cols])
+
+        fold_bst = xgb.train(xgb_params, dtrain, num_boost_round=120, verbose_eval=False)
+        pred_test_price = np.exp(test_yhat + fold_bst.predict(dtest))
+        true_test_price = test_slice["close"].values
+
+        fold_acc = accuracy_score(np.diff(true_test_price) > 0, np.diff(pred_test_price) > 0)
+        fold_metrics.append(
+            {
+                "train_end": str(train_slice.index[-1].date()),
+                "test_start": str(test_slice.index[0].date()),
+                "test_end": str(test_slice.index[-1].date()),
+                "directional_accuracy": float(fold_acc),
+            }
+        )
+
+    if not fold_metrics:
+        return {"folds": 0, "mean_acc": None, "std_acc": None, "fold_metrics": []}
+
+    acc_values = np.array([m["directional_accuracy"] for m in fold_metrics])
+    return {
+        "folds": len(fold_metrics),
+        "mean_acc": float(acc_values.mean()),
+        "std_acc": float(acc_values.std(ddof=0)),
+        "fold_metrics": fold_metrics,
     }
 
 
@@ -287,10 +352,18 @@ df = df_raw.copy()
 df["return"] = df["close"].pct_change()
 df["log_close"] = np.log(df["close"])
 
+if len(df) <= TEST_LAST_DAYS + 200:
+    raise RuntimeError(
+        "Not enough samples after cutoff for strict split. Reduce TEST_LAST_DAYS or choose an earlier cutoff."
+    )
+
+selection_df = df.iloc[:-TEST_LAST_DAYS].copy()
+
 # --------- Automatic PACF lag selection ---------
-print("🔍 Computing PACF for automatic lag selection...")
-pacf_vals = pacf(df["return"].dropna(), nlags=MAX_LAG)
-N = len(df)
+print("🔍 Computing PACF for automatic lag selection (train only)...")
+pacf_source = selection_df["return"].dropna()
+pacf_vals = pacf(pacf_source, nlags=MAX_LAG)
+N = len(pacf_source)
 significant_lags = [i for i, v in enumerate(pacf_vals) if i>0 and abs(v) > 2/np.sqrt(N)]
 if not significant_lags:
     significant_lags = [1]
@@ -321,12 +394,12 @@ else:
 print("🔍 Selecting optimal rolling windows...")
 rolling_features = {}
 for w in ROLL_WINDOWS_CANDIDATES:
-    roll_mean = df["return"].rolling(w).mean()
-    roll_std = df["return"].rolling(w).std()
-    roll_vol = df["volume"].rolling(w).mean()
-    corr_mean = abs(roll_mean.corr(df["return"].shift(-1)))
-    corr_std = abs(roll_std.corr(df["return"].shift(-1)))
-    corr_vol = abs(roll_vol.corr(df["return"].shift(-1)))
+    roll_mean = selection_df["return"].rolling(w).mean()
+    roll_std = selection_df["return"].rolling(w).std()
+    roll_vol = selection_df["volume"].rolling(w).mean()
+    corr_mean = abs(roll_mean.corr(selection_df["return"].shift(-1)))
+    corr_std = abs(roll_std.corr(selection_df["return"].shift(-1)))
+    corr_vol = abs(roll_vol.corr(selection_df["return"].shift(-1)))
     rolling_features[w] = (corr_mean + corr_std + corr_vol)/3
 
 top_roll_windows = sorted(rolling_features, key=rolling_features.get, reverse=True)[:3]
@@ -342,10 +415,10 @@ print("🔍 Selecting optimal EMA and SMA periods...")
 ema_features = {}
 sma_features = {}
 for span in EMA_SMA_CANDIDATES:
-    ema = df["close"].ewm(span=span, adjust=False).mean()
-    sma = df["close"].rolling(span).mean()
-    corr_ema = abs(ema.corr(df["return"].shift(-1)))
-    corr_sma = abs(sma.corr(df["return"].shift(-1)))
+    ema = selection_df["close"].ewm(span=span, adjust=False).mean()
+    sma = selection_df["close"].rolling(span).mean()
+    corr_ema = abs(ema.corr(selection_df["return"].shift(-1)))
+    corr_sma = abs(sma.corr(selection_df["return"].shift(-1)))
     ema_features[span] = corr_ema
     sma_features[span] = corr_sma
 
@@ -364,21 +437,28 @@ df = df.dropna().copy()
 # =========================
 # 3) Prophet baseline
 # =========================
-print("⚙️ Fitting Prophet baseline...")
-prophet_df = pd.DataFrame({"ds": df.index, "y": df["log_close"].values})
+print("⚙️ Fitting Prophet baseline (train only)...")
+
+split_idx = -TEST_LAST_DAYS
+train_df = df.iloc[:split_idx].copy()
+test_df = df.iloc[split_idx:].copy()
+
+if len(train_df) < 365 or len(test_df) < 2:
+    raise RuntimeError("Insufficient train/test samples after feature engineering")
+
 m = Prophet(interval_width=0.95, daily_seasonality=False, weekly_seasonality=True, yearly_seasonality=True)
-m.fit(prophet_df)
+m.fit(pd.DataFrame({"ds": train_df.index, "y": train_df["log_close"].values}))
 
-future_prophet = m.make_future_dataframe(periods=HORIZON_DAYS)
-forecast_prophet = m.predict(future_prophet)
-fc = forecast_prophet[["ds","yhat","yhat_lower","yhat_upper"]].set_index("ds")
+prophet_train_log = m.predict(pd.DataFrame({"ds": train_df.index}))["yhat"].values
+prophet_test_log = m.predict(pd.DataFrame({"ds": test_df.index}))["yhat"].values
 
-prophet_in_sample = fc.reindex(df.index).dropna()
-df = df.loc[prophet_in_sample.index]
-df["prophet_log"] = prophet_in_sample["yhat"].values
-df["residual"] = df["log_close"] - df["prophet_log"]
+future_dates = pd.date_range(start=df.index.max() + timedelta(days=1), periods=HORIZON_DAYS, freq="D")
+prophet_future_log = m.predict(pd.DataFrame({"ds": future_dates}))["yhat"].values
 
-print(f"✅ Prophet fitted on {len(df)} samples")
+train_df["residual"] = train_df["log_close"].values - prophet_train_log
+test_df["residual"] = test_df["log_close"].values - prophet_test_log
+
+print(f"✅ Prophet fitted on {len(train_df)} training samples; held out {len(test_df)} test samples")
 
 # =========================
 # 4) XGBoost residuals
@@ -388,11 +468,8 @@ feature_cols = [c for c in df.columns if c.startswith(("lag_","roll_","ema_","sm
 print(f"📊 Using {len(feature_cols)} features: {feature_cols[:5]}... (showing first 5)")
 
 X = df[feature_cols]
-y_res = df["residual"]
-
-split_idx = -TEST_LAST_DAYS
-X_train, X_test = X.iloc[:split_idx], X.iloc[split_idx:]
-y_train, y_test = y_res.iloc[:split_idx], y_res.iloc[split_idx:]
+X_train, X_test = train_df[feature_cols], test_df[feature_cols]
+y_train, y_test = train_df["residual"], test_df["residual"]
 
 dtrain = xgb.DMatrix(X_train, label=y_train)
 dtest = xgb.DMatrix(X_test, label=y_test)
@@ -427,12 +504,11 @@ print("✅ GARCH model fitted")
 # =========================
 print(f"🔮 Producing combined {HORIZON_DAYS}-day forecast...")
 
-future_dates = pd.date_range(start=df.index.max() + timedelta(days=1), periods=HORIZON_DAYS, freq="D")
-prophet_future_log = fc.reindex(future_dates)["yhat"].ffill().values
-
 print("🔧 Constructing future features...")
 history_df = df.copy()
-future_features = []
+pred_res_future = []
+combined_log = []
+combined_price = []
 
 for i, next_date in enumerate(future_dates):
     row = {}
@@ -462,19 +538,27 @@ for i, next_date in enumerate(future_dates):
             w = int(col.split("_")[-1])
             row[col] = history_df["close"].iloc[-w:].mean() if len(history_df) >= w else history_df["close"].mean()
 
-    future_features.append(row)
+    row_df = pd.DataFrame([row], index=[next_date])[feature_cols]
+    pred_res = float(bst.predict(xgb.DMatrix(row_df))[0])
+    pred_log = float(prophet_future_log[i] + pred_res)
+    pred_price = float(np.exp(pred_log))
 
-    if i < len(future_dates) - 1:
-        dummy_row = history_df.iloc[-1].copy()
-        history_df = pd.concat([history_df, pd.DataFrame([dummy_row], index=[next_date])])
+    pred_res_future.append(pred_res)
+    combined_log.append(pred_log)
+    combined_price.append(pred_price)
 
-X_future = pd.DataFrame(future_features, index=future_dates)
-X_future = X_future[feature_cols]
+    prev_close = float(history_df["close"].iloc[-1])
+    next_return = (pred_price / prev_close) - 1.0 if prev_close != 0 else 0.0
 
-pred_res_future = bst.predict(xgb.DMatrix(X_future))
+    dummy_row = history_df.iloc[-1].copy()
+    dummy_row["close"] = pred_price
+    dummy_row["log_close"] = pred_log
+    dummy_row["return"] = next_return
+    history_df = pd.concat([history_df, pd.DataFrame([dummy_row], index=[next_date])])
 
-combined_log = prophet_future_log + pred_res_future
-combined_price = np.exp(combined_log)
+pred_res_future = np.array(pred_res_future)
+combined_log = np.array(combined_log)
+combined_price = np.array(combined_price)
 
 print("✅ Point forecast generated")
 
@@ -516,9 +600,9 @@ df["close"].iloc[-365:].to_csv(out_path("historical_prices.csv"), header=["close
 # =========================
 print("📊 Computing test set performance...")
 
-pred_log_test = fc.reindex(X_test.index)["yhat"].values + pred_res_test
+pred_log_test = prophet_test_log + pred_res_test
 pred_price_test = np.exp(pred_log_test)
-true_price_test = df.loc[X_test.index,"close"].values
+true_price_test = test_df["close"].values
 
 pred_dir = np.diff(pred_price_test) > 0
 true_dir = np.diff(true_price_test) > 0
@@ -528,6 +612,22 @@ p_value = binomtest(k=(pred_dir==true_dir).sum(), n=len(pred_dir), p=0.5, altern
 
 print(f"✅ Directional accuracy ({TEST_LAST_DAYS}-day test): {dir_acc:.4f} ({dir_acc*100:.2f}%)")
 print(f"✅ p-value: {p_value:.6f} {'(significant)' if p_value < 0.05 else '(not significant)'}")
+
+walk_forward = evaluate_walk_forward(
+    df_features=df,
+    feature_cols=feature_cols,
+    test_window=TEST_LAST_DAYS,
+    folds=4,
+    min_train_days=max(365, MIN_CUTOFF_TRAIN_DAYS),
+)
+
+if walk_forward["folds"] > 0:
+    print(
+        f"✅ Walk-forward accuracy: {walk_forward['mean_acc']:.4f} "
+        f"± {walk_forward['std_acc']:.4f} across {walk_forward['folds']} folds"
+    )
+else:
+    print("⚠️ Walk-forward accuracy skipped (not enough data for configured folds)")
 
 target_idx_30 = min(29, len(result_df) - 1)
 target_idx_90 = min(89, len(result_df) - 1)
@@ -550,6 +650,10 @@ summary_stats = {
     "directional_accuracy": float(dir_acc),
     "p_value": float(p_value),
     "significant": bool(p_value < 0.05),
+    "walk_forward_folds": int(walk_forward["folds"]),
+    "walk_forward_mean_accuracy": None if walk_forward["mean_acc"] is None else float(walk_forward["mean_acc"]),
+    "walk_forward_std_accuracy": None if walk_forward["std_acc"] is None else float(walk_forward["std_acc"]),
+    "walk_forward_details": walk_forward["fold_metrics"],
     "residual_test_mse": float(mse_res),
     "current_price": float(df["close"].iloc[-1]),
     "forecast_30d": float(result_df["combined_price"].iloc[target_idx_30]),
@@ -607,9 +711,6 @@ print("⚙️ Computing learning curve...")
 train_sizes = np.linspace(0.2, 1.0, 5)
 train_acc, test_acc = [], []
 
-prophet_train_log = fc.reindex(X_train.index)["yhat"].values
-prophet_test_log = fc.reindex(X_test.index)["yhat"].values
-
 for frac in train_sizes:
     n = int(frac * len(X_train))
 
@@ -664,6 +765,12 @@ print(f"\n📊 Test Performance ({TEST_LAST_DAYS} days):")
 print(f"   • Directional Accuracy: {dir_acc:.4f} ({dir_acc*100:.2f}%)")
 print(f"   • p-value: {p_value:.6f}")
 print(f"   • Significant: {'Yes ✅' if p_value < 0.05 else 'No ❌'}")
+if walk_forward["folds"] > 0:
+    print(
+        "   • Walk-forward Accuracy: "
+        f"{walk_forward['mean_acc']:.4f} ± {walk_forward['std_acc']:.4f} "
+        f"({walk_forward['folds']} folds)"
+    )
 
 print(f"\n🔮 Forecast Summary ({HORIZON_DAYS} days):")
 print(f"   • Current Price: ${df['close'].iloc[-1]:,.2f}")

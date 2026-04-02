@@ -4051,3 +4051,312 @@ Importing plotly failed. Interactive plots will not work.
 15:54:55 - cmdstanpy - INFO - Chain [1] done processing
 15:54:57 - cmdstanpy - INFO - Chain [1] start processing
 15:54:59 - cmdstanpy - INFO - Chain [1] done processing
+
+===== RUN 2026-03-13T15:58:33.002394 =====
+================================================================================
+🔥 BTC HYBRID FORECASTER WITH BAYESIAN ENSEMBLE + REGIME DETECTION
+================================================================================
+
+================================================================================
+STEP 1: BAYESIAN CUTOFF ENSEMBLE
+================================================================================
+
+📥 Downloading full BTC history for cutoff evaluation...
+✅ Downloaded 3359 rows
+📌 Cutoff grid: freq=MS, min_train_days=730, candidates=48
+
+🔄 Evaluating 48 cutoffs...
+  2017-01-01: Acc=0.7303, Days=3345
+  2017-02-01: Acc=0.6966, Days=3314
+  2017-04-01: Acc=0.6742, Days=3255
+  2017-06-01: Acc=0.7191, Days=3194
+  2017-08-01: Acc=0.6966, Days=3133
+  2017-10-01: Acc=0.7191, Days=3072
+  2017-12-01: Acc=0.6854, Days=3011
+  2018-01-01: Acc=0.7191, Days=2980
+  2018-03-01: Acc=0.6966, Days=2921
+  2018-05-01: Acc=0.7079, Days=2860
+  2018-07-01: Acc=0.6742, Days=2799
+  2018-09-01: Acc=0.7191, Days=2737
+  2018-11-01: Acc=0.7191, Days=2676
+  2019-01-01: Acc=0.7191, Days=2615
+  2019-02-01: Acc=0.7416, Days=2584
+  2019-04-01: Acc=0.7416, Days=2525
+  2019-06-01: Acc=0.7079, Days=2464
+  2019-08-01: Acc=0.7416, Days=2403
+  2019-10-01: Acc=0.7303, Days=2342
+  2019-12-01: Acc=0.7191, Days=2281
+  2020-02-01: Acc=0.6629, Days=2219
+  2020-03-01: Acc=0.6854, Days=2190
+  2020-05-01: Acc=0.7416, Days=2129
+  2020-07-01: Acc=0.6966, Days=2068
+  2020-09-01: Acc=0.7303, Days=2006
+  2020-11-01: Acc=0.7303, Days=1945
+  2021-01-01: Acc=0.6742, Days=1884
+  2021-02-01: Acc=0.6742, Days=1853
+  2021-04-01: Acc=0.7079, Days=1794
+  2021-06-01: Acc=0.6517, Days=1733
+  2021-08-01: Acc=0.6629, Days=1672
+  2021-10-01: Acc=0.6404, Days=1611
+  2021-12-01: Acc=0.6742, Days=1550
+  2022-02-01: Acc=0.7528, Days=1488
+  2022-03-01: Acc=0.6854, Days=1460
+  2022-05-01: Acc=0.6854, Days=1399
+  2022-07-01: Acc=0.6742, Days=1338
+  2022-09-01: Acc=0.7640, Days=1276
+  2022-11-01: Acc=0.6966, Days=1215
+  2023-01-01: Acc=0.7191, Days=1154
+  2023-03-01: Acc=0.7191, Days=1095
+  2023-04-01: Acc=0.7303, Days=1064
+  2023-06-01: Acc=0.6742, Days=1003
+  2023-08-01: Acc=0.6966, Days=942
+  2023-10-01: Acc=0.7416, Days=881
+  2023-12-01: Acc=0.6854, Days=820
+  2024-02-01: Acc=0.6629, Days=758
+  2024-03-13: Acc=0.6966, Days=717
+
+📊 BAYESIAN POSTERIORS:
+Cutoff       Accuracy   Posterior    Weight %  
+------------------------------------------------------------
+2017-01-01   0.7303     0.021111     2.1       
+2017-02-01   0.6966     0.020758     2.1       
+2017-04-01   0.6742     0.020526     2.1       
+2017-06-01   0.7191     0.020993     2.1       
+2017-08-01   0.6966     0.020758     2.1       
+2017-10-01   0.7191     0.020993     2.1       
+2017-12-01   0.6854     0.020642     2.1       
+2018-01-01   0.7191     0.020993     2.1       
+2018-03-01   0.6966     0.020758     2.1       
+2018-05-01   0.7079     0.020875     2.1       
+2018-07-01   0.6742     0.020526     2.1       
+2018-09-01   0.7191     0.020993     2.1       
+2018-11-01   0.7191     0.020993     2.1       
+2019-01-01   0.7191     0.020993     2.1       
+2019-02-01   0.7416     0.021230     2.1       
+2019-04-01   0.7416     0.021230     2.1       
+2019-06-01   0.7079     0.020875     2.1       
+2019-08-01   0.7416     0.021230     2.1       
+2019-10-01   0.7303     0.021111     2.1       
+2019-12-01   0.7191     0.020993     2.1       
+2020-02-01   0.6629     0.020411     2.0       
+2020-03-01   0.6854     0.020642     2.1       
+2020-05-01   0.7416     0.021230     2.1       
+2020-07-01   0.6966     0.020758     2.1       
+2020-09-01   0.7303     0.021111     2.1       
+2020-11-01   0.7303     0.021111     2.1       
+2021-01-01   0.6742     0.020526     2.1       
+2021-02-01   0.6742     0.020526     2.1       
+2021-04-01   0.7079     0.020875     2.1       
+2021-06-01   0.6517     0.020297     2.0       
+2021-08-01   0.6629     0.020411     2.0       
+2021-10-01   0.6404     0.020183     2.0       
+2021-12-01   0.6742     0.020526     2.1       
+2022-02-01   0.7528     0.021350     2.1       
+2022-03-01   0.6854     0.020642     2.1       
+2022-05-01   0.6854     0.020642     2.1       
+2022-07-01   0.6742     0.020526     2.1       
+2022-09-01   0.7640     0.021470     2.1        🏆
+2022-11-01   0.6966     0.020758     2.1       
+2023-01-01   0.7191     0.020993     2.1       
+2023-03-01   0.7191     0.020993     2.1       
+2023-04-01   0.7303     0.021111     2.1       
+2023-06-01   0.6742     0.020526     2.1       
+2023-08-01   0.6966     0.020758     2.1       
+2023-10-01   0.7416     0.021230     2.1       
+2023-12-01   0.6854     0.020642     2.1       
+2024-02-01   0.6629     0.020411     2.0       
+2024-03-13   0.6966     0.020758     2.1       
+
+✅ MAP Cutoff: 2022-09-01 (posterior: 0.021)
+💡 Using weighted ensemble of all cutoffs!
+
+================================================================================
+STEP 2: MARKET REGIME DETECTION
+================================================================================
+
+📈 Current Regime: BULL_VOLATILE 🟡
+   Based on last 30 days of price action
+
+================================================================================
+STEP 3: FULL FORECAST PIPELINE (Using 2022-09-01)
+================================================================================
+
+📥 Downloading data from 2022-09-01...
+✅ Downloaded 1290 rows (2022-09-01 → 2026-03-13)
+🔍 Computing PACF for automatic lag selection...
+✅ Selected lags: [13, 20, 24, 25, 56]
+📊 PACF plot saved to pacf_diagnostic.png
+🔍 Selecting optimal rolling windows...
+✅ Selected rolling windows: [30, 21, 3]
+🔍 Selecting optimal EMA and SMA periods...
+✅ Selected EMA periods: [3, 30, 21]
+✅ Selected SMA periods: [21, 30, 7]
+⚙️ Fitting Prophet baseline...
+✅ Prophet fitted on 1233 samples
+⚙️ Training XGBoost on residuals...
+📊 Using 20 features: ['lag_ret_13', 'lag_ret_20', 'lag_ret_24', 'lag_ret_25', 'lag_ret_56']... (showing first 5)
+✅ XGBoost residual model trained. Residual test MSE: 1.603161e-03
+⚙️ Fitting GARCH(1,1) on training residuals...
+✅ GARCH model fitted
+🔮 Producing combined 90-day forecast...
+🔧 Constructing future features...
+✅ Point forecast generated
+🎲 Running GARCH-based Monte Carlo simulation (300 runs)...
+✅ Monte Carlo simulation complete
+📊 Computing test set performance...
+✅ Directional accuracy (40-day test): 0.7949 (79.49%)
+✅ p-value: 0.000147 (significant)
+📊 Generating forecast plot...
+✅ Forecast plot saved to hybrid_forecast_montecarlo.png
+⚙️ Computing learning curve...
+✅ Learning curve saved to learning_curve.png
+
+================================================================================
+🔮 FORECAST RESULTS
+================================================================================
+
+🎯 Bayesian Ensemble:
+   • MAP Cutoff: 2022-09-01
+   • Posterior: 0.021
+   • Ensemble members: 48
+
+📈 Market Regime: BULL_VOLATILE 🟡
+
+📊 Test Performance (40 days):
+   • Directional Accuracy: 0.7949 (79.49%)
+   • p-value: 0.000147
+   • Significant: Yes ✅
+
+🔮 Forecast Summary (90 days):
+   • Current Price: $71,538.55
+   • Forecast (30 days): $63,270.36
+   • Forecast (90 days): $66,512.28
+   • Forecast (90 days): $66,512.28
+
+📄 First 10 days of forecast:
+            prophet_baseline  xgboost_res  ...  combined_low_mc  combined_high_mc
+date                                       ...                                   
+2026-03-14         64,408.01         0.03  ...        61,286.21         70,477.93
+2026-03-15         64,114.77         0.03  ...        61,332.02         70,474.36
+2026-03-16         63,933.42         0.03  ...        61,743.52         70,025.23
+2026-03-17         63,619.55         0.03  ...        61,022.69         70,844.83
+2026-03-18         63,527.51         0.04  ...        61,627.58         70,353.28
+2026-03-19         63,008.62         0.03  ...        60,875.14         69,340.77
+2026-03-20         62,829.57         0.03  ...        60,281.43         69,033.35
+2026-03-21         62,511.36         0.04  ...        60,980.84         69,968.29
+2026-03-22         62,323.14         0.04  ...        60,669.64         69,236.54
+2026-03-23         62,243.91         0.04  ...        60,261.53         69,071.23
+
+[10 rows x 5 columns]
+
+✅ Forecast saved to: nextgen_hybrid_forecast_results_montecarlo.csv
+✅ Summary stats saved to: forecast_summary.json
+✅ Plots saved:
+   • pacf_diagnostic.png
+   • hybrid_forecast_montecarlo.png
+   • learning_curve.png
+
+================================================================================
+✅ ALL DONE!
+================================================================================
+
+--- STDERR ---
+Importing plotly failed. Interactive plots will not work.
+15:56:28 - cmdstanpy - INFO - Chain [1] start processing
+15:56:30 - cmdstanpy - INFO - Chain [1] done processing
+15:56:31 - cmdstanpy - INFO - Chain [1] start processing
+15:56:33 - cmdstanpy - INFO - Chain [1] done processing
+15:56:34 - cmdstanpy - INFO - Chain [1] start processing
+15:56:35 - cmdstanpy - INFO - Chain [1] done processing
+15:56:36 - cmdstanpy - INFO - Chain [1] start processing
+15:56:38 - cmdstanpy - INFO - Chain [1] done processing
+15:56:39 - cmdstanpy - INFO - Chain [1] start processing
+15:56:41 - cmdstanpy - INFO - Chain [1] done processing
+15:56:42 - cmdstanpy - INFO - Chain [1] start processing
+15:56:44 - cmdstanpy - INFO - Chain [1] done processing
+15:56:45 - cmdstanpy - INFO - Chain [1] start processing
+15:56:49 - cmdstanpy - INFO - Chain [1] done processing
+15:56:51 - cmdstanpy - INFO - Chain [1] start processing
+15:56:56 - cmdstanpy - INFO - Chain [1] done processing
+15:56:57 - cmdstanpy - INFO - Chain [1] start processing
+15:56:59 - cmdstanpy - INFO - Chain [1] done processing
+15:57:00 - cmdstanpy - INFO - Chain [1] start processing
+15:57:02 - cmdstanpy - INFO - Chain [1] done processing
+15:57:03 - cmdstanpy - INFO - Chain [1] start processing
+15:57:05 - cmdstanpy - INFO - Chain [1] done processing
+15:57:06 - cmdstanpy - INFO - Chain [1] start processing
+15:57:08 - cmdstanpy - INFO - Chain [1] done processing
+15:57:09 - cmdstanpy - INFO - Chain [1] start processing
+15:57:11 - cmdstanpy - INFO - Chain [1] done processing
+15:57:11 - cmdstanpy - INFO - Chain [1] start processing
+15:57:13 - cmdstanpy - INFO - Chain [1] done processing
+15:57:14 - cmdstanpy - INFO - Chain [1] start processing
+15:57:16 - cmdstanpy - INFO - Chain [1] done processing
+15:57:16 - cmdstanpy - INFO - Chain [1] start processing
+15:57:18 - cmdstanpy - INFO - Chain [1] done processing
+15:57:19 - cmdstanpy - INFO - Chain [1] start processing
+15:57:20 - cmdstanpy - INFO - Chain [1] done processing
+15:57:21 - cmdstanpy - INFO - Chain [1] start processing
+15:57:23 - cmdstanpy - INFO - Chain [1] done processing
+15:57:24 - cmdstanpy - INFO - Chain [1] start processing
+15:57:26 - cmdstanpy - INFO - Chain [1] done processing
+15:57:27 - cmdstanpy - INFO - Chain [1] start processing
+15:57:29 - cmdstanpy - INFO - Chain [1] done processing
+15:57:30 - cmdstanpy - INFO - Chain [1] start processing
+15:57:33 - cmdstanpy - INFO - Chain [1] done processing
+15:57:34 - cmdstanpy - INFO - Chain [1] start processing
+15:57:36 - cmdstanpy - INFO - Chain [1] done processing
+15:57:36 - cmdstanpy - INFO - Chain [1] start processing
+15:57:39 - cmdstanpy - INFO - Chain [1] done processing
+15:57:40 - cmdstanpy - INFO - Chain [1] start processing
+15:57:41 - cmdstanpy - INFO - Chain [1] done processing
+15:57:42 - cmdstanpy - INFO - Chain [1] start processing
+15:57:43 - cmdstanpy - INFO - Chain [1] done processing
+15:57:44 - cmdstanpy - INFO - Chain [1] start processing
+15:57:45 - cmdstanpy - INFO - Chain [1] done processing
+15:57:46 - cmdstanpy - INFO - Chain [1] start processing
+15:57:47 - cmdstanpy - INFO - Chain [1] done processing
+15:57:48 - cmdstanpy - INFO - Chain [1] start processing
+15:57:50 - cmdstanpy - INFO - Chain [1] done processing
+15:57:50 - cmdstanpy - INFO - Chain [1] start processing
+15:57:52 - cmdstanpy - INFO - Chain [1] done processing
+15:57:52 - cmdstanpy - INFO - Chain [1] start processing
+15:57:53 - cmdstanpy - INFO - Chain [1] done processing
+15:57:54 - cmdstanpy - INFO - Chain [1] start processing
+15:57:55 - cmdstanpy - INFO - Chain [1] done processing
+15:57:56 - cmdstanpy - INFO - Chain [1] start processing
+15:57:57 - cmdstanpy - INFO - Chain [1] done processing
+15:57:58 - cmdstanpy - INFO - Chain [1] start processing
+15:57:59 - cmdstanpy - INFO - Chain [1] done processing
+15:57:59 - cmdstanpy - INFO - Chain [1] start processing
+15:58:00 - cmdstanpy - INFO - Chain [1] done processing
+15:58:01 - cmdstanpy - INFO - Chain [1] start processing
+15:58:02 - cmdstanpy - INFO - Chain [1] done processing
+15:58:02 - cmdstanpy - INFO - Chain [1] start processing
+15:58:04 - cmdstanpy - INFO - Chain [1] done processing
+15:58:04 - cmdstanpy - INFO - Chain [1] start processing
+15:58:05 - cmdstanpy - INFO - Chain [1] done processing
+15:58:06 - cmdstanpy - INFO - Chain [1] start processing
+15:58:07 - cmdstanpy - INFO - Chain [1] done processing
+15:58:08 - cmdstanpy - INFO - Chain [1] start processing
+15:58:10 - cmdstanpy - INFO - Chain [1] done processing
+15:58:10 - cmdstanpy - INFO - Chain [1] start processing
+15:58:11 - cmdstanpy - INFO - Chain [1] done processing
+15:58:12 - cmdstanpy - INFO - Chain [1] start processing
+15:58:13 - cmdstanpy - INFO - Chain [1] done processing
+15:58:15 - cmdstanpy - INFO - Chain [1] start processing
+15:58:16 - cmdstanpy - INFO - Chain [1] done processing
+15:58:17 - cmdstanpy - INFO - Chain [1] start processing
+15:58:18 - cmdstanpy - INFO - Chain [1] done processing
+15:58:18 - cmdstanpy - INFO - Chain [1] start processing
+15:58:19 - cmdstanpy - INFO - Chain [1] done processing
+15:58:20 - cmdstanpy - INFO - Chain [1] start processing
+15:58:20 - cmdstanpy - INFO - Chain [1] done processing
+15:58:21 - cmdstanpy - INFO - Chain [1] start processing
+15:58:22 - cmdstanpy - INFO - Chain [1] done processing
+15:58:22 - cmdstanpy - INFO - Chain [1] start processing
+15:58:24 - cmdstanpy - INFO - Chain [1] done processing
+15:58:24 - cmdstanpy - INFO - Chain [1] start processing
+15:58:26 - cmdstanpy - INFO - Chain [1] done processing
+15:58:27 - cmdstanpy - INFO - Chain [1] start processing
+15:58:29 - cmdstanpy - INFO - Chain [1] done processing
