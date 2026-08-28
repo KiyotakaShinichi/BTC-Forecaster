@@ -21,3 +21,39 @@ features = FeatureAggregator().aggregate(signals, forecast_origin)
 Current keys are `sentiment_mean_24h`, `sentiment_weighted_24h`, `event_count_24h`, `high_relevance_event_count_24h`, `regulatory_signal_72h`, `whale_exchange_inflow_signal_72h`, and `macro_news_signal_72h`. The caller should join these by `forecast_origin` and learn their value/weight inside point-in-time walk-forward evaluation.
 
 Live provider work remaining: select contracted search/news/market/on-chain vendors, map their response formats, define operator-approved RSS feeds, load credentials from deployment environment, and empirically calibrate entity importance and extraction quality.
+
+## B2 operations
+
+`configuration.py` validates provider and watchlist configuration. `QueryPlanner` creates stable query IDs from enabled watch entities without interpreting fame or configured importance as market direction. The example configuration deliberately contains no asserted live feed URLs; operators must add verified, permitted sources.
+
+`MultiProviderRetriever` provides bounded retries, exponential backoff/jitter hooks, timeout isolation, rate-limit reporting, and partial-success results. Cross-provider deduplication uses canonical URLs, exact content hashes, or the corroborated combination of normalized title, publisher, and close publication time. All retrieval provenance is retained.
+
+`run_intelligence_cycle` is the single operational entry point:
+
+```text
+plan → retrieve → normalize/deduplicate → cache → extract → validate
+     → durable store/watermarks → aggregate → quality/health → manifest
+```
+
+Extraction failures quarantine metadata while preserving successfully retrieved documents. Successful evidence storage and watermark advancement share a DuckDB transaction. Failed provider/query attempts never advance watermarks. Missingness and provider health are returned separately from numeric features, so an outage is not interpreted as zero sentiment.
+
+`ReplayService.replay(forecast_origin, ...)` includes only documents with `available_at <= forecast_origin` and events with `available_time <= forecast_origin` whose sources are also eligible. It persists a membership fingerprint rather than copying raw content. Feature definitions and missing-value semantics are versioned in `features.py`.
+
+## CLI and automation
+
+Install the layered requirements, then invoke the scheduler-friendly script:
+
+```powershell
+python -m pip install -r requirements-market-intelligence.txt
+python btc-intel.py --db data/intelligence.duckdb collect --config market_intelligence/config.example.json --origin 2026-08-28T08:00:00Z --manifest data/manifests/run.json
+python btc-intel.py --db data/intelligence.duckdb replay --origin 2026-08-28T08:00:00Z
+python btc-intel.py --db data/intelligence.duckdb aggregate --origin 2026-08-28T08:00:00Z
+python btc-intel.py --db data/intelligence.duckdb health
+python btc-intel.py --db data/intelligence.duckdb quality --origin 2026-08-28T08:00:00Z
+```
+
+Commands contain no scheduler dependency and can be called by cron, GitHub Actions, or Windows Task Scheduler. `backfill` records deterministic bounded windows and an atomic resumable progress manifest; an operational deployment should bind its window callback to the same collection service with an approved provider configuration.
+
+The RSS adapter is for operator-verified public feeds. The generic JSON adapter is a seam for legitimate contracted search APIs; no vendor contract is assumed. `SocialStatementProvider` intentionally requires a lawful API implementation and contains no X/Twitter scraping. `WhaleDataProvider` carries explicit transfer context and defaults unknown transfers to `UNKNOWN`; it never invents wallet labels.
+
+The manually defined gold labels in `gold_fixtures.json` exercise regulation, monetary policy, ETF, exchange incident, whale, irrelevant, ambiguous social, duplicate, and multi-source cases. `evaluation.py` compares extraction quality only; its outputs are not forecast weights, and the small fixture set is not evidence of production accuracy.

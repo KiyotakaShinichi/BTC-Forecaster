@@ -9,6 +9,8 @@ from .models import (
     SignalCategory,
     TransferContext,
 )
+from .cycle import ReplayService, run_intelligence_cycle
+from .features import FEATURE_CONTRACT_VERSION, FEATURE_DEFINITIONS
 
 __all__ = [
     "Direction",
@@ -18,4 +20,8 @@ __all__ = [
     "FeatureAggregator",
     "SignalCategory",
     "TransferContext",
+    "ReplayService",
+    "run_intelligence_cycle",
+    "FEATURE_CONTRACT_VERSION",
+    "FEATURE_DEFINITIONS",
 ]

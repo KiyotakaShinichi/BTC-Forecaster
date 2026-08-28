@@ -1,0 +1,11 @@
+[
+  {"case_id":"regulation","document_ids":["gold-reg"],"expected_event_type":"REGULATION","expected_entity":"SEC","relevance_min":0.4,"relevance_max":0.8},
+  {"case_id":"fed","document_ids":["gold-fed"],"expected_event_type":"MONETARY_POLICY","expected_entity":"Jerome Powell","relevance_min":0.3,"relevance_max":0.8},
+  {"case_id":"etf","document_ids":["gold-etf"],"expected_event_type":"ETF_FLOW","expected_entity":null,"relevance_min":0.4,"relevance_max":0.8},
+  {"case_id":"exchange","document_ids":["gold-exchange"],"expected_event_type":"EXCHANGE_INCIDENT","expected_entity":null,"relevance_min":0.4,"relevance_max":0.8},
+  {"case_id":"transfer","document_ids":["gold-whale"],"expected_event_type":"WHALE_TRANSFER","expected_entity":null,"expected_direction":"UNKNOWN","relevance_min":0.4,"relevance_max":0.8},
+  {"case_id":"irrelevant","document_ids":["gold-irrelevant"],"expected_event_type":null,"expected_entity":null,"relevance_min":0.0,"relevance_max":0.2},
+  {"case_id":"social","document_ids":["gold-social"],"expected_event_type":null,"expected_entity":"Elon Musk","relevance_min":0.0,"relevance_max":0.6},
+  {"case_id":"duplicate","document_ids":["gold-dup-a"],"expected_event_type":"ETF_FLOW","expected_entity":null,"relevance_min":0.4,"relevance_max":0.8},
+  {"case_id":"multi-source","document_ids":["gold-multi-a","gold-multi-b"],"expected_event_type":"REGULATION","expected_entity":"CFTC","relevance_min":0.4,"relevance_max":0.9}
+]

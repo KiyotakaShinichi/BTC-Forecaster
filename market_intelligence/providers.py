@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import json
 import urllib.parse
 import urllib.request
@@ -10,7 +9,9 @@ from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from typing import Iterable
 
-from .models import Document
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
+
+from .models import Document, TransferContext, _utc
 
 
 class SearchProvider(ABC):
@@ -18,6 +19,54 @@ class SearchProvider(ABC):
 
     @abstractmethod
     def search(self, query: str, start: datetime, end: datetime) -> list[Document]: ...
+
+
+class SocialStatement(BaseModel):
+    model_config = ConfigDict(frozen=True)
+    entity: str
+    statement_hash: str
+    published_at: datetime
+    available_at: datetime
+    source_url: HttpUrl
+    provider: str
+
+    @field_validator("published_at", "available_at")
+    @classmethod
+    def aware(cls, value: datetime) -> datetime:
+        return _utc(value)
+
+
+class SocialStatementProvider(ABC):
+    """Seam for lawful, contracted social APIs; no HTML scraping behavior."""
+    name: str
+
+    @abstractmethod
+    def statements(self, entities: list[str], start: datetime, end: datetime) -> list[SocialStatement]: ...
+
+
+class WhaleObservation(BaseModel):
+    model_config = ConfigDict(frozen=True)
+    observation_id: str
+    amount_btc: float = Field(gt=0)
+    from_entity: str | None = None
+    to_entity: str | None = None
+    transfer_context: TransferContext = TransferContext.UNKNOWN
+    observed_at: datetime
+    available_at: datetime
+    source_url: HttpUrl
+    provider: str
+
+    @field_validator("observed_at", "available_at")
+    @classmethod
+    def aware(cls, value: datetime) -> datetime:
+        return _utc(value)
+
+
+class WhaleDataProvider(ABC):
+    name: str
+
+    @abstractmethod
+    def observations(self, start: datetime, end: datetime) -> list[WhaleObservation]: ...
 
 
 def deduplicate_documents(documents: Iterable[Document]) -> list[Document]:

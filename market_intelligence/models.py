@@ -51,8 +51,48 @@ class TransferContext(str, Enum):
     UNKNOWN = "UNKNOWN"
 
 
-UnitScore = Annotated[float, Field(ge=0.0, le=1.0)]
-SentimentScore = Annotated[float, Field(ge=-1.0, le=1.0)]
+class ExtractionMethod(str, Enum):
+    LLM = "LLM"
+    RULE_BASED = "RULE_BASED"
+    MANUAL = "MANUAL"
+    FIXTURE = "FIXTURE"
+
+
+class SourceType(str, Enum):
+    PRIMARY_OFFICIAL = "PRIMARY_OFFICIAL"
+    PRIMARY_CORPORATE = "PRIMARY_CORPORATE"
+    REPUTABLE_NEWS = "REPUTABLE_NEWS"
+    SPECIALIST_CRYPTO_NEWS = "SPECIALIST_CRYPTO_NEWS"
+    SOCIAL_OR_STATEMENT = "SOCIAL_OR_STATEMENT"
+    UNKNOWN = "UNKNOWN"
+
+
+UnitScore = Annotated[float, Field(ge=0.0, le=1.0, allow_inf_nan=False)]
+SentimentScore = Annotated[float, Field(ge=-1.0, le=1.0, allow_inf_nan=False)]
+
+
+class RetrievalProvenance(BaseModel):
+    model_config = ConfigDict(frozen=True)
+    provider: str
+    retrieved_at: datetime
+    provider_document_id: str | None = None
+    query: str | None = None
+    query_id: str | None = None
+
+    @field_validator("retrieved_at")
+    @classmethod
+    def aware_time(cls, value: datetime) -> datetime:
+        return _utc(value)
+
+
+class SourceMetadata(BaseModel):
+    model_config = ConfigDict(frozen=True)
+    source_type: SourceType = SourceType.UNKNOWN
+    official_source: bool = False
+    primary_source: bool = False
+    known_publisher: bool = False
+    timestamp_quality: UnitScore = 0.5
+    content_completeness: UnitScore = 0.5
 
 
 class Document(BaseModel):
@@ -69,6 +109,9 @@ class Document(BaseModel):
     text_hash: str
     query: str
     provider: str
+    retrieval_provenance: tuple[RetrievalProvenance, ...] = ()
+    source_metadata: SourceMetadata = Field(default_factory=SourceMetadata)
+    schema_version: str = "document-v2"
 
     @field_validator("published_at", "retrieved_at", "available_at")
     @classmethod
@@ -119,6 +162,8 @@ class EventSignal(BaseModel):
     summary: str = Field(min_length=1, max_length=1000)
     transfer_context: TransferContext | None = None
     extractor_version: str
+    extraction_method: ExtractionMethod = ExtractionMethod.FIXTURE
+    schema_version: str = "event-v2"
 
     @field_validator("event_time", "available_time")
     @classmethod

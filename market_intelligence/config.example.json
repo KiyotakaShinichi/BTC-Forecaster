@@ -1,0 +1,34 @@
+{
+  "providers": [
+    {
+      "id": "official-announcements",
+      "type": "rss",
+      "enabled": false,
+      "priority": 10,
+      "timeout": 15,
+      "rate_limit": 1,
+      "credentials_env": null,
+      "source_category": "OFFICIAL_GOVERNMENT",
+      "settings": {"feed_urls": []}
+    },
+    {
+      "id": "contracted-search",
+      "type": "json_search_api",
+      "enabled": false,
+      "priority": 20,
+      "timeout": 15,
+      "rate_limit": 1,
+      "credentials_env": "BTC_INTEL_SEARCH_API_KEY",
+      "source_category": "GENERAL_WEB",
+      "settings": {"endpoint": "SET_CONTRACTED_PROVIDER_ENDPOINT"}
+    }
+  ],
+  "watchlist": [
+    {"canonical_name":"Bitcoin","aliases":["BTC"],"entity_type":"INSTITUTION","topics":["ETF","exchange inflow","exchange outflow","liquidation","funding rate"],"expected_event_types":["ETF_FLOW","WHALE_TRANSFER","LIQUIDITY_EVENT"],"importance_prior":1.0},
+    {"canonical_name":"Jerome Powell","aliases":["Powell"],"entity_type":"CENTRAL_BANK","topics":["Federal Reserve","monetary policy"],"expected_event_types":["MONETARY_POLICY"],"importance_prior":1.0},
+    {"canonical_name":"SEC","aliases":["Securities and Exchange Commission"],"entity_type":"REGULATOR","topics":["Bitcoin regulation","BTC ETF"],"expected_event_types":["REGULATION","ETF_FLOW"],"importance_prior":1.0},
+    {"canonical_name":"Donald Trump","aliases":[],"entity_type":"POLITICAL","topics":["Bitcoin","crypto regulation"],"expected_event_types":["ENTITY_STATEMENT","REGULATION"],"importance_prior":1.0},
+    {"canonical_name":"Elon Musk","aliases":[],"entity_type":"CORPORATE","topics":["Bitcoin"],"expected_event_types":["ENTITY_STATEMENT"],"importance_prior":1.0},
+    {"canonical_name":"Michael Saylor","aliases":[],"entity_type":"CRYPTO_EXECUTIVE","topics":["Bitcoin","institutional adoption"],"expected_event_types":["ENTITY_STATEMENT","INSTITUTIONAL_ADOPTION"],"importance_prior":1.0}
+  ]
+}
