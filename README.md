@@ -142,17 +142,28 @@ Every flag has an environment-variable equivalent (`TICKER`, `HORIZON_DAYS`,
 `btc-forecast run` prints a model comparison, then a verdict:
 
 ```
+data      : 3527 bars 2017-01-01..2026-08-28
+            provider=yfinance sha256=056b866b16fe
+backtest  : 3 expanding folds, horizon=30, embargo=0, min_train=900
+
 model comparison (walk-forward means, lower MAE is better):
-                          mae      rmse    mase  directional_accuracy  interval_coverage
-random_walk         1,842.3110  ...     0.9871                0.4930             0.9430
-arima               1,851.9902  ...     0.9923                0.5010             0.9385
-prophet_xgb_hybrid  2,140.5518  ...     1.1470                0.5120             0.8910
+                               mae        rmse    mase  directional_accuracy  interval_coverage
+random_walk_drift       3,480.1898  4,455.4098  7.7887                0.8889             0.9556
+ets                     3,801.7574  5,018.6515  8.4151                0.4444             0.9556
+arima                   3,840.2669  5,033.7429  8.7406                0.5556             0.9333
+random_walk             3,848.5724  5,042.3343  8.7847                0.4444             0.9444
+historical_mean_return  4,286.7264  5,611.8315  9.2442                0.4444             0.5556
+prophet                 9,404.9897 10,036.7518 18.0914                0.2222             0.3667
+prophet_xgb_hybrid     10,158.5059 10,791.1421 18.9160                0.2444             0.2333
 
 verdict:
   prophet_xgb_hybrid did NOT beat random_walk on walk-forward MAE across
   identical folds. The forward forecast should be read as a scenario, not a
   prediction, and the added complexity is not currently earning anything.
 ```
+
+(Real output, not an illustration — the run is archived in
+[`research/runs/2026-08-28-track-a-baseline/`](research/runs/2026-08-28-track-a-baseline/README.md).)
 
 That verdict is the product. A platform that can only report success is not
 measuring anything.
