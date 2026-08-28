@@ -233,6 +233,22 @@ def _register_defaults() -> None:
         description="Prophet baseline with XGBoost residual correction (the original headline model).",
     )
 
+    def _xgb_causal(**kwargs):
+        from .challengers import XgboostCausalRetuned
+
+        return XgboostCausalRetuned(**kwargs)
+
+    register(
+        "xgboost_causal_retuned",
+        _xgb_causal,
+        family="challenger",
+        requires=("xgboost",),
+        description=(
+            "XGBOOST_CAUSAL_RETUNED: direct XGBoost on next-bar log return, "
+            "hyperparameters selected by nested inner validation per fold."
+        ),
+    )
+
 
 _register_defaults()
 
