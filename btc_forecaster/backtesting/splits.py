@@ -14,8 +14,9 @@ either.
 
 from __future__ import annotations
 
+from collections.abc import Iterator
 from dataclasses import dataclass
-from typing import Iterator, Literal
+from typing import Literal
 
 import pandas as pd
 
@@ -146,6 +147,8 @@ class WalkForwardSplitter:
             if self.mode == "expanding":
                 train_start_pos = 0
             else:
+                if self.window_bars is None:  # unreachable: __post_init__ enforces it
+                    raise ValueError("rolling mode requires window_bars")
                 train_start_pos = max(0, train_end_pos - self.window_bars + 1)
 
             folds.append(

@@ -33,9 +33,13 @@ The fix is one ``cumsum``: shocks accumulate along each simulated path.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from typing import Literal
 
 import numpy as np
 import pandas as pd
+
+#: Innovation distributions the arch package accepts for a GARCH fit.
+InnovationDist = Literal["normal", "t", "skewt", "ged"]
 
 
 @dataclass(frozen=True)
@@ -71,7 +75,7 @@ def garch_volatility(
     *,
     p: int = 1,
     q: int = 1,
-    dist: str = "normal",
+    dist: InnovationDist = "normal",
 ) -> VolatilityForecast:
     """GARCH(p,q) conditional volatility forecast for log returns.
 
@@ -176,6 +180,7 @@ def analytic_interval(
 
 
 __all__ = [
+    "InnovationDist",
     "VolatilityForecast",
     "analytic_interval",
     "constant_volatility",

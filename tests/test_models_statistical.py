@@ -21,7 +21,6 @@ from btc_forecaster.models.statistical import (
     select_arima_order,
 )
 from btc_forecaster.testing import constant_growth_frame, synthetic_market_frame
-from btc_forecaster.timebase import UTC, HorizonSpec
 
 
 @pytest.fixture

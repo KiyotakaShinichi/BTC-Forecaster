@@ -54,14 +54,14 @@ class SupervisedData:
     def feature_names(self) -> list[str]:
         return list(self.X.columns)
 
-    def before(self, bar: pd.Timestamp) -> "SupervisedData":
+    def before(self, bar: pd.Timestamp) -> SupervisedData:
         """Rows whose *target* bar is at or before ``bar``."""
         mask = self.X.index <= bar
         return SupervisedData(
             X=self.X[mask], y=self.y[mask], feature_bar=self.feature_bar[mask], step=self.step
         )
 
-    def between(self, start: pd.Timestamp, end: pd.Timestamp) -> "SupervisedData":
+    def between(self, start: pd.Timestamp, end: pd.Timestamp) -> SupervisedData:
         mask = (self.X.index >= start) & (self.X.index <= end)
         return SupervisedData(
             X=self.X[mask], y=self.y[mask], feature_bar=self.feature_bar[mask], step=self.step

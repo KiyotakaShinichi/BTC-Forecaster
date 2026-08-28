@@ -87,10 +87,10 @@ class SnapshotManifest:
         return payload
 
     @classmethod
-    def from_dict(cls, payload: dict) -> "SnapshotManifest":
+    def from_dict(cls, payload: dict) -> SnapshotManifest:
         data = dict(payload)
         data["columns"] = tuple(data.get("columns", ()))
-        known = {f for f in cls.__dataclass_fields__}  # type: ignore[attr-defined]
+        known = set(cls.__dataclass_fields__)  # type: ignore[attr-defined]
         return cls(**{k: v for k, v in data.items() if k in known})
 
     def to_json(self) -> str:
@@ -115,7 +115,7 @@ class MarketSnapshot:
         retrieved_at: datetime | pd.Timestamp | None = None,
         note: str | None = None,
         normalise: bool = True,
-    ) -> "MarketSnapshot":
+    ) -> MarketSnapshot:
         prepared = normalise_market_frame(frame) if normalise else frame
         report = validate_market_frame(prepared)
 
@@ -152,7 +152,7 @@ class MarketSnapshot:
         return path
 
     @classmethod
-    def load(cls, directory: Path | str, *, verify: bool = True) -> "MarketSnapshot":
+    def load(cls, directory: Path | str, *, verify: bool = True) -> MarketSnapshot:
         path = Path(directory)
         manifest_path = path / MANIFEST_FILENAME
         data_path = path / DATA_FILENAME

@@ -28,7 +28,19 @@ import numpy as np
 import pandas as pd
 
 from ..timebase import HorizonSpec
-from .base import ForecastModel, ForecastResult, TrainingWindow
+from .base import ForecastModel, ForecastResult, NotFittedError, TrainingWindow
+
+
+def _fitted(model, name: str):
+    """Narrow a lazily-assigned fitted model away from None.
+
+    Subclasses assign their backend in ``_fit``. The base class guarantees
+    ``_predict`` runs only after ``fit``, but a type checker cannot see that, and
+    an assert would vanish under -O. This raises the same error the contract uses.
+    """
+    if model is None:
+        raise NotFittedError(f"{name} has not been fitted")
+    return model
 
 
 @dataclass(frozen=True)
@@ -171,9 +183,10 @@ class ArimaModel(ForecastModel):
         target_bars: pd.DatetimeIndex,
         future_exog: pd.DataFrame | None,
     ) -> ForecastResult:
+        fitted = _fitted(self._fitted_model, self.name)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            forecast = self._fitted_model.get_forecast(steps=len(horizon))
+            forecast = fitted.get_forecast(steps=len(horizon))
             mean_log = np.asarray(forecast.predicted_mean, dtype=float)
             conf = np.asarray(forecast.conf_int(alpha=1.0 - self.interval_level), dtype=float)
 
@@ -184,8 +197,8 @@ class ArimaModel(ForecastModel):
             upper=np.exp(conf[:, 1]),
             interval_level=self.interval_level,
             metadata={
-                "order": list(self._chosen_order),
-                "aic": float(self._fitted_model.aic),
+                "order": list(self._chosen_order or ()),
+                "aic": float(fitted.aic),
                 "order_selection": self._selection.to_dict() if self._selection else None,
             },
         )
@@ -287,9 +300,10 @@ class SarimaxModel(ForecastModel):
                 raise ValueError(f"future_exog is missing column(s): {missing}")
             exog_array = future_exog[list(self.exog_columns)].to_numpy(dtype=float)
 
+        fitted = _fitted(self._fitted_model, self.name)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            forecast = self._fitted_model.get_forecast(steps=len(horizon), exog=exog_array)
+            forecast = fitted.get_forecast(steps=len(horizon), exog=exog_array)
             mean_log = np.asarray(forecast.predicted_mean, dtype=float)
             conf = np.asarray(forecast.conf_int(alpha=1.0 - self.interval_level), dtype=float)
 
@@ -303,7 +317,7 @@ class SarimaxModel(ForecastModel):
                 "order": list(self.order),
                 "seasonal_order": list(self.seasonal_order),
                 "exog_columns": list(self.exog_columns),
-                "aic": float(self._fitted_model.aic),
+                "aic": float(fitted.aic),
             },
         )
 
@@ -383,9 +397,10 @@ class EtsModel(ForecastModel):
         n = len(self.window)
         steps = len(horizon)
 
+        fitted = _fitted(self._fitted_model, self.name)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            prediction = self._fitted_model.get_prediction(start=n, end=n + steps - 1)
+            prediction = fitted.get_prediction(start=n, end=n + steps - 1)
             mean_log = np.asarray(prediction.predicted_mean, dtype=float)
             conf = np.asarray(
                 prediction.summary_frame(alpha=1.0 - self.interval_level)[
@@ -403,7 +418,7 @@ class EtsModel(ForecastModel):
             metadata={
                 "trend": self.trend,
                 "damped_trend": self.damped_trend,
-                "aic": float(self._fitted_model.aic),
+                "aic": float(fitted.aic),
             },
         )
 

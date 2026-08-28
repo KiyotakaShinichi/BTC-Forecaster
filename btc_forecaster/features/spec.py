@@ -79,7 +79,7 @@ class LagReturn(FeatureSpec):
             raise ValueError(f"lag must be >= 1, got {self.lag}")
 
     @classmethod
-    def of(cls, lag: int) -> "LagReturn":
+    def of(cls, lag: int) -> LagReturn:
         return cls(name=f"lag_ret_{lag}", lag=lag)
 
     def compute(self, frame: pd.DataFrame) -> pd.Series:
@@ -97,7 +97,7 @@ class RollingMeanReturn(FeatureSpec):
     window: int = 7
 
     @classmethod
-    def of(cls, window: int) -> "RollingMeanReturn":
+    def of(cls, window: int) -> RollingMeanReturn:
         return cls(name=f"roll_mean_ret_{window}", window=window)
 
     def compute(self, frame: pd.DataFrame) -> pd.Series:
@@ -115,7 +115,7 @@ class RollingStdReturn(FeatureSpec):
     window: int = 7
 
     @classmethod
-    def of(cls, window: int) -> "RollingStdReturn":
+    def of(cls, window: int) -> RollingStdReturn:
         return cls(name=f"roll_std_ret_{window}", window=window)
 
     def compute(self, frame: pd.DataFrame) -> pd.Series:
@@ -131,7 +131,7 @@ class RollingMeanVolume(FeatureSpec):
     window: int = 7
 
     @classmethod
-    def of(cls, window: int) -> "RollingMeanVolume":
+    def of(cls, window: int) -> RollingMeanVolume:
         return cls(name=f"roll_vol_{window}", window=window)
 
     def compute(self, frame: pd.DataFrame) -> pd.Series:
@@ -156,7 +156,7 @@ class Ema(FeatureSpec):
     span: int = 7
 
     @classmethod
-    def of(cls, span: int) -> "Ema":
+    def of(cls, span: int) -> Ema:
         return cls(name=f"ema_{span}", span=span)
 
     def compute(self, frame: pd.DataFrame) -> pd.Series:
@@ -172,7 +172,7 @@ class Sma(FeatureSpec):
     window: int = 7
 
     @classmethod
-    def of(cls, window: int) -> "Sma":
+    def of(cls, window: int) -> Sma:
         return cls(name=f"sma_{window}", window=window)
 
     def compute(self, frame: pd.DataFrame) -> pd.Series:
@@ -196,7 +196,7 @@ class PriceOverSma(FeatureSpec):
     window: int = 20
 
     @classmethod
-    def of(cls, window: int) -> "PriceOverSma":
+    def of(cls, window: int) -> PriceOverSma:
         return cls(name=f"close_over_sma_{window}", window=window)
 
     def compute(self, frame: pd.DataFrame) -> pd.Series:

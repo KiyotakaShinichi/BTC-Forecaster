@@ -102,7 +102,9 @@ class TestRunConfig:
         json.dumps(config.to_dict())
 
     def test_config_is_frozen(self, config):
-        with pytest.raises(Exception):
+        from dataclasses import FrozenInstanceError
+
+        with pytest.raises(FrozenInstanceError):
             config.ticker = "OTHER"  # type: ignore[misc]
 
     def test_snapshot_path_is_per_ticker(self):
@@ -316,7 +318,6 @@ class TestCli:
 class TestPipelineOnATrendingSeries:
     def test_drift_wins_where_drift_exists(self, tmp_path):
         """The pipeline must be able to report a positive result too."""
-        from dataclasses import replace
 
         config = RunConfig(
             ticker="TREND-USD",

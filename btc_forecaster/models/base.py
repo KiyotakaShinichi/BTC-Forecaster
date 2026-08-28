@@ -88,7 +88,7 @@ class TrainingWindow:
     def __len__(self) -> int:
         return len(self.frame)
 
-    def tail(self, bars: int) -> "TrainingWindow":
+    def tail(self, bars: int) -> TrainingWindow:
         return TrainingWindow(
             frame=self.frame.iloc[-bars:],
             exog=None if self.exog is None else self.exog.iloc[-bars:],
@@ -141,7 +141,7 @@ class ForecastResult:
         out.index.name = "date"
         return out
 
-    def head(self, n: int) -> "ForecastResult":
+    def head(self, n: int) -> ForecastResult:
         """The first ``n`` steps. Used to score a long forecast at a short horizon."""
         return ForecastResult(
             model=self.model,
@@ -203,7 +203,7 @@ class ForecastModel(ABC):
         """The forecast origin implied by the training data."""
         return self.window.origin
 
-    def fit(self, window: TrainingWindow) -> "ForecastModel":
+    def fit(self, window: TrainingWindow) -> ForecastModel:
         if len(window) < self.min_train_bars:
             raise ValueError(
                 f"{self.name} needs at least {self.min_train_bars} bars, got {len(window)}"

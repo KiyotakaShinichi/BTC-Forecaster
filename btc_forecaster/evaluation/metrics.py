@@ -354,8 +354,8 @@ def evaluate_forecast(
     a = actual.loc[aligned]
     p = point.loc[aligned]
     r = (
-        pd.Series(float(reference), index=aligned)
-        if np.isscalar(reference)
+        pd.Series(float(reference), index=aligned)  # type: ignore[arg-type]
+        if isinstance(reference, (int, float, np.floating, np.integer))
         else pd.Series(reference).loc[aligned]
     )
 

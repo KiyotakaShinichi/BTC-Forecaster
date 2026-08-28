@@ -68,7 +68,7 @@ class WalkForwardConfig:
     embargo_bars: int = 0
 
     @classmethod
-    def from_env(cls) -> "WalkForwardConfig":
+    def from_env(cls) -> WalkForwardConfig:
         window = _env_int("WF_WINDOW_BARS", 0)
         return cls(
             n_folds=_env_int("WF_FOLDS", 6),
@@ -118,7 +118,7 @@ class RunConfig:
             )
 
     @classmethod
-    def from_env(cls, **overrides) -> "RunConfig":
+    def from_env(cls, **overrides) -> RunConfig:
         """Build from environment variables, honouring the original names."""
         base = cls(
             ticker=_env_str("TICKER", "BTC-USD"),

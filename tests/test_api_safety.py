@@ -76,17 +76,21 @@ class TestRunRequestContract:
         assert "arima" in request.models
 
     def test_a_primary_model_outside_the_set_is_rejected(self):
+        from pydantic import ValidationError
+
         from api_server import ForecastRunRequest
 
-        with pytest.raises(Exception, match="primary_model"):
+        with pytest.raises(ValidationError, match="primary_model"):
             ForecastRunRequest(models=["random_walk"], primary_model="ets")
 
     def test_walk_forward_settings_are_bounded(self):
+        from pydantic import ValidationError
+
         from api_server import ForecastRunRequest
 
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError, match="walk_forward_folds"):
             ForecastRunRequest(walk_forward_folds=0)
-        with pytest.raises(Exception):
+        with pytest.raises(ValidationError, match="embargo_bars"):
             ForecastRunRequest(embargo_bars=-1)
 
 

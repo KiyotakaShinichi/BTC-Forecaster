@@ -118,7 +118,7 @@ class DiagnosticReport:
                     "p_adjusted": p_adj,
                     "significant_after_correction": bool(flag),
                 }
-                for name, p, p_adj, flag in zip(names, raw, adjusted, rejected)
+                for name, p, p_adj, flag in zip(names, raw, adjusted, rejected, strict=True)
             ],
         }
 

@@ -12,8 +12,8 @@ so a comparison table that is missing a row says why.
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Callable
 
 from .base import ForecastModel, MissingDependencyError
 
@@ -76,7 +76,7 @@ def build(name: str, /, **kwargs) -> ForecastModel:
     registration = _REGISTRY[name]
     ok, missing = registration.is_available()
     if not ok:
-        extra = _EXTRA_FOR_MODULE.get(missing, "all")
+        extra = _EXTRA_FOR_MODULE.get(missing or "", "all")
         raise MissingDependencyError(
             f"model {name!r} requires {missing!r}, which is not installed.\n"
             f'    pip install "btc-forecaster[{extra}]"'

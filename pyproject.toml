@@ -48,6 +48,8 @@ dev = [
     "pytest>=8,<10",
     # fastapi.testclient needs httpx; the API tests skip without it.
     "httpx>=0.27,<1",
+    "ruff>=0.6,<1",
+    "mypy>=1.10,<2",
 ]
 # Everything needed to run the full pipeline end to end.
 all = [
@@ -76,3 +78,36 @@ filterwarnings = [
     "ignore::DeprecationWarning",
     "ignore::FutureWarning",
 ]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["research", ".venv"]
+
+[tool.ruff.lint]
+# Deliberately narrow. These catch real defects (undefined names, unused
+# imports, mutable defaults, bare except) without turning style opinions into
+# build failures on a research codebase.
+select = ["E4", "E7", "E9", "F", "B", "I", "UP", "C4"]
+ignore = [
+    "E741",   # ambiguous variable name -- `l` for lag is conventional here
+    "B008",   # function call in default arg -- FastAPI Depends/Header idiom
+    "UP038",  # isinstance tuple form is clearer than X | Y here
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests import symbols to assert they exist and re-import inside functions to
+# keep optional dependencies out of module scope.
+"tests/*" = ["B011", "E402"]
+
+[tool.mypy]
+python_version = "3.11"
+files = ["btc_forecaster"]
+ignore_missing_imports = true
+warn_unused_ignores = false
+# Not strict: the scientific stack is largely untyped, and demanding full
+# annotations would produce noise rather than caught defects. What is enforced
+# is that code which IS annotated is internally consistent -- which is how the
+# Optional-model-state bugs were found.
+check_untyped_defs = false
+disallow_untyped_defs = false

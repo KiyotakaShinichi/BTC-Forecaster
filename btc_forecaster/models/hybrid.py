@@ -35,7 +35,7 @@ import pandas as pd
 from ..features.pipeline import build_feature_frame, to_supervised
 from ..features.selection import FeatureSelection, FeatureSelector
 from ..timebase import HorizonSpec
-from .base import ForecastModel, ForecastResult, TrainingWindow
+from .base import ForecastModel, ForecastResult, NotFittedError, TrainingWindow
 from .prophet_model import ProphetModel
 from .volatility import constant_volatility, garch_volatility, monte_carlo_interval
 
@@ -79,7 +79,7 @@ class ProphetXgboostHybrid(ForecastModel):
         self.use_garch = use_garch
 
         self._prophet: ProphetModel | None = None
-        self._booster = None
+        self._booster: object | None = None
         self._selection: FeatureSelection | None = None
         self._residual_std: float = float("nan")
         self._train_residuals: pd.Series | None = None
@@ -87,6 +87,28 @@ class ProphetXgboostHybrid(ForecastModel):
     @property
     def min_train_bars(self) -> int:
         return 365
+
+    # The three components are assigned in _fit. The base class guarantees
+    # _predict runs only after fit, but a type checker cannot see that, so each
+    # is narrowed through an accessor that raises the contract's own error.
+
+    @property
+    def _fitted_prophet(self) -> ProphetModel:
+        if self._prophet is None:
+            raise NotFittedError(f"{self.name} has not been fitted")
+        return self._prophet
+
+    @property
+    def _fitted_booster(self):
+        if self._booster is None:
+            raise NotFittedError(f"{self.name} has not been fitted")
+        return self._booster
+
+    @property
+    def _fitted_selection(self) -> FeatureSelection:
+        if self._selection is None:
+            raise NotFittedError(f"{self.name} has not been fitted")
+        return self._selection
 
     def describe(self) -> dict:
         return {
@@ -105,13 +127,14 @@ class ProphetXgboostHybrid(ForecastModel):
         import xgboost as xgb
 
         # 1. Prophet baseline on the training window only.
-        self._prophet = ProphetModel(
+        prophet = ProphetModel(
             interval_level=self.interval_level,
             name=f"{self.name}::prophet",
         )
-        self._prophet.fit(window)
+        prophet.fit(window)
+        self._prophet = prophet
 
-        baseline_log = self._prophet.predict_log(window.index)
+        baseline_log = prophet.predict_log(window.index)
         residual = pd.Series(
             window.log_close.to_numpy(dtype=float) - baseline_log,
             index=window.index,
@@ -127,13 +150,14 @@ class ProphetXgboostHybrid(ForecastModel):
         params = {**self.xgb_params, "seed": self.random_state}
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            self._booster = xgb.train(
+            booster = xgb.train(
                 params,
                 xgb.DMatrix(data.X, label=data.y),
                 num_boost_round=self.num_boost_round,
                 verbose_eval=False,
             )
-            in_sample = self._booster.predict(xgb.DMatrix(data.X))
+            in_sample = booster.predict(xgb.DMatrix(data.X))
+        self._booster = booster
 
         self._train_residuals = pd.Series(data.y.to_numpy() - in_sample, index=data.X.index)
         self._residual_std = float(self._train_residuals.std(ddof=1))
@@ -156,7 +180,7 @@ class ProphetXgboostHybrid(ForecastModel):
         """
         import xgboost as xgb
 
-        specs = list(self._selection.specs)
+        specs = list(self._fitted_selection.specs)
         history = self.window.frame.copy()
         last_volume = float(history["volume"].iloc[-1])
 
@@ -173,7 +197,7 @@ class ProphetXgboostHybrid(ForecastModel):
             else:
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")
-                    residuals[step] = float(self._booster.predict(xgb.DMatrix(row))[0])
+                    residuals[step] = float(self._fitted_booster.predict(xgb.DMatrix(row))[0])
 
             simulated_log = baseline_log[step] + residuals[step]
             history = pd.concat(
@@ -194,7 +218,7 @@ class ProphetXgboostHybrid(ForecastModel):
         target_bars: pd.DatetimeIndex,
         future_exog: pd.DataFrame | None,
     ) -> ForecastResult:
-        baseline_log = self._prophet.predict_log(target_bars)
+        baseline_log = self._fitted_prophet.predict_log(target_bars)
         residuals = self._recursive_residuals(target_bars, baseline_log)
         combined_log = baseline_log + residuals
 
@@ -229,8 +253,8 @@ class ProphetXgboostHybrid(ForecastModel):
                 "volatility_model": volatility.model,
                 "volatility_params": volatility.params,
                 "monte_carlo_runs": self.monte_carlo_runs,
-                "n_features": len(self._selection.specs),
-                "features": self._selection.names,
+                "n_features": len(self._fitted_selection.specs),
+                "features": self._fitted_selection.names,
                 "residual_std_in_sample": self._residual_std,
                 "prophet_baseline_price": np.exp(baseline_log).tolist()[:5],
                 "recursive_multi_step": True,

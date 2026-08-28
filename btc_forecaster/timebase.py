@@ -37,13 +37,13 @@ ingest -- only localisation to UTC.
 
 from __future__ import annotations
 
+from collections.abc import Iterable
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
-from typing import Iterable
+from datetime import UTC, datetime
 
 import pandas as pd
 
-UTC = timezone.utc
+UTC = UTC
 
 #: Bar labels are UTC midnights, one calendar day apart.
 BAR_FREQ = "D"
@@ -94,7 +94,7 @@ def available_time(
 
 def assert_available(
     when_available: pd.Timestamp,
-    origin: "ForecastOrigin | pd.Timestamp",
+    origin: ForecastOrigin | pd.Timestamp,
     *,
     what: str = "observation",
 ) -> None:

@@ -20,7 +20,6 @@ the backtest first means the summary cannot be written without it.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -32,7 +31,6 @@ from .config.settings import RunConfig
 from .data.providers import MarketDataProvider, load_or_fetch
 from .data.snapshot import MarketSnapshot
 from .diagnostics.suite import diagnose_prices, diagnose_returns
-from .evaluation.metrics import skill_score
 from .features.spec import simple_returns
 from .models import registry
 from .models.base import ForecastModel, ForecastResult, TrainingWindow

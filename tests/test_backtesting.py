@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import numpy as np
 import pandas as pd
 import pytest
 
@@ -15,7 +14,7 @@ from btc_forecaster.backtesting.splits import (
     WalkForwardSplitter,
     assert_folds_are_disjoint,
 )
-from btc_forecaster.models.base import ForecastModel, TrainingWindow
+from btc_forecaster.models.base import TrainingWindow
 from btc_forecaster.models.baselines import (
     HistoricalMeanReturn,
     RandomWalk,
@@ -96,7 +95,7 @@ class TestFoldConstruction:
         folds = splitter.split(frame.index)
         gaps = {
             int((b.train_end - a.train_end) / BAR_DURATION)
-            for a, b in zip(folds, folds[1:])
+            for a, b in zip(folds, folds[1:], strict=False)
         }
         assert gaps == {100}
 
@@ -169,7 +168,7 @@ class TestEngineFairness:
         run_walk_forward(frame, [Spy(name="spy")], splitter)
 
         assert len(seen) == len(folds)
-        for (start, end), fold in zip(seen, folds):
+        for (start, end), fold in zip(seen, folds, strict=False):
             assert start == fold.train_start
             assert end == fold.train_end
             assert end < fold.test_start

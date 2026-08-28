@@ -24,7 +24,7 @@ import numpy as np
 import pandas as pd
 
 from ..timebase import HorizonSpec
-from .base import ForecastModel, ForecastResult, TrainingWindow
+from .base import ForecastModel, ForecastResult, NotFittedError, TrainingWindow
 
 
 def _silence_prophet() -> None:
@@ -92,11 +92,18 @@ class ProphetModel(ForecastModel):
             yearly_seasonality=self.yearly_seasonality,
         )
 
+    @property
+    def _backend(self):
+        if self._model is None:
+            raise NotFittedError(f"{self.name} has not been fitted")
+        return self._model
+
     def _fit(self, window: TrainingWindow) -> None:
-        self._model = self._new_model()
+        model = self._new_model()
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            self._model.fit(to_prophet_frame(window.index, window.log_close.to_numpy()))
+            model.fit(to_prophet_frame(window.index, window.log_close.to_numpy()))
+        self._model = model
 
     def predict_log(self, index: pd.DatetimeIndex) -> np.ndarray:
         """Prophet's log-price prediction at arbitrary bars.
@@ -107,7 +114,7 @@ class ProphetModel(ForecastModel):
         """
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            predicted = self._model.predict(to_prophet_frame(index))
+            predicted = self._backend.predict(to_prophet_frame(index))
         return predicted["yhat"].to_numpy(dtype=float)
 
     def _predict(
@@ -118,7 +125,7 @@ class ProphetModel(ForecastModel):
     ) -> ForecastResult:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
-            predicted = self._model.predict(to_prophet_frame(target_bars))
+            predicted = self._backend.predict(to_prophet_frame(target_bars))
 
         return self._result(
             np.exp(predicted["yhat"].to_numpy(dtype=float)),
