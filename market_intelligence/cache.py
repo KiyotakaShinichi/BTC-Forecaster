@@ -15,8 +15,17 @@ class DeterministicCache:
 
     @staticmethod
     def key(query: str, start: datetime, end: datetime, provider: str, extractor_version: str) -> str:
-        material = json.dumps({"query": query, "start": start.isoformat(), "end": end.isoformat(),
-            "provider": provider, "extractor_version": extractor_version}, sort_keys=True, separators=(",", ":"))
+        material = json.dumps(
+            {
+                "query": query,
+                "start": start.isoformat(),
+                "end": end.isoformat(),
+                "provider": provider,
+                "extractor_version": extractor_version,
+            },
+            sort_keys=True,
+            separators=(",", ":"),
+        )
         return hashlib.sha256(material.encode("utf-8")).hexdigest()
 
     def get(self, key: str) -> Any | None:

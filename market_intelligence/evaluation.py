@@ -28,7 +28,9 @@ class EvaluationResult(BaseModel):
     invalid_output_rate: float
 
 
-def evaluate_extractor(extractor: EventExtractor, documents: list[Document], labels: list[GoldLabel]) -> EvaluationResult:
+def evaluate_extractor(
+    extractor: EventExtractor, documents: list[Document], labels: list[GoldLabel]
+) -> EvaluationResult:
     by_id = {d.document_id: d for d in documents}
     type_correct = provenance_correct = relevance_correct = invalid = 0
     true_entities = predicted_entities = correct_entities = 0
@@ -44,19 +46,49 @@ def evaluate_extractor(extractor: EventExtractor, documents: list[Document], lab
         relevance_correct += bool(prediction and label.relevance_min <= prediction.btc_relevance <= label.relevance_max)
         true_entities += label.expected_entity is not None
         predicted_entities += bool(prediction and prediction.entity is not None)
-        correct_entities += bool(prediction and prediction.entity == label.expected_entity and label.expected_entity is not None)
+        correct_entities += bool(
+            prediction and prediction.entity == label.expected_entity and label.expected_entity is not None
+        )
     total = len(labels) or 1
-    return EvaluationResult(extractor_version=extractor.version, cases=len(labels),
-        event_type_accuracy=type_correct / total, entity_precision=correct_entities / predicted_entities if predicted_entities else 0.0,
+    return EvaluationResult(
+        extractor_version=extractor.version,
+        cases=len(labels),
+        event_type_accuracy=type_correct / total,
+        entity_precision=correct_entities / predicted_entities if predicted_entities else 0.0,
         entity_recall=correct_entities / true_entities if true_entities else 0.0,
-        source_provenance_accuracy=provenance_correct / total, relevance_in_range_rate=relevance_correct / total,
-        invalid_output_rate=invalid / total)
+        source_provenance_accuracy=provenance_correct / total,
+        relevance_in_range_rate=relevance_correct / total,
+        invalid_output_rate=invalid / total,
+    )
 
 
 class ExtractorComparison(BaseModel):
     results: list[EvaluationResult]
 
 
-def compare_extractors(extractors: list[EventExtractor], documents: list[Document], labels: list[GoldLabel]) -> ExtractorComparison:
+class GoldManifest(BaseModel):
+    gold_version: str
+    case_count: int
+    case_hash: str
+    schema_version: str
+
+
+class GoldEvaluationReport(BaseModel):
+    manifest: GoldManifest
+    result: EvaluationResult
+    limitation: str = "Nine curated cases are a regression fixture, not evidence of production accuracy."
+
+
+def build_gold_report(
+    extractor: EventExtractor, documents: list[Document], labels: list[GoldLabel], manifest: GoldManifest
+) -> GoldEvaluationReport:
+    if len(labels) != manifest.case_count:
+        raise ValueError("gold manifest case count mismatch")
+    return GoldEvaluationReport(manifest=manifest, result=evaluate_extractor(extractor, documents, labels))
+
+
+def compare_extractors(
+    extractors: list[EventExtractor], documents: list[Document], labels: list[GoldLabel]
+) -> ExtractorComparison:
     """Extraction calibration only; this never assigns forecast or fusion weights."""
     return ExtractorComparison(results=[evaluate_extractor(extractor, documents, labels) for extractor in extractors])

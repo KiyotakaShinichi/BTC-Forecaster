@@ -9,6 +9,7 @@ from typing import Annotated, Any
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
+from .errors import ConfigurationError
 from .models import EventType
 
 
@@ -53,7 +54,7 @@ class ProviderRegistry:
 
     def register(self, provider_type: str, factory: Any) -> None:
         if provider_type in self._factories:
-            raise ValueError(f"provider type already registered: {provider_type}")
+            raise ConfigurationError(f"provider type already registered: {provider_type}")
         self._factories[provider_type] = factory
 
     def build(self, configs: list[ProviderConfig]) -> dict[str, Any]:
@@ -63,9 +64,9 @@ class ProviderRegistry:
                 continue
             factory = self._factories.get(config.type)
             if factory is None:
-                raise ValueError(f"unknown provider type: {config.type}")
+                raise ConfigurationError(f"unknown provider type: {config.type}")
             if config.credentials_env and config.credential() is None:
-                raise ValueError(f"credential environment variable is not set: {config.credentials_env}")
+                raise ConfigurationError(f"credential environment variable is not set: {config.credentials_env}")
             providers[config.id] = factory(config)
         return providers
 
@@ -116,11 +117,27 @@ class QueryPlanner:
         for entity in sorted((e for e in watchlist if e.enabled), key=lambda e: e.canonical_name.casefold()):
             for topic in sorted(set(entity.topics), key=str.casefold):
                 text = f'"{entity.canonical_name}" {topic}'
-                material = json.dumps({"entity": entity.canonical_name, "topic": topic,
-                    "lookback_hours": lookback_hours, "version": self.version}, sort_keys=True)
-                queries.append(QuerySpec(query_id=hashlib.sha256(material.encode()).hexdigest(), query=text,
-                    topic=topic, entities=(entity.canonical_name,), event_types=entity.expected_event_types,
-                    lookback_hours=lookback_hours, priority=50, generated_at=generated_at))
+                material = json.dumps(
+                    {
+                        "entity": entity.canonical_name,
+                        "topic": topic,
+                        "lookback_hours": lookback_hours,
+                        "version": self.version,
+                    },
+                    sort_keys=True,
+                )
+                queries.append(
+                    QuerySpec(
+                        query_id=hashlib.sha256(material.encode()).hexdigest(),
+                        query=text,
+                        topic=topic,
+                        entities=(entity.canonical_name,),
+                        event_types=entity.expected_event_types,
+                        lookback_hours=lookback_hours,
+                        priority=50,
+                        generated_at=generated_at,
+                    )
+                )
         return queries
 
 
@@ -129,5 +146,11 @@ def configuration_fingerprint(value: Any) -> str:
         value = value.model_dump(mode="json")
     elif isinstance(value, list):
         value = [v.model_dump(mode="json") if isinstance(v, BaseModel) else v for v in value]
-    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":"),
-        default=lambda item: item.model_dump(mode="json") if isinstance(item, BaseModel) else str(item)).encode()).hexdigest()
+    return hashlib.sha256(
+        json.dumps(
+            value,
+            sort_keys=True,
+            separators=(",", ":"),
+            default=lambda item: item.model_dump(mode="json") if isinstance(item, BaseModel) else str(item),
+        ).encode()
+    ).hexdigest()

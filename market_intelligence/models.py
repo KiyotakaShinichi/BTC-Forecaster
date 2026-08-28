@@ -175,11 +175,15 @@ class EventSignal(BaseModel):
         if self.event_type == EventType.WHALE_TRANSFER:
             if self.transfer_context is None:
                 raise ValueError("whale transfer requires transfer_context")
-            if self.transfer_context in {
-                TransferContext.UNKNOWN,
-                TransferContext.CUSTODY_TRANSFER,
-                TransferContext.INTERNAL_EXCHANGE,
-            } and self.direction != Direction.UNKNOWN:
+            if (
+                self.transfer_context
+                in {
+                    TransferContext.UNKNOWN,
+                    TransferContext.CUSTODY_TRANSFER,
+                    TransferContext.INTERNAL_EXCHANGE,
+                }
+                and self.direction != Direction.UNKNOWN
+            ):
                 raise ValueError("ambiguous whale transfer direction must be UNKNOWN")
         elif self.transfer_context is not None:
             raise ValueError("transfer_context is only valid for whale transfers")

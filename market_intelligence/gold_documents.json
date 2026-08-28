@@ -1,0 +1,12 @@
+[
+  {"document_id":"gold-reg","title":"SEC regulation applies to Bitcoin"},
+  {"document_id":"gold-fed","title":"Jerome Powell Federal Reserve interest rate statement"},
+  {"document_id":"gold-etf","title":"Bitcoin ETF approval announced"},
+  {"document_id":"gold-exchange","title":"Bitcoin exchange incident causes outage"},
+  {"document_id":"gold-whale","title":"Large transfer by Bitcoin whale with unknown destination"},
+  {"document_id":"gold-irrelevant","title":"Crypto game launches a new avatar collection"},
+  {"document_id":"gold-social","title":"Elon Musk makes ambiguous statement about rockets"},
+  {"document_id":"gold-dup-a","title":"Bitcoin ETF approval announced by issuer"},
+  {"document_id":"gold-multi-a","title":"CFTC regulation applies to Bitcoin markets"},
+  {"document_id":"gold-multi-b","title":"CFTC regulation applies to Bitcoin markets"}
+]

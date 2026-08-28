@@ -38,6 +38,7 @@ class SocialStatement(BaseModel):
 
 class SocialStatementProvider(ABC):
     """Seam for lawful, contracted social APIs; no HTML scraping behavior."""
+
     name: str
 
     @abstractmethod
@@ -86,9 +87,7 @@ class FixtureSearchProvider(SearchProvider):
         self._documents = list(documents)
 
     def search(self, query: str, start: datetime, end: datetime) -> list[Document]:
-        return deduplicate_documents(
-            d for d in self._documents if d.query == query and start <= d.available_at <= end
-        )
+        return deduplicate_documents(d for d in self._documents if d.query == query and start <= d.available_at <= end)
 
 
 class JsonSearchApiProvider(SearchProvider):
@@ -99,24 +98,39 @@ class JsonSearchApiProvider(SearchProvider):
 
     def search(self, query: str, start: datetime, end: datetime) -> list[Document]:
         params = urllib.parse.urlencode({"q": query, "start": start.isoformat(), "end": end.isoformat()})
-        request = urllib.request.Request(f"{self.endpoint}?{params}", headers={"Authorization": f"Bearer {self.api_key}"})
+        request = urllib.request.Request(
+            f"{self.endpoint}?{params}", headers={"Authorization": f"Bearer {self.api_key}"}
+        )
         retrieved = datetime.now(timezone.utc)
         with urllib.request.urlopen(request, timeout=self.timeout) as response:  # nosec: configured API endpoint
             payload = json.load(response)
         documents = []
         for item in payload.get("results", []):
             text = item.get("text") or item.get("snippet") or ""
-            published = datetime.fromisoformat(item["published_at"].replace("Z", "+00:00")) if item.get("published_at") else None
+            published = (
+                datetime.fromisoformat(item["published_at"].replace("Z", "+00:00"))
+                if item.get("published_at")
+                else None
+            )
             # Without a vendor-supplied first-seen timestamp, retrieval is the
             # earliest time we can prove the system knew this item existed.
             available = retrieved
             text_hash = Document.content_hash(text)
-            documents.append(Document(
-                document_id=Document.stable_id(item["url"], text_hash), url=item["url"],
-                publisher=item.get("publisher") or "unknown", title=item["title"], published_at=published,
-                retrieved_at=retrieved, available_at=available, author=item.get("author"), text_hash=text_hash,
-                query=query, provider=self.name,
-            ))
+            documents.append(
+                Document(
+                    document_id=Document.stable_id(item["url"], text_hash),
+                    url=item["url"],
+                    publisher=item.get("publisher") or "unknown",
+                    title=item["title"],
+                    published_at=published,
+                    retrieved_at=retrieved,
+                    available_at=available,
+                    author=item.get("author"),
+                    text_hash=text_hash,
+                    query=query,
+                    provider=self.name,
+                )
+            )
         return deduplicate_documents(documents)
 
 
@@ -146,8 +160,19 @@ class RssSearchProvider(SearchProvider):
                 if not start <= available <= end:
                     continue
                 text_hash = Document.content_hash(description)
-                output.append(Document(document_id=Document.stable_id(link, text_hash), url=link,
-                    publisher=urllib.parse.urlparse(feed_url).netloc, title=title, published_at=published,
-                    retrieved_at=retrieved, available_at=available, author=item.findtext("author"),
-                    text_hash=text_hash, query=query, provider=self.name))
+                output.append(
+                    Document(
+                        document_id=Document.stable_id(link, text_hash),
+                        url=link,
+                        publisher=urllib.parse.urlparse(feed_url).netloc,
+                        title=title,
+                        published_at=published,
+                        retrieved_at=retrieved,
+                        available_at=available,
+                        author=item.findtext("author"),
+                        text_hash=text_hash,
+                        query=query,
+                        provider=self.name,
+                    )
+                )
         return deduplicate_documents(output)

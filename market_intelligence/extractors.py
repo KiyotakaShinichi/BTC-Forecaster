@@ -7,8 +7,7 @@ from typing import Callable
 
 from pydantic import ValidationError
 
-from .models import (Direction, Document, EventSignal, EventType, ExtractionMethod,
-                     SignalCategory, TransferContext)
+from .models import Direction, Document, EventSignal, EventType, ExtractionMethod, SignalCategory, TransferContext
 
 
 class ExtractionError(ValueError):
@@ -39,24 +38,29 @@ class FixtureExtractor(EventExtractor):
 
     def extract(self, documents: list[Document]) -> list[EventSignal]:
         source_ids = {d.document_id for d in documents}
-        return _validate_provenance(
-            [s for s in self._signals if set(s.source_ids) <= source_ids], documents
-        )
+        return _validate_provenance([s for s in self._signals if set(s.source_ids) <= source_ids], documents)
 
 
 class StructuredLlmExtractor(EventExtractor):
     """Provider-independent validated-JSON boundary around an injected LLM call."""
 
-    def __init__(self, completion: Callable[[str], str], version: str,
-                 now: Callable[[], datetime] = lambda: datetime.now(timezone.utc)):
+    def __init__(
+        self,
+        completion: Callable[[str], str],
+        version: str,
+        now: Callable[[], datetime] = lambda: datetime.now(timezone.utc),
+    ):
         self._completion, self.version, self._now = completion, version, now
 
     def extract(self, documents: list[Document]) -> list[EventSignal]:
-        prompt = json.dumps({
-            "instruction": "Extract events as JSON array only. Never forecast or recommend trades.",
-            "schema": EventSignal.model_json_schema(),
-            "documents": [d.model_dump(mode="json") for d in documents],
-        }, sort_keys=True)
+        prompt = json.dumps(
+            {
+                "instruction": "Extract events as JSON array only. Never forecast or recommend trades.",
+                "schema": EventSignal.model_json_schema(),
+                "documents": [d.model_dump(mode="json") for d in documents],
+            },
+            sort_keys=True,
+        )
         try:
             raw = json.loads(self._completion(prompt))
             if not isinstance(raw, list):
@@ -75,6 +79,7 @@ class StructuredLlmExtractor(EventExtractor):
 
 class RuleBasedExtractor(EventExtractor):
     """Conservative routing fallback; hints are lower-confidence than semantic extraction."""
+
     version = "rules-v1"
     _rules = (
         (("sec", "regulation", "lawsuit"), EventType.REGULATION),
@@ -95,14 +100,36 @@ class RuleBasedExtractor(EventExtractor):
             event_type = next((event for terms, event in self._rules if any(term in text for term in terms)), None)
             if event_type is None:
                 continue
-            entity = next((name for name, aliases in self.entities.items()
-                           if any(alias.casefold() in text for alias in (name, *aliases))), None)
+            entity = next(
+                (
+                    name
+                    for name, aliases in self.entities.items()
+                    if any(alias.casefold() in text for alias in (name, *aliases))
+                ),
+                None,
+            )
             context = TransferContext.UNKNOWN if event_type == EventType.WHALE_TRANSFER else None
-            output.append(EventSignal(event_id=EventSignal.stable_id([doc.document_id], event_type, doc.available_at),
-                event_time=doc.published_at or doc.available_at, available_time=doc.available_at,
-                source_ids=(doc.document_id,), category=SignalCategory.ONCHAIN if event_type == EventType.WHALE_TRANSFER else SignalCategory.WEB_EVENT,
-                entity=entity, event_type=event_type, direction=Direction.UNKNOWN, sentiment=0.0,
-                btc_relevance=0.55, novelty=0.5, confidence=0.35, expected_horizon_hours=24,
-                summary=f"Rule-based hint: {doc.title}", transfer_context=context,
-                extractor_version=self.version, extraction_method=ExtractionMethod.RULE_BASED))
+            output.append(
+                EventSignal(
+                    event_id=EventSignal.stable_id([doc.document_id], event_type, doc.available_at),
+                    event_time=doc.published_at or doc.available_at,
+                    available_time=doc.available_at,
+                    source_ids=(doc.document_id,),
+                    category=SignalCategory.ONCHAIN
+                    if event_type == EventType.WHALE_TRANSFER
+                    else SignalCategory.WEB_EVENT,
+                    entity=entity,
+                    event_type=event_type,
+                    direction=Direction.UNKNOWN,
+                    sentiment=0.0,
+                    btc_relevance=0.55,
+                    novelty=0.5,
+                    confidence=0.35,
+                    expected_horizon_hours=24,
+                    summary=f"Rule-based hint: {doc.title}",
+                    transfer_context=context,
+                    extractor_version=self.version,
+                    extraction_method=ExtractionMethod.RULE_BASED,
+                )
+            )
         return _validate_provenance(output, documents)

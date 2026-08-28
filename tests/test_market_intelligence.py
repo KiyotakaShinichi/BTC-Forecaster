@@ -10,7 +10,12 @@ from market_intelligence.aggregation import FeatureAggregator
 from market_intelligence.cache import DeterministicCache
 from market_intelligence.extractors import ExtractionError, FixtureExtractor, StructuredLlmExtractor
 from market_intelligence.models import (
-    Direction, Document, EventSignal, EventType, SignalCategory, TransferContext,
+    Direction,
+    Document,
+    EventSignal,
+    EventType,
+    SignalCategory,
+    TransferContext,
 )
 from market_intelligence.pipeline import IntelligencePipeline
 from market_intelligence.providers import FixtureSearchProvider, deduplicate_documents
@@ -21,20 +26,42 @@ ORIGIN = datetime(2026, 1, 10, 12, tzinfo=UTC)
 
 
 def document(**updates):
-    values = dict(document_id="doc-1", url="https://example.com/a", publisher="Example", title="BTC item",
-        published_at=ORIGIN - timedelta(hours=3), retrieved_at=ORIGIN - timedelta(hours=2),
-        available_at=ORIGIN - timedelta(hours=3), author="Reporter", text_hash=Document.content_hash("body"),
-        query="bitcoin", provider="fixture")
+    values = dict(
+        document_id="doc-1",
+        url="https://example.com/a",
+        publisher="Example",
+        title="BTC item",
+        published_at=ORIGIN - timedelta(hours=3),
+        retrieved_at=ORIGIN - timedelta(hours=2),
+        available_at=ORIGIN - timedelta(hours=3),
+        author="Reporter",
+        text_hash=Document.content_hash("body"),
+        query="bitcoin",
+        provider="fixture",
+    )
     values.update(updates)
     return Document(**values)
 
 
 def signal(**updates):
-    values = dict(event_id="event-1", event_time=ORIGIN - timedelta(hours=4),
-        available_time=ORIGIN - timedelta(hours=3), source_ids=("doc-1",), category=SignalCategory.WEB_EVENT,
-        entity=None, event_type=EventType.REGULATION, asset="BTC", direction=Direction.NEUTRAL,
-        sentiment=0.5, btc_relevance=0.8, novelty=0.75, confidence=0.9,
-        expected_horizon_hours=72, summary="A validated event", extractor_version="fixture-v1")
+    values = dict(
+        event_id="event-1",
+        event_time=ORIGIN - timedelta(hours=4),
+        available_time=ORIGIN - timedelta(hours=3),
+        source_ids=("doc-1",),
+        category=SignalCategory.WEB_EVENT,
+        entity=None,
+        event_type=EventType.REGULATION,
+        asset="BTC",
+        direction=Direction.NEUTRAL,
+        sentiment=0.5,
+        btc_relevance=0.8,
+        novelty=0.75,
+        confidence=0.9,
+        expected_horizon_hours=72,
+        summary="A validated event",
+        extractor_version="fixture-v1",
+    )
     values.update(updates)
     return EventSignal(**values)
 
@@ -54,10 +81,14 @@ class SchemaTests(unittest.TestCase):
 
     def test_unknown_whale_context_cannot_claim_direction(self):
         with self.assertRaises(ValidationError):
-            signal(event_type=EventType.WHALE_TRANSFER, transfer_context=TransferContext.UNKNOWN,
-                   direction=Direction.BULLISH)
-        unknown = signal(event_type=EventType.WHALE_TRANSFER, transfer_context=TransferContext.UNKNOWN,
-                         direction=Direction.UNKNOWN)
+            signal(
+                event_type=EventType.WHALE_TRANSFER,
+                transfer_context=TransferContext.UNKNOWN,
+                direction=Direction.BULLISH,
+            )
+        unknown = signal(
+            event_type=EventType.WHALE_TRANSFER, transfer_context=TransferContext.UNKNOWN, direction=Direction.UNKNOWN
+        )
         self.assertEqual(unknown.direction, Direction.UNKNOWN)
 
 
@@ -68,8 +99,12 @@ class ProviderAndTimeTests(unittest.TestCase):
         self.assertEqual(deduplicate_documents([later, document()])[0].document_id, "doc-1")
 
     def test_fixture_provider_filters_time(self):
-        future = document(document_id="future", url="https://example.com/future",
-                          available_at=ORIGIN + timedelta(minutes=1), retrieved_at=ORIGIN + timedelta(minutes=2))
+        future = document(
+            document_id="future",
+            url="https://example.com/future",
+            available_at=ORIGIN + timedelta(minutes=1),
+            retrieved_at=ORIGIN + timedelta(minutes=2),
+        )
         found = FixtureSearchProvider([document(), future]).search("bitcoin", ORIGIN - timedelta(days=1), ORIGIN)
         self.assertEqual([d.document_id for d in found], ["doc-1"])
 
@@ -80,8 +115,12 @@ class ProviderAndTimeTests(unittest.TestCase):
         self.assertEqual(result["sentiment_mean_24h"], 0.5)
 
     def test_aggregation_windows_and_taxonomies(self):
-        macro = signal(event_id="macro", event_type=EventType.MACRO_SHOCK, sentiment=-0.5,
-                       available_time=ORIGIN - timedelta(hours=48))
+        macro = signal(
+            event_id="macro",
+            event_type=EventType.MACRO_SHOCK,
+            sentiment=-0.5,
+            available_time=ORIGIN - timedelta(hours=48),
+        )
         result = FeatureAggregator().aggregate([signal(), macro], ORIGIN)
         self.assertEqual(result["event_count_24h"], 1.0)
         self.assertAlmostEqual(result["regulatory_signal_72h"], 0.5)
@@ -117,10 +156,13 @@ class ExtractionAndCacheTests(unittest.TestCase):
     def test_pipeline_reuses_cache_without_provider_call(self):
         class CountingProvider(FixtureSearchProvider):
             def __init__(self):
-                super().__init__([document()]); self.calls = 0
+                super().__init__([document()])
+                self.calls = 0
+
             def search(self, *args):
                 self.calls += 1
                 return super().search(*args)
+
         provider = CountingProvider()
         with tempfile.TemporaryDirectory() as directory:
             pipeline = IntelligencePipeline(provider, FixtureExtractor([signal()]), DeterministicCache(directory))
@@ -132,8 +174,12 @@ class ExtractionAndCacheTests(unittest.TestCase):
 
 class StorageTests(unittest.TestCase):
     def test_duckdb_as_of_filter_and_parquet_export(self):
-        future_document = document(document_id="future", url="https://example.com/future",
-            available_at=ORIGIN + timedelta(minutes=1), retrieved_at=ORIGIN + timedelta(minutes=2))
+        future_document = document(
+            document_id="future",
+            url="https://example.com/future",
+            available_at=ORIGIN + timedelta(minutes=1),
+            retrieved_at=ORIGIN + timedelta(minutes=2),
+        )
         future_signal = signal(event_id="future", available_time=ORIGIN + timedelta(minutes=1))
         with tempfile.TemporaryDirectory() as directory:
             store = IntelligenceStore(Path(directory) / "intelligence.duckdb")

@@ -39,9 +39,15 @@ class RetrievalResult(BaseModel):
 
 
 class MultiProviderRetriever:
-    def __init__(self, providers: dict[str, SearchProvider], configs: dict[str, ProviderConfig],
-                 max_retries: int = 2, sleep: Callable[[float], None] = time.sleep,
-                 jitter: Callable[[], float] = random.random, clock: Callable[[], float] = time.monotonic):
+    def __init__(
+        self,
+        providers: dict[str, SearchProvider],
+        configs: dict[str, ProviderConfig],
+        max_retries: int = 2,
+        sleep: Callable[[float], None] = time.sleep,
+        jitter: Callable[[], float] = random.random,
+        clock: Callable[[], float] = time.monotonic,
+    ):
         self.providers, self.configs, self.max_retries = providers, configs, max_retries
         self.sleep, self.jitter, self.clock = sleep, jitter, clock
         self._last_call: dict[str, float] = {}
@@ -79,10 +85,18 @@ class MultiProviderRetriever:
                             self.sleep((2 ** (used - 1)) + self.jitter())
                 success = error is None
                 documents.extend(received if success else [])
-                attempts.append(ProviderAttempt(provider_id=provider_id, query_id=query.query_id,
-                    success=success, attempts=used, latency_ms=(self.clock() - began) * 1000,
-                    documents_received=len(received), error=error,
-                    rate_limited=bool(error and "429" in error)))
+                attempts.append(
+                    ProviderAttempt(
+                        provider_id=provider_id,
+                        query_id=query.query_id,
+                        success=success,
+                        attempts=used,
+                        latency_ms=(self.clock() - began) * 1000,
+                        documents_received=len(received),
+                        error=error,
+                        rate_limited=bool(error and "429" in error),
+                    )
+                )
         return RetrievalResult(documents=documents, attempts=attempts)
 
 
@@ -104,10 +118,13 @@ def deduplicate_across_providers(documents: Iterable[Document]) -> list[Document
             representative = group[0]
             exact = canonical_url(str(document.url)) == canonical_url(str(representative.url))
             same_hash = document.text_hash == representative.text_hash
-            corroborated = (_normalized_title(document.title) == _normalized_title(representative.title)
+            corroborated = (
+                _normalized_title(document.title) == _normalized_title(representative.title)
                 and document.publisher.casefold() == representative.publisher.casefold()
-                and document.published_at is not None and representative.published_at is not None
-                and abs((document.published_at - representative.published_at).total_seconds()) <= 300)
+                and document.published_at is not None
+                and representative.published_at is not None
+                and abs((document.published_at - representative.published_at).total_seconds()) <= 300
+            )
             if exact or same_hash or corroborated:
                 match = group
                 break
@@ -118,10 +135,21 @@ def deduplicate_across_providers(documents: Iterable[Document]) -> list[Document
     output = []
     for group in groups:
         first = min(group, key=lambda d: d.retrieved_at)
-        provenance = {(p.provider, p.retrieved_at, p.provider_document_id): p for d in group for p in d.retrieval_provenance}
+        provenance = {
+            (p.provider, p.retrieved_at, p.provider_document_id): p for d in group for p in d.retrieval_provenance
+        }
         for d in group:
-            p = RetrievalProvenance(provider=d.provider, retrieved_at=d.retrieved_at,
-                provider_document_id=d.document_id, query=d.query)
+            p = RetrievalProvenance(
+                provider=d.provider, retrieved_at=d.retrieved_at, provider_document_id=d.document_id, query=d.query
+            )
             provenance[(p.provider, p.retrieved_at, p.provider_document_id)] = p
-        output.append(first.model_copy(update={"retrieval_provenance": tuple(sorted(provenance.values(), key=lambda p: (p.retrieved_at, p.provider))) }))
+        output.append(
+            first.model_copy(
+                update={
+                    "retrieval_provenance": tuple(
+                        sorted(provenance.values(), key=lambda p: (p.retrieved_at, p.provider))
+                    )
+                }
+            )
+        )
     return sorted(output, key=lambda d: (d.available_at, d.document_id))

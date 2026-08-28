@@ -1,6 +1,8 @@
 """Provider-agnostic, point-in-time external intelligence for BTC forecasts."""
 
 from .aggregation import FeatureAggregator
+from .cycle import ReplayService, run_intelligence_cycle
+from .features import FEATURE_CONTRACT_VERSION, FEATURE_DEFINITIONS
 from .models import (
     Direction,
     Document,
@@ -9,8 +11,6 @@ from .models import (
     SignalCategory,
     TransferContext,
 )
-from .cycle import ReplayService, run_intelligence_cycle
-from .features import FEATURE_CONTRACT_VERSION, FEATURE_DEFINITIONS
 
 __all__ = [
     "Direction",

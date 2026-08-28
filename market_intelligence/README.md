@@ -57,3 +57,7 @@ Commands contain no scheduler dependency and can be called by cron, GitHub Actio
 The RSS adapter is for operator-verified public feeds. The generic JSON adapter is a seam for legitimate contracted search APIs; no vendor contract is assumed. `SocialStatementProvider` intentionally requires a lawful API implementation and contains no X/Twitter scraping. `WhaleDataProvider` carries explicit transfer context and defaults unknown transfers to `UNKNOWN`; it never invents wallet labels.
 
 The manually defined gold labels in `gold_fixtures.json` exercise regulation, monetary policy, ETF, exchange incident, whale, irrelevant, ambiguous social, duplicate, and multi-source cases. `evaluation.py` compares extraction quality only; its outputs are not forecast weights, and the small fixture set is not evidence of production accuracy.
+
+## B3 service and replay datasets
+
+The import-safe FastAPI factory, SQL-filtered read repository, schema-v3 migration, replay dataset builder, offline demo, dashboard, observability contracts, static checks, and service operations are documented in `docs/market-intelligence-service.md`. Representative local timings are recorded in `docs/market-intelligence-performance.md`.
