@@ -36,3 +36,28 @@ constants unexplainable. They are also **stale**: they were tuned against a
 different cutoff, a different feature set, and a search that used
 `TimeSeriesSplit` without an embargo. Re-tuning them under the walk-forward
 engine is tracked as open quant debt.
+
+## bayesianCutoff.py
+
+Moved here in the Track A refactor. It was the maintained implementation and the
+one `api_server.py` invoked; `btc_forecaster/` replaces it, and the API now runs
+`python -m btc_forecaster.cli run`.
+
+Preserved rather than deleted because it is the reference for the before/after
+comparison, and because the defects documented in the Track A report are all
+verifiable against this exact file:
+
+- Features and target on the same bar (`roll_mean_ret_*`, `ema_*`, `sma_*` at
+  row D contain `close[D]`, and the target was the residual of `log_close[D]`).
+- Cutoff chosen by scoring 48 candidates on the last 90 days, then the holdout
+  reported on that same window.
+- Feature selection performed once, outside the walk-forward loop whose folds
+  it then contaminated.
+- Monte Carlo shocks drawn independently per horizon step instead of
+  accumulated along the path, so 95% bands did not widen with horizon.
+- Directional accuracy computed as `np.diff` of the forecast against `np.diff`
+  of the actual, comparing the forecast path with itself.
+- A bare `except:` around cutoff evaluation that swallowed every failure,
+  including KeyboardInterrupt.
+
+Its final run output is frozen in `research/runs/2026-04-02/`.

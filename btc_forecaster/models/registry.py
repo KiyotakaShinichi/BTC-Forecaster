@@ -55,8 +55,21 @@ def register(
     )
 
 
-def build(name: str, **kwargs) -> ForecastModel:
-    """Construct a registered model, or explain why it cannot be built."""
+def build(name: str, /, **kwargs) -> ForecastModel:
+    """Construct a registered model, or explain why it cannot be built.
+
+    The registry key becomes the model's canonical identity: unless the caller
+    passes an explicit ``name``, the built model is renamed to the key it was
+    requested under. Without this, a model whose class picks its own name from
+    its hyperparameters (ArimaModel defaults to ``"arima(1, 1, 1)"``) would not
+    match the registry key used to request it, and any lookup by configured name
+    -- ``primary_model``, ``baseline_model``, a skill-table row -- would silently
+    miss. Hyperparameters remain visible in ``describe()`` and in the forecast
+    metadata, so nothing is lost by fixing the identity.
+
+    The registry key is positional-only so that ``name`` in ``**kwargs`` reaches
+    the model constructor rather than colliding with this parameter.
+    """
     if name not in _REGISTRY:
         raise KeyError(f"unknown model {name!r}; registered: {sorted(_REGISTRY)}")
 
@@ -68,7 +81,11 @@ def build(name: str, **kwargs) -> ForecastModel:
             f"model {name!r} requires {missing!r}, which is not installed.\n"
             f'    pip install "btc-forecaster[{extra}]"'
         )
-    return registration.factory(**kwargs)
+
+    model = registration.factory(**kwargs)
+    if "name" not in kwargs:
+        model._name = name
+    return model
 
 
 def names(family: str | None = None) -> list[str]:

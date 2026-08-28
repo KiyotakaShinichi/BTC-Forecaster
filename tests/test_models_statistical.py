@@ -228,6 +228,19 @@ class TestRegistry:
         model = registry.build("historical_mean_return", lookback=30)
         assert model.lookback == 30
 
+    def test_built_models_are_named_after_their_registry_key(self):
+        """Otherwise a lookup by configured name silently misses.
+
+        ArimaModel names itself from its order ("arima(1, 1, 1)"), which would
+        never match the "arima" key used to request it -- so primary_model,
+        baseline_model and every skill-table row would fail to resolve.
+        """
+        for key in ("arima", "arima_auto", "ets", "sarimax", "random_walk"):
+            assert registry.build(key).name == key
+
+    def test_an_explicit_name_still_wins(self):
+        assert registry.build("arima", name="custom").name == "custom"
+
     def test_unknown_model_lists_what_is_registered(self):
         with pytest.raises(KeyError, match="random_walk"):
             registry.build("no_such_model")
