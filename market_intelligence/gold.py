@@ -16,10 +16,10 @@ def load_gold_set(directory: str | Path | None = None) -> tuple[list[Document], 
     fixtures_path = root / "gold_fixtures.json"
     documents_path = root / "gold_documents.json"
     manifest = GoldManifest.model_validate_json((root / "gold_manifest.json").read_text(encoding="utf-8"))
-    fixture_bytes = fixtures_path.read_bytes()
-    if hashlib.sha256(fixture_bytes).hexdigest() != manifest.case_hash:
+    raw_labels = json.loads(fixtures_path.read_text(encoding="utf-8"))
+    canonical_labels = json.dumps(raw_labels, sort_keys=True, separators=(",", ":")).encode()
+    if hashlib.sha256(canonical_labels).hexdigest() != manifest.case_hash:
         raise ValueError("gold fixture hash mismatch")
-    raw_labels = json.loads(fixture_bytes)
     raw_documents = json.loads(documents_path.read_text(encoding="utf-8"))
     available = datetime(2025, 1, 1, tzinfo=timezone.utc)
     documents = []

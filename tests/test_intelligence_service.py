@@ -330,7 +330,8 @@ class SharedServiceTests(unittest.TestCase):
 class ReproducibilityTests(unittest.TestCase):
     def test_gold_fixture_manifest_hash_and_version(self):
         root = Path(__file__).parents[1] / "market_intelligence"
-        fixture_hash = hashlib.sha256((root / "gold_fixtures.json").read_bytes()).hexdigest()
+        labels = json.loads((root / "gold_fixtures.json").read_text(encoding="utf-8"))
+        fixture_hash = hashlib.sha256(json.dumps(labels, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
         manifest = json.loads((root / "gold_manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["gold_version"], "gold-v1")
         self.assertEqual(manifest["case_count"], 9)
