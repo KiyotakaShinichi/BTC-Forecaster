@@ -1,0 +1,171 @@
+{
+  "returns": {
+    "subject": "returns",
+    "n_observations": 3526,
+    "n_tests": 6,
+    "results": [
+      {
+        "name": "adf",
+        "statistic": -41.19173280125823,
+        "p_value": 0.0,
+        "null_hypothesis": "the series has a unit root (is non-stationary)",
+        "reject_means": "evidence of stationarity",
+        "alpha": 0.05,
+        "rejects_null": true,
+        "used_lag": 1,
+        "n_obs": 3524,
+        "critical_values": {
+          "1%": -3.43220700049189,
+          "5%": -2.8623605177922244,
+          "10%": -2.5672067755691153
+        }
+      },
+      {
+        "name": "kpss",
+        "statistic": 0.35771869355287206,
+        "p_value": 0.09537987346858963,
+        "null_hypothesis": "the series is stationary",
+        "reject_means": "evidence of non-stationarity",
+        "alpha": 0.05,
+        "rejects_null": false,
+        "lags": 12,
+        "critical_values": {
+          "10%": 0.347,
+          "5%": 0.463,
+          "2.5%": 0.574,
+          "1%": 0.739
+        },
+        "note": "p-value is interpolated and clipped to [0.01, 0.10] by statsmodels"
+      },
+      {
+        "name": "ljung_box",
+        "statistic": 27.40649266265844,
+        "p_value": 0.1242100925948521,
+        "null_hypothesis": "no autocorrelation up to lag 20",
+        "reject_means": "serial correlation is present",
+        "alpha": 0.05,
+        "rejects_null": false,
+        "lags": 20
+      },
+      {
+        "name": "arch_lm",
+        "statistic": 178.41995753470871,
+        "p_value": 8.999856978739765e-32,
+        "null_hypothesis": "no ARCH effects up to lag 12 (homoskedastic)",
+        "reject_means": "volatility clusters -- a conditional variance model is justified",
+        "alpha": 0.05,
+        "rejects_null": true,
+        "lags": 12,
+        "f_statistic": 15.605688350467128,
+        "f_p_value": 1.1956545607871209e-32
+      },
+      {
+        "name": "jarque_bera",
+        "statistic": 9083.976219458214,
+        "p_value": 0.0,
+        "null_hypothesis": "the series is normally distributed",
+        "reject_means": "non-normal: skewed and/or fat-tailed",
+        "alpha": 0.05,
+        "rejects_null": true,
+        "skew": -0.021404737049146735,
+        "kurtosis": 10.863140302854895,
+        "excess_kurtosis": 7.8631403028548945
+      },
+      {
+        "name": "durbin_watson",
+        "statistic": 2.049635997127131,
+        "p_value": NaN,
+        "null_hypothesis": "no first-order autocorrelation (statistic near 2.0)",
+        "reject_means": "n/a -- this statistic has no p-value",
+        "alpha": 0.05,
+        "rejects_null": false,
+        "interpretation": "no strong first-order autocorrelation"
+      }
+    ],
+    "multiple_testing_note": "6 hypotheses were tested on this series. Raw p-values are uncorrected; call adjusted() before treating any single rejection as a finding, and do not select models by dispatching on these outcomes."
+  },
+  "returns_multiple_testing": {
+    "method": "benjamini-hochberg",
+    "alpha": 0.05,
+    "n_tests": 6,
+    "results": [
+      {
+        "name": "adf",
+        "p_value": 0.0,
+        "p_adjusted": 0.0,
+        "significant_after_correction": true
+      },
+      {
+        "name": "kpss",
+        "p_value": 0.09537987346858963,
+        "p_adjusted": 0.11922484183573703,
+        "significant_after_correction": false
+      },
+      {
+        "name": "ljung_box",
+        "p_value": 0.1242100925948521,
+        "p_adjusted": 0.12421009259485212,
+        "significant_after_correction": false
+      },
+      {
+        "name": "arch_lm",
+        "p_value": 8.999856978739765e-32,
+        "p_adjusted": 1.499976163123294e-31,
+        "significant_after_correction": true
+      },
+      {
+        "name": "jarque_bera",
+        "p_value": 0.0,
+        "p_adjusted": 0.0,
+        "significant_after_correction": true
+      },
+      {
+        "name": "durbin_watson",
+        "p_value": NaN,
+        "p_adjusted": NaN,
+        "significant_after_correction": false
+      }
+    ]
+  },
+  "log_price": {
+    "subject": "log_price",
+    "n_observations": 3527,
+    "n_tests": 2,
+    "results": [
+      {
+        "name": "adf",
+        "statistic": -2.2920515685344625,
+        "p_value": 0.17454431514370922,
+        "null_hypothesis": "the series has a unit root (is non-stationary)",
+        "reject_means": "evidence of stationarity",
+        "alpha": 0.05,
+        "rejects_null": false,
+        "used_lag": 2,
+        "n_obs": 3524,
+        "critical_values": {
+          "1%": -3.43220700049189,
+          "5%": -2.8623605177922244,
+          "10%": -2.5672067755691153
+        }
+      },
+      {
+        "name": "kpss",
+        "statistic": 7.466005289853077,
+        "p_value": 0.01,
+        "null_hypothesis": "the series is stationary",
+        "reject_means": "evidence of non-stationarity",
+        "alpha": 0.05,
+        "rejects_null": true,
+        "lags": 38,
+        "critical_values": {
+          "10%": 0.347,
+          "5%": 0.463,
+          "2.5%": 0.574,
+          "1%": 0.739
+        },
+        "note": "p-value is interpolated and clipped to [0.01, 0.10] by statsmodels"
+      }
+    ],
+    "multiple_testing_note": "2 hypotheses were tested on this series. Raw p-values are uncorrected; call adjusted() before treating any single rejection as a finding, and do not select models by dispatching on these outcomes."
+  }
+}

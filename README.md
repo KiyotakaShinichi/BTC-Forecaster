@@ -42,9 +42,27 @@ variance mean-reverts within weeks, so the 95% band was roughly constant width a
 year out, when it should grow like `sqrt(h)`. Nothing measured coverage, so
 nothing noticed.
 
-Every one of these now has a test that fails if it returns. See
-[`research/runs/2026-04-02/README.md`](research/runs/2026-04-02/README.md) for
-the frozen before-state.
+Every one of these now has a test that fails if it returns.
+
+**What the corrected numbers look like.** Same model, same data, leaks removed
+([full run](research/runs/2026-08-28-track-a-baseline/README.md)):
+
+| model | MAE | skill vs RW | dir. acc | coverage (nominal 95%) |
+| --- | ---: | ---: | ---: | ---: |
+| random_walk_drift | 3,480 | +0.096 | 0.889 | 0.956 |
+| random_walk *(baseline)* | 3,849 | 0.000 | 0.444 | 0.944 |
+| prophet | 9,405 | −1.444 | 0.222 | 0.367 |
+| **prophet_xgb_hybrid** | **10,159** | **−1.640** | 0.244 | 0.233 |
+
+The hybrid is the worst model tested: 2.6x the random walk's error, directional
+accuracy below a coin, and a stated 95% interval that contained 23% of outcomes.
+Nothing about the model changed — only that it can no longer see the price it is
+predicting. The apparent skill was the leaks.
+
+(3 folds, so this ranks nothing among the top five — `mae_std` swamps those
+gaps. It does establish that the leak-free numbers are bad.) The frozen
+before-state is in
+[`research/runs/2026-04-02/`](research/runs/2026-04-02/README.md).
 
 ---
 
