@@ -1,192 +1,257 @@
-# BTC Forecaster (Hybrid Time-Series + Uncertainty + API)
+# BTC Forecaster
 
-A small end-to-end time-series forecasting project built while learning applied time-series analysis.
+A forecasting **research platform** for BTC-USD, built around point-in-time
+correctness and honest evaluation.
 
-It generates **BTC-USD forecasts** using a hybrid approach:
-- **Prophet** for the baseline trend/seasonality forecast
-- **XGBoost** to model and correct Prophet residuals using engineered lag/rolling/EMA/SMA features
-- **GARCH(1,1) + Monte Carlo** to produce uncertainty bands around the hybrid forecast
+The question it exists to answer is not "what will BTC do" but **"does this model
+beat a random walk, on identical folds, out of sample?"** — and to be able to
+report "no" when the answer is no.
 
-It also includes a **FastAPI** server that can trigger runs and serve the latest outputs, plus a lightweight static dashboard.
-
-> Note: This is a research/demo project. Forecasts are not financial advice.
+> Research and educational project. Not financial advice.
 
 ---
 
-## What’s in this repo
+## What changed, and why it matters
 
-- `bayesianCutoff.py` — main forecasting pipeline + diagnostics + artifacts
-- `api_server.py` — FastAPI service to trigger forecasts and serve latest artifacts
-- `frontend/` — static dashboard served by the API
-- `Dockerfile` — container to run the batch forecaster
-- `Dockerfile.api` — container to run the API service
-- `docker-compose.yml` — local API container helper
-- `out/` — default output folder (created automatically)
+This started as a script that reported **68.97% directional accuracy, p=0.031**
+on a 90-day holdout. That number was not real. Three independent defects
+produced it, all verifiable against `research/legacy/bayesianCutoff.py`:
 
----
+**1. The model was shown the answer.** Features and target sat on the same bar:
 
-## Modeling overview (high level)
+```python
+df["roll_mean_ret_7"] = df["return"].rolling(7).mean()   # includes return[D]
+df["ema_7"]           = df["close"].ewm(span=7).mean()   # includes close[D]
+train_df["residual"]  = train_df["log_close"] - prophet_train_log
+dtrain = xgb.DMatrix(train_df[feature_cols], label=train_df["residual"])
+```
 
-### 1) Data
-- Pulls daily BTC prices and volume using `yfinance`.
+The rolling window at row `D` includes `return[D]`, which is a deterministic
+function of `close[D]`. `ema_7[D]` contains `close[D]` outright. The target was
+the residual of `log_close[D]`. The model was asked to predict a closing price
+it had been handed.
 
-### 2) Cutoff selection (“Bayesian cutoff”)
-- Evaluates multiple historical start dates (“cutoffs”) and scores them via a strict train/test directional-accuracy evaluation.
-- Uses a softmax (temperature-controlled) weighting over cutoff scores to select a MAP cutoff.
+**2. The cutoff was chosen on the test set.** 48 candidate start dates were
+scored on the last 90 days of the series, and the winner's holdout was
+*that same window*. With 48 candidates, a 0.69 maximum is close to what
+selection noise alone produces.
 
-### 3) Feature engineering
-- Returns + log price
-- PACF-driven lag selection (train-only)
-- Rolling mean/std of returns and rolling volume
-- EMA/SMA candidates chosen using train-only correlation with next-day returns
+**3. The uncertainty bands did not widen.** The Monte Carlo drew one independent
+shock per horizon step instead of accumulating along the path. GARCH conditional
+variance mean-reverts within weeks, so the 95% band was roughly constant width a
+year out, when it should grow like `sqrt(h)`. Nothing measured coverage, so
+nothing noticed.
 
-### 4) Hybrid forecast
-- Fit Prophet on **training data only**.
-- Train XGBoost on training residuals.
-- Predict test residuals for evaluation.
-- Predict future residuals and combine with Prophet future predictions.
-
-### 5) Uncertainty
-- Fit GARCH(1,1) on training residuals.
-- Use Monte Carlo sampling from conditional variance to generate 95% intervals.
-
-### 6) Evaluation
-- Holdout evaluation on the last `TEST_LAST_DAYS` days (directional accuracy + binomial test).
-- Walk-forward (expanding window) directional-accuracy evaluation across multiple folds.
+Every one of these now has a test that fails if it returns. See
+[`research/runs/2026-04-02/README.md`](research/runs/2026-04-02/README.md) for
+the frozen before-state.
 
 ---
 
-## Outputs
+## Architecture
 
-After a run, artifacts are written to `OUTPUT_DIR` (default: `./out`):
+```
+btc_forecaster/
+    timebase.py      the time contract: UTC, event_time, available_time, origins
+    config/          frozen run configuration
+    data/            schema contract, providers, hash-verified snapshots
+    features/        causal features, train-only selection, supervised alignment
+    models/          ForecastModel contract, baselines, ARIMA/SARIMAX/ETS,
+                     Prophet, XGBoost hybrid, GARCH volatility
+    evaluation/      point and interval metrics, skill scores
+    backtesting/     the walk-forward engine every model is scored through
+    diagnostics/     stationarity, autocorrelation, ARCH, normality + corrections
+    artifacts/       run output and its manifest
+    pipeline.py      orchestration
+    cli.py           btc-forecast
+```
 
-- `nextgen_hybrid_forecast_results_montecarlo.csv` — forecast dataframe (baseline, residual, combined, CI)
-- `historical_prices.csv` — last 365 days of historical prices used by the dashboard plot
-- `forecast_summary.json` — run metadata + metrics (incl. walk-forward results)
-- `pacf_diagnostic.png` — PACF plot
-- `hybrid_forecast_montecarlo.png` — forecast plot with 95% interval
-- `learning_curve.png` — learning curve (directional accuracy vs training size)
+Nothing in the core imports Prophet, XGBoost, arch, matplotlib or yfinance at
+module scope, so it is importable — and the whole unit suite runs — without them
+and without a network connection.
+
+### The time contract
+
+A daily bar labelled `D` covers `[D, D+1)`. Its close is only determined at
+`D+1`, so:
+
+```
+event_time     = D + 1 day        the close is determined
+available_time = event_time + publication_lag
+```
+
+A forecast issued at `forecast_origin` may use an observation **iff**
+`available_time <= forecast_origin`. That single inequality is the whole leakage
+rule, and `assert_available()` is its only enforcement point.
+
+Features are **causal** (row `D` uses bars `<= D`) but that is not enough to be
+*usable*: row `D` still contains bar `D`'s close. `to_supervised(step=1)` shifts
+features so the row predicting bar `T` comes from bar `T-1`. `step=0` is
+rejected outright — it is precisely the original defect.
 
 ---
 
-## Quickstart (local)
+## Quickstart
 
-### 1) Create venv + install
-
-```powershell
+```bash
 python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+.venv/Scripts/activate            # Windows;  source .venv/bin/activate on POSIX
+pip install -e ".[all]" -c constraints.txt
 ```
 
-### 2) Run the batch forecaster
-
-```powershell
-$env:OUTPUT_DIR = ".\out"
-$env:PLOT_SHOW = "0"
-python .\bayesianCutoff.py
+```bash
+btc-forecast models               # what can be built here
+btc-forecast diagnose             # stationarity / autocorrelation / ARCH
+btc-forecast backtest             # walk-forward comparison, no forward forecast
+btc-forecast run                  # backtest, then forecast forward
 ```
+
+Useful flags:
+
+```bash
+btc-forecast backtest --models random_walk,arima,ets --folds 8 --wf-horizon 30
+btc-forecast run --mode rolling --window-bars 730 --embargo-bars 5
+btc-forecast run --horizon 90 --primary-model arima --no-plots
+```
+
+Every flag has an environment-variable equivalent (`TICKER`, `HORIZON_DAYS`,
+`OUTPUT_DIR`, `WF_FOLDS`, …) — the original names are unchanged.
 
 ---
 
-## Run the API + dashboard locally
+## Reading a run
 
-Start the server:
+`btc-forecast run` prints a model comparison, then a verdict:
 
-```powershell
-.\.venv\Scripts\Activate.ps1
-$env:APP_HOST = "0.0.0.0"
-$env:APP_PORT = "8010"
-$env:APP_AUTO_OPEN = "1"
-python .\api_server.py
+```
+model comparison (walk-forward means, lower MAE is better):
+                          mae      rmse    mase  directional_accuracy  interval_coverage
+random_walk         1,842.3110  ...     0.9871                0.4930             0.9430
+arima               1,851.9902  ...     0.9923                0.5010             0.9385
+prophet_xgb_hybrid  2,140.5518  ...     1.1470                0.5120             0.8910
+
+verdict:
+  prophet_xgb_hybrid did NOT beat random_walk on walk-forward MAE across
+  identical folds. The forward forecast should be read as a scenario, not a
+  prediction, and the added complexity is not currently earning anything.
 ```
 
-Open:
-- Dashboard: http://localhost:8010/
-- Swagger docs: http://localhost:8010/docs
+That verdict is the product. A platform that can only report success is not
+measuring anything.
 
-### API endpoints
+**How to read the columns.** `mase < 1` beats a naive forecast on the training
+scale. `interval_coverage` should sit near the nominal level — both 0.60 and
+1.00 are miscalibrated, which is why coverage is reported but never used to rank.
+`directional_accuracy` is now measured against the last observed close (the
+tradeable quantity); `path_directional_accuracy` is the original metric, kept so
+historical numbers stay interpretable. Check `mae_std` before believing any of it.
 
-- `GET /health`
-- `GET /status`
-- `POST /run` — starts a background forecast run
-- `GET /latest` — returns latest summary + last row
-- `GET /artifacts` — lists output files
+---
+
+## Models
+
+| Name | Family | Notes |
+| --- | --- | --- |
+| `random_walk` | baseline | `P[T+h] = P[T]`. The hypothesis to disprove. |
+| `random_walk_drift` | baseline | Classical endpoint drift. |
+| `historical_mean_return` | baseline | Trailing arithmetic mean simple return. |
+| `arima` / `arima_auto` | statistical | `arima_auto` selects order by AIC **inside each fold**. |
+| `sarimax` | statistical | Seasonal + exogenous dynamic regression seam. |
+| `ets` | statistical | Damped additive trend on log price. |
+| `prophet` | structural | Preserved from the original pipeline. |
+| `prophet_xgb_hybrid` | hybrid | The original headline model, with the leaks fixed. |
+
+Adding one is `registry.register(...)`; it is then scored through the same folds
+against the same baseline with the same metrics.
+
+---
+
+## API and dashboard
+
+```bash
+pip install -e ".[all]"
+python api_server.py               # http://localhost:8010  (docs at /docs)
+```
+
+`GET /health` · `GET /status` · `POST /run` · `GET /latest` · `GET /artifacts`
+
+`POST /run` accepts the original fields plus `models`, `primary_model`,
+`baseline_model`, `walk_forward_folds`, `walk_forward_horizon`,
+`min_train_bars` and `embargo_bars`. Set `API_TOKEN` to require an `X-API-Key`
+header; `ALLOWED_OUTPUT_ROOT` confines any `output_dir` override;
+`S3_ARTIFACT_BUCKET` uploads artifacts after a successful run.
+
+A fresh clone has an empty `out/`, so `/latest` returns 404 until a run happens.
+That is intentional — see [`ARTIFACTS.md`](ARTIFACTS.md).
 
 ---
 
 ## Docker
 
-### Batch container
+```bash
+docker build -t btc-forecaster .                    # batch run
+docker run --rm -v "$PWD/out:/app/out" btc-forecaster
 
-```powershell
-docker build -t btc-bayesian-forecaster .
-docker run --rm -e OUTPUT_DIR=/app/out -v ${PWD}/out:/app/out btc-bayesian-forecaster
-```
-
-### API container
-
-```powershell
 docker build -f Dockerfile.api -t btc-forecast-api .
-docker run --rm -p 8010:8010 -e OUTPUT_DIR=/app/out -v ${PWD}/out:/app/out btc-forecast-api
-```
-
-Or with compose:
-
-```powershell
-docker compose up --build
+docker run --rm -p 8010:8010 -v "$PWD/out:/app/out" btc-forecast-api
+# or: docker compose up --build
 ```
 
 ---
 
-## Configuration
+## Tests
 
-### Forecast env vars (`bayesianCutoff.py`)
+```bash
+pytest                      # full suite, no network, no live data
+pytest tests/test_leakage.py -v
+```
 
-- `TICKER` (default: `BTC-USD`)
-- `HORIZON_DAYS` (default: `365`)
-- `TEST_LAST_DAYS` (default: `90`)
-- `MONTE_CARLO_RUNS` (default: `1000`)
-- `BAYESIAN_TEMPERATURE` (default: `2.0`)
-- `RANDOM_STATE` (default: `42`)
-- `MAX_LAG` (default: `60`)
-- `OUTPUT_DIR` (default: current working dir)
-- `PLOT_SHOW` (`0/1`, default: `0`)
-
-### API env vars (`api_server.py`)
-
-- `APP_HOST` (default: `0.0.0.0`)
-- `APP_PORT` (default: `8010`)
-- `APP_RELOAD` (`0/1`, default: `0`)
-- `APP_AUTO_OPEN` (`0/1`, default: `1`)
-- `OUTPUT_DIR` (default: `./out`)
-
-Security + storage options:
-- `API_TOKEN` — if set, `POST /run` requires header `X-API-Key: <API_TOKEN>`
-- `ALLOWED_OUTPUT_ROOT` — restricts any `output_dir` override to a safe root
-- `S3_ARTIFACT_BUCKET` — if set, successful runs upload artifacts to S3
-- `S3_ARTIFACT_PREFIX` — optional prefix within the bucket
-- `S3_REGION` — optional AWS region
+The suite is offline by construction: every series comes from seeded generators
+in `btc_forecaster/testing.py`. `tests/test_leakage.py` is the centrepiece — it
+verifies causality by **perturbing the future and asserting the past does not
+move**, which catches centred windows, negative shifts and whole-sample
+normalisation that reading a column name will not. It also proves the guard
+itself fires, because a check that never fails is worthless.
 
 ---
 
-## Notes / limitations
+## Reproducibility
 
-- Forecast quality depends heavily on market regime changes; crypto markets are non-stationary.
-- The binomial test on direction assumes independent trials; treat p-values as a rough signal, not a guarantee.
-- Uncertainty bands are conditional on the fitted GARCH model and do not capture all tail risks.
-- This project is intended for learning, demos, and iteration (not production trading decisions).
+Every run writes `manifest.json` with the data snapshot's SHA-256, the full
+configuration, model hyperparameters, fold boundaries, package versions and the
+git commit. Data is pinned as a hash-verified snapshot rather than re-fetched,
+so repeated runs read the same bytes — `yfinance` returns a different series
+every day and silently revises history.
+
+A promoted research run without its manifest is an anecdote.
+
+---
+
+## Layout
+
+- [`ARTIFACTS.md`](ARTIFACTS.md) — what is committed, what is generated, and why
+- [`docs/seams.md`](docs/seams.md) — where external signals attach (Track B contract)
+- [`DEPLOYMENT.md`](DEPLOYMENT.md), [`AWS_BACKEND_API.md`](AWS_BACKEND_API.md) — deployment
+- `research/legacy/` — superseded implementations, kept deliberately
+- `research/runs/` — frozen, dated run evidence
 
 ---
 
-## Deployment (cloud)
+## Known limitations
 
-See:
-- `DEPLOYMENT.md` — local + Docker + scheduling patterns
-- `AWS_BACKEND_API.md` — recommended AWS ECS Fargate patterns (API + scheduled runs)
-
----
+- Multi-step hybrid forecasts are **recursive**: only the origin bar's features
+  are real, later steps are built from the model's own simulated prices, and
+  volume cannot be simulated at all. Long-horizon output is a scenario.
+- The XGBoost hyperparameters are the frozen output of an Optuna search run
+  against a different cutoff, a different feature set and a leaky evaluation.
+  Re-tuning them under the walk-forward engine is open work.
+- Monte Carlo shocks are Gaussian. Crypto returns are not; Jarque-Bera rejects
+  normality decisively, so tail risk is understated even with correct
+  accumulation.
+- Interval coverage is measured but not yet calibrated against.
+- The binomial direction test remains uncorrected for multiple comparisons; its
+  caveat travels with the result rather than being buried in a comment.
 
 ## License
 
-Add a license if you plan to open-source this.
+Add a license before open-sourcing.
