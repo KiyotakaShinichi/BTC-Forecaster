@@ -1,0 +1,21 @@
+"""Provider-agnostic, point-in-time external intelligence for BTC forecasts."""
+
+from .aggregation import FeatureAggregator
+from .models import (
+    Direction,
+    Document,
+    EventSignal,
+    EventType,
+    SignalCategory,
+    TransferContext,
+)
+
+__all__ = [
+    "Direction",
+    "Document",
+    "EventSignal",
+    "EventType",
+    "FeatureAggregator",
+    "SignalCategory",
+    "TransferContext",
+]
