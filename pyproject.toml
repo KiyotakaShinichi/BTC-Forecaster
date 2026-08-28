@@ -1,0 +1,76 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "btc-forecaster"
+version = "0.2.0"
+description = "Point-in-time correct forecasting research platform for BTC-USD"
+readme = "README.md"
+requires-python = ">=3.11"
+
+# Track A owns the quantitative core's dependencies. Bounds are deliberately
+# wide-below / capped-above at the next major: the repository was developed
+# against the versions pinned in constraints.txt, and those pins are what the
+# committed research artifacts were produced with.
+dependencies = [
+    "numpy>=1.24,<3",
+    "pandas>=2.0,<4",
+    "scipy>=1.10,<2",
+    "statsmodels>=0.14,<1",
+]
+
+[project.optional-dependencies]
+# Models that are heavy or awkward to install. The core package imports none of
+# these at module scope; every adapter degrades to a clear error if missing.
+models = [
+    "prophet>=1.1,<2",
+    "xgboost>=2.0,<4",
+    "scikit-learn>=1.3,<2",
+    "arch>=6.3,<9",
+]
+# Live market data. Never imported by unit tests.
+data = [
+    "yfinance>=0.2,<2",
+]
+plots = [
+    "matplotlib>=3.7,<4",
+]
+api = [
+    "fastapi>=0.115,<1",
+    "uvicorn[standard]>=0.30,<1",
+    "pydantic>=2.8,<3",
+]
+cloud = [
+    "boto3>=1.34,<2",
+]
+dev = [
+    "pytest>=8,<10",
+]
+# Everything needed to run the full pipeline end to end.
+all = [
+    "btc-forecaster[models,data,plots,api,cloud,dev]",
+]
+
+[project.scripts]
+btc-forecast = "btc_forecaster.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["btc_forecaster*"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+addopts = [
+    "-q",
+    "--strict-markers",
+    "--strict-config",
+]
+markers = [
+    "network: test requires live network access (deselected by default)",
+    "slow: test fits a heavy model (Prophet/XGBoost/GARCH)",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::FutureWarning",
+]
