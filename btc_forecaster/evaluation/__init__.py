@@ -25,9 +25,29 @@ from .metrics import (
     smape,
     winkler_score,
 )
+from .targets import (
+    TARGET_AUDIT,
+    ForecastTask,
+    ReturnView,
+    StepMetrics,
+    cumulative_return_view,
+    evaluate_by_step,
+    one_step_direction_sample,
+    step_metrics_frame,
+    step_return_view,
+)
 
 __all__ = [
     "CALIBRATION",
+    "TARGET_AUDIT",
+    "ForecastTask",
+    "ReturnView",
+    "StepMetrics",
+    "cumulative_return_view",
+    "evaluate_by_step",
+    "one_step_direction_sample",
+    "step_metrics_frame",
+    "step_return_view",
     "HIGHER_IS_BETTER",
     "LOWER_IS_BETTER",
     "SUMMARY_METRICS",

@@ -6,6 +6,7 @@ import pandas as pd
 import pytest
 
 from btc_forecaster.backtesting.engine import (
+    TIMING_COLUMNS,
     has_useful_skill,
     rank_models,
     run_walk_forward,
@@ -186,11 +187,20 @@ class TestEngineFairness:
         assert fits == sorted(fits), "expanding window should grow on each refit"
 
     def test_results_are_reproducible(self, frame, splitter):
-        # fit_seconds is a wall-clock measurement and is excluded by design;
-        # every scored quantity must be bit-identical between runs.
-        a = run_walk_forward(frame, [RandomWalk()], splitter).to_frame().drop(columns=["fit_seconds"])
-        b = run_walk_forward(frame, [RandomWalk()], splitter).to_frame().drop(columns=["fit_seconds"])
+        # Wall-clock columns are excluded by design; every scored quantity must
+        # be bit-identical between runs.
+        drop = list(TIMING_COLUMNS)
+        a = run_walk_forward(frame, [RandomWalk()], splitter).to_frame().drop(columns=drop)
+        b = run_walk_forward(frame, [RandomWalk()], splitter).to_frame().drop(columns=drop)
         pd.testing.assert_frame_equal(a, b)
+
+    def test_fit_and_inference_are_timed_separately(self, frame, splitter):
+        """A2.19: the two costs matter in different deployments."""
+        table = run_walk_forward(frame, [RandomWalk()], splitter).to_frame()
+        assert set(TIMING_COLUMNS) <= set(table.columns)
+        assert (table["fit_seconds"] > 0).all()
+        assert (table["predict_seconds"] > 0).all()
+        assert not table["fit_seconds"].equals(table["predict_seconds"])
 
 
 class TestEngineResults:

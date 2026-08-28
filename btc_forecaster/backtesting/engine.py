@@ -34,7 +34,13 @@ from ..evaluation.metrics import (
     skill_score,
 )
 from ..models.base import ForecastModel, TrainingWindow
+from ..timebase import BAR_DURATION
 from .splits import Fold, WalkForwardSplitter, assert_folds_are_disjoint
+
+#: Columns in the per-fold table that are wall-clock measurements. They are
+#: informative but not reproducible, so any comparison of two runs must exclude
+#: them. Defined once here rather than re-listed at each call site.
+TIMING_COLUMNS: tuple[str, ...] = ("fit_seconds", "predict_seconds")
 
 
 @dataclass(frozen=True)
@@ -51,6 +57,11 @@ class FoldOutcome:
     metrics: dict = field(default_factory=dict)
     error: str | None = None
     fit_seconds: float = 0.0
+    predict_seconds: float = 0.0
+    #: One row per scored bar: step, date, actual, predicted, lower, upper.
+    #: Kept so metrics can be decomposed by horizon step after the fact, and so
+    #: the largest misses can be inspected without re-running the backtest.
+    predictions: pd.DataFrame | None = None
 
     @property
     def failed(self) -> bool:
@@ -66,6 +77,7 @@ class FoldOutcome:
             "test_end": self.test_end,
             "train_bars": self.train_bars,
             "fit_seconds": self.fit_seconds,
+            "predict_seconds": self.predict_seconds,
             "error": self.error,
             **self.metrics,
         }
@@ -169,6 +181,27 @@ class BacktestResult:
     def failures(self) -> list[FoldOutcome]:
         return [outcome for outcome in self.outcomes if outcome.failed]
 
+    def prediction_records(self, model: str | None = None) -> pd.DataFrame:
+        """One row per (model, fold, horizon step) with actual and predicted.
+
+        The raw material for per-step metrics, dependence-aware inference and
+        failure analysis. Aggregating first and asking questions later loses
+        exactly the structure those need.
+        """
+        frames = [
+            outcome.predictions
+            for outcome in self.outcomes
+            if outcome.predictions is not None and (model is None or outcome.model == model)
+        ]
+        if not frames:
+            return pd.DataFrame(
+                columns=[
+                    "model", "fold", "origin", "date", "step",
+                    "actual", "predicted", "lower", "upper", "origin_close",
+                ]
+            )
+        return pd.concat(frames, ignore_index=True)
+
     def to_manifest(self) -> dict:
         summary = self.summary()
         return {
@@ -222,9 +255,18 @@ def run_walk_forward(
         for model in models:
             started = time.perf_counter()
             try:
+                # Fit and inference are timed separately: a model can be cheap to
+                # fit and expensive to forecast (the hybrid's recursive rollout
+                # rebuilds its whole feature frame once per step), and the two
+                # costs matter in different deployments.
                 model.fit(window)
+                fitted_at = time.perf_counter()
+
                 # Forecast across any embargo gap, then score only the test window.
                 result = model.predict(fold.steps_to_test_end)
+
+                fit_seconds = fitted_at - started
+                predict_seconds = time.perf_counter() - fitted_at
 
                 metrics = evaluate_forecast(
                     actual,
@@ -235,6 +277,13 @@ def run_walk_forward(
                     interval_level=result.interval_level,
                     naive_scale=naive_scale,
                 )
+                records = _prediction_records(
+                    model_name=model.name,
+                    fold=fold,
+                    actual=actual,
+                    result=result,
+                    origin_close=origin_close,
+                )
                 outcome = FoldOutcome(
                     model=model.name,
                     fold=fold.index,
@@ -244,7 +293,9 @@ def run_walk_forward(
                     test_end=fold.test_end,
                     train_bars=len(train_frame),
                     metrics=metrics.to_dict(),
-                    fit_seconds=time.perf_counter() - started,
+                    fit_seconds=fit_seconds,
+                    predict_seconds=predict_seconds,
+                    predictions=records,
                 )
             except Exception as exc:
                 outcome = FoldOutcome(
@@ -280,6 +331,49 @@ def run_walk_forward(
     )
 
 
+def _prediction_records(
+    *,
+    model_name: str,
+    fold: Fold,
+    actual: pd.Series,
+    result,
+    origin_close: float,
+) -> pd.DataFrame:
+    """Build the per-bar record frame for one model on one fold.
+
+    ``step`` counts from the forecast origin, so with an embargo the first
+    *scored* bar is step ``embargo_bars + 1``. That is deliberate: step is the
+    forecast distance, not the position within the scored window, and pooling
+    "step 1" across folds must mean the same forecast distance every time.
+    """
+    aligned = result.point.index.intersection(actual.index)
+    if len(aligned) == 0:
+        return pd.DataFrame()
+
+    origin_bar = fold.origin.last_observed_bar
+    steps = ((aligned - origin_bar) / BAR_DURATION).astype(int)
+
+    records = pd.DataFrame(
+        {
+            "model": model_name,
+            "fold": fold.index,
+            "origin": origin_bar,
+            "date": aligned,
+            "step": steps,
+            "actual": actual.loc[aligned].to_numpy(dtype=float),
+            "predicted": result.point.loc[aligned].to_numpy(dtype=float),
+            "origin_close": float(origin_close),
+        }
+    )
+    records["lower"] = (
+        result.lower.loc[aligned].to_numpy(dtype=float) if result.lower is not None else np.nan
+    )
+    records["upper"] = (
+        result.upper.loc[aligned].to_numpy(dtype=float) if result.upper is not None else np.nan
+    )
+    return records
+
+
 def rank_models(result: BacktestResult, metric: str = "mae") -> pd.DataFrame:
     """Models ordered best-first on one metric."""
     summary = result.summary()
@@ -304,6 +398,7 @@ def has_useful_skill(result: BacktestResult, model: str, *, baseline: str = "ran
 
 
 __all__ = [
+    "TIMING_COLUMNS",
     "BacktestResult",
     "FoldOutcome",
     "has_useful_skill",
