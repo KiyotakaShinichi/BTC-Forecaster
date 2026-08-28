@@ -1,5 +1,15 @@
 """Forecast evaluation metrics for point and interval forecasts."""
 
+from .inference import (
+    INFERENCE_NOTES,
+    BootstrapCI,
+    DieboldMarianoResult,
+    compare_models,
+    diebold_mariano,
+    directional_accuracy_ci,
+    loss_series,
+    stationary_bootstrap,
+)
 from .metrics import (
     CALIBRATION,
     HIGHER_IS_BETTER,
@@ -39,6 +49,14 @@ from .targets import (
 
 __all__ = [
     "CALIBRATION",
+    "INFERENCE_NOTES",
+    "BootstrapCI",
+    "DieboldMarianoResult",
+    "compare_models",
+    "diebold_mariano",
+    "directional_accuracy_ci",
+    "loss_series",
+    "stationary_bootstrap",
     "TARGET_AUDIT",
     "ForecastTask",
     "ReturnView",
