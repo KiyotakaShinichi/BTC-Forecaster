@@ -303,7 +303,7 @@ class TestCompareModels:
                     "actual": actual, "predicted": 100.0, "origin_close": 100.0,
                 })
                 rows.append({
-                    "model": "ets", "origin": origin, "step": step,
+                    "model": "prophet_xgb_hybrid", "origin": origin, "step": step,
                     "actual": actual, "predicted": 100.0 + rng.normal(scale=8.0),
                     "origin_close": 100.0,
                 })
@@ -316,13 +316,19 @@ class TestCompareModels:
 
     def test_every_challenger_is_compared_to_the_baseline(self, records):
         table = compare_models(records, baseline="random_walk", horizon=2)
-        assert set(table.index) == {"ets", "prophet"}
+        assert set(table.index) == {"prophet_xgb_hybrid", "prophet"}
         assert (table["model_b"] == "random_walk").all()
 
     def test_the_correction_is_applied_across_the_family(self, records):
         table = compare_models(records, baseline="random_walk", horizon=2)
         assert table["correction"].eq("benjamini-hochberg").all()
-        assert (table["p_adjusted"] >= table["p_value"] - 1e-12).all()
+
+        # Only usable comparisons get an adjusted p-value; nested pairs are
+        # excluded from the family and carry NaN by design.
+        usable = table[table["usable"]]
+        assert not usable.empty
+        assert (usable["p_adjusted"] >= usable["p_value"] - 1e-12).all()
+        assert table.loc[~table["usable"], "p_adjusted"].isna().all()
 
     def test_only_usable_comparisons_enter_the_correction(self, records):
         """Correcting a statistic that was never valid would launder it."""
@@ -331,7 +337,7 @@ class TestCompareModels:
         assert (table["n_hypotheses_corrected"] == expected).all()
 
     def test_nested_comparisons_are_excluded_from_correction(self, records):
-        renamed = records.replace({"ets": "arima"})
+        renamed = records.replace({"prophet_xgb_hybrid": "arima"})
         table = compare_models(renamed, baseline="random_walk", horizon=2)
         assert table.loc["arima", "nested"]
         assert not table.loc["arima", "usable"]

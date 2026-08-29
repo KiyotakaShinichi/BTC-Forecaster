@@ -7,6 +7,7 @@ None of these touch the network: every frame comes from
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
@@ -31,6 +32,8 @@ from btc_forecaster.data.snapshot import (
 )
 from btc_forecaster.testing import synthetic_market_frame
 from btc_forecaster.timebase import UTC
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 @pytest.fixture
@@ -311,13 +314,39 @@ class TestProviders:
 
 class TestImportSafety:
     def test_core_imports_without_optional_heavy_dependencies(self):
-        """The unit suite must run without prophet/xgboost/arch/yfinance."""
-        import importlib
+        """The core must import without prophet/xgboost/arch/yfinance.
+
+        Run in a fresh interpreter. Asserting on sys.modules inside the shared
+        pytest process would only record which test file happened to import a
+        heavy dependency first, and would pass or fail on test ordering rather
+        than on the property being claimed.
+        """
+        import subprocess
         import sys
+        import textwrap
 
-        for module in ["btc_forecaster", "btc_forecaster.data", "btc_forecaster.timebase"]:
-            importlib.import_module(module)
+        probe = textwrap.dedent(
+            """
+            import sys
+            import btc_forecaster
+            import btc_forecaster.data
+            import btc_forecaster.timebase
+            import btc_forecaster.evaluation
+            import btc_forecaster.backtesting
+            import btc_forecaster.benchmark
 
-        forbidden = {"prophet", "xgboost", "arch", "yfinance", "matplotlib.pyplot"}
-        loaded = forbidden & set(sys.modules)
+            forbidden = {"prophet", "xgboost", "arch", "yfinance", "matplotlib.pyplot"}
+            loaded = sorted(forbidden & set(sys.modules))
+            print(",".join(loaded))
+            """
+        )
+        result = subprocess.run(
+            [sys.executable, "-c", probe],
+            capture_output=True,
+            text=True,
+            cwd=str(REPO_ROOT),
+            check=False,
+        )
+        assert result.returncode == 0, result.stderr
+        loaded = result.stdout.strip()
         assert not loaded, f"importing the core pulled in heavy dependencies: {loaded}"

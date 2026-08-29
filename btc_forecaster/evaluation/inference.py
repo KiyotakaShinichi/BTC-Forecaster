@@ -248,6 +248,7 @@ KNOWN_NESTED_PAIRS: frozenset[tuple[str, str]] = frozenset(
         ("random_walk", "arima_auto"),
         ("random_walk", "sarimax"),
         ("random_walk", "historical_mean_return"),  # mean return = 0
+        ("random_walk", "ets"),                 # ETS(A,N,N) with alpha=1
         ("arima", "sarimax"),                   # no exog, no seasonal terms
     }
 )

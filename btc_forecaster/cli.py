@@ -2,6 +2,7 @@
 
 Subcommands:
 
+    benchmark    the A2 study: many folds, nested tuning, promotion verdicts
     run          fetch/reuse data, backtest every model, forecast forward
     backtest     backtest only -- no forward forecast, no plots
     diagnose     stationarity/autocorrelation/heteroskedasticity report
@@ -183,6 +184,73 @@ def cmd_snapshot(args: argparse.Namespace) -> int:
     return 0
 
 
+#: The A2 benchmark model set (A2.6). Deliberately short: naive baselines, a
+#: representative statistical family, the preserved leakage-corrected reference,
+#: and one causal challenger. Model-count inflation buys nothing.
+BENCHMARK_MODELS: tuple[str, ...] = (
+    "random_walk",
+    "random_walk_drift",
+    "historical_mean_return",
+    "arima",
+    "ets",
+    "prophet",
+    "prophet_xgb_hybrid",
+    "xgboost_causal_retuned",
+)
+
+
+def cmd_benchmark(args: argparse.Namespace) -> int:
+    from dataclasses import replace as dc_replace
+
+    from .backtesting.splits import WalkForwardSplitter
+    from .benchmark import format_benchmark_report, run_benchmark, write_benchmark
+    from .evaluation.promotion import PromotionPolicy
+    from .pipeline import build_models, load_market_data
+
+    config = _config_from_args(args)
+    if not getattr(args, "models", None):
+        config = dc_replace(config, models=BENCHMARK_MODELS)
+
+    snapshot = load_market_data(config)
+    models, skipped = build_models(config)
+    if not models:
+        print(f"no models could be built; skipped: {skipped}", file=sys.stderr)
+        return 1
+
+    walk = config.walk_forward
+    splitter = WalkForwardSplitter(
+        horizon=walk.horizon,
+        n_folds=walk.n_folds,
+        min_train_bars=walk.min_train_bars,
+        mode=walk.mode,  # type: ignore[arg-type]
+        window_bars=walk.window_bars,
+        embargo_bars=walk.embargo_bars,
+    )
+
+    result = run_benchmark(
+        snapshot.frame,
+        models,
+        snapshot=snapshot,
+        splitter=splitter,
+        baseline=config.baseline_model,
+        policy=PromotionPolicy(),
+        seed=config.random_state,
+        skipped_models=skipped,
+    )
+
+    print(format_benchmark_report(result))
+
+    target = Path(args.run_dir) if args.run_dir else config.output_dir / f"benchmark-{result.run_id}"
+    result.artifacts = write_benchmark(result, target)
+    print(f"\nartifacts written to {target.resolve()}:")
+    for name in result.artifacts:
+        print(f"  - {name}")
+
+    for name, reason in skipped.items():
+        print(f"skipped {name}: {reason}", file=sys.stderr)
+    return 0
+
+
 def cmd_models(args: argparse.Namespace) -> int:
     report = registry.available()
     if args.json:
@@ -202,6 +270,16 @@ def build_parser() -> argparse.ArgumentParser:
         description="Point-in-time correct forecasting research platform for BTC-USD.",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
+
+    benchmark = subparsers.add_parser(
+        "benchmark", help="the A2 study: many folds, nested tuning, promotion verdicts"
+    )
+    _add_common(benchmark)
+    _add_backtest_options(benchmark)
+    benchmark.add_argument(
+        "--run-dir", default=None, help="where to write the run (must not already exist)"
+    )
+    benchmark.set_defaults(func=cmd_benchmark)
 
     run = subparsers.add_parser("run", help="backtest every model, then forecast forward")
     _add_common(run)
