@@ -64,6 +64,12 @@ gaps. It does establish that the leak-free numbers are bad.) The frozen
 before-state is in
 [`research/runs/2026-04-02/`](research/runs/2026-04-02/README.md).
 
+Both numbers are now **tamper-evident**: `btc_forecaster/evidence.py` records
+them as data and `tests/test_evidence.py` reads the archived JSON back, failing
+if either drifts. Retuning the corrected reference until it looks better is
+forbidden; building a named challenger and scoring both through identical folds
+is the sanctioned route. See [`docs/benchmark.md`](docs/benchmark.md).
+
 ---
 
 ## Architecture
@@ -121,6 +127,7 @@ pip install -e ".[all]" -c constraints.txt
 btc-forecast models               # what can be built here
 btc-forecast diagnose             # stationarity / autocorrelation / ARCH
 btc-forecast backtest             # walk-forward comparison, no forward forecast
+btc-forecast benchmark            # the full study: nested tuning, promotion verdicts
 btc-forecast run                  # backtest, then forecast forward
 ```
 
@@ -259,6 +266,7 @@ A promoted research run without its manifest is an anecdote.
 ## Layout
 
 - [`ARTIFACTS.md`](ARTIFACTS.md) — what is committed, what is generated, and why
+- [`docs/benchmark.md`](docs/benchmark.md) — what the benchmark measures, how to read it, what it cannot tell you
 - [`docs/seams.md`](docs/seams.md) — where external signals attach (Track B contract)
 - [`DEPLOYMENT.md`](DEPLOYMENT.md), [`AWS_BACKEND_API.md`](AWS_BACKEND_API.md) — deployment
 - `research/legacy/` — superseded implementations, kept deliberately
@@ -268,12 +276,19 @@ A promoted research run without its manifest is an anecdote.
 
 ## Known limitations
 
+- **Directional accuracy is not profitability.** No transaction costs, slippage
+  or position sizing are modelled. Nothing here says a strategy makes money.
+- **The market may simply not be forecastable at this frequency.** A benchmark
+  that keeps returning "no skill" is not necessarily broken — that is the result
+  this platform was built to be able to report.
 - Multi-step hybrid forecasts are **recursive**: only the origin bar's features
   are real, later steps are built from the model's own simulated prices, and
   volume cannot be simulated at all. Long-horizon output is a scenario.
-- The XGBoost hyperparameters are the frozen output of an Optuna search run
-  against a different cutoff, a different feature set and a leaky evaluation.
-  Re-tuning them under the walk-forward engine is open work.
+- The legacy hybrid's XGBoost hyperparameters remain the frozen output of an
+  Optuna search run against a different cutoff, a different feature set and a
+  leaky evaluation. They are deliberately **not** retuned, so the preserved
+  reference stays comparable to itself; `xgboost_causal_retuned` is the
+  challenger that does tune, nested inside each fold.
 - Monte Carlo shocks are Gaussian. Crypto returns are not; Jarque-Bera rejects
   normality decisively, so tail risk is understated even with correct
   accumulation.

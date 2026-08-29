@@ -156,12 +156,14 @@ def load_market_data(
 
 def build_models(config: RunConfig) -> tuple[list[ForecastModel], dict[str, str]]:
     """Construct requested models, reporting any whose dependencies are missing."""
+    monte_carlo = {
+        "monte_carlo_runs": config.monte_carlo_runs,
+        "random_state": config.random_state,
+        "interval_level": config.interval_level,
+    }
     kwargs_by_model = {
-        "prophet_xgb_hybrid": {
-            "monte_carlo_runs": config.monte_carlo_runs,
-            "random_state": config.random_state,
-            "interval_level": config.interval_level,
-        },
+        "prophet_xgb_hybrid": monte_carlo,
+        "xgboost_causal_retuned": monte_carlo,
     }
 
     built: list[ForecastModel] = []
