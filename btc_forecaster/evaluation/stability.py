@@ -253,18 +253,36 @@ def residual_diagnostics(records: pd.DataFrame, *, model: str, max_lag: int = 10
         jarque_bera_test,
         ljung_box_test,
     )
+    from .targets import first_scored_step
 
     data = records[records["model"] == model]
     if data.empty:
         return {}
 
-    # Step-1 residuals only: pooling horizons would mix h-step errors whose
-    # autocorrelation is mechanical rather than informative.
-    step_one = data[data["step"] == 1] if "step" in data.columns else data
-    if len(step_one) < 30:
-        return {"model": model, "n": int(len(step_one)), "note": "too few step-1 residuals"}
+    # A single forecast distance only: pooling horizons would mix h-step errors
+    # whose autocorrelation is mechanical rather than informative. Under an
+    # embargo the shortest scored distance is embargo+1, not 1 -- filtering on
+    # literal step 1 silently selects nothing and reports every model as having
+    # too few residuals.
+    if "step" in data.columns:
+        target_step = first_scored_step(data)
+        single_step = data[data["step"] == target_step]
+    else:
+        target_step = None
+        single_step = data
 
-    ordered = step_one.sort_values("origin") if "origin" in step_one.columns else step_one
+    if len(single_step) < 30:
+        return {
+            "model": model,
+            "n": int(len(single_step)),
+            "step": target_step,
+            "note": (
+                f"too few step-{target_step} residuals "
+                f"({len(single_step)} < 30) for a Ljung-Box test"
+            ),
+        }
+
+    ordered = single_step.sort_values("origin") if "origin" in single_step.columns else single_step
     residual = pd.Series(
         (ordered["actual"] - ordered["predicted"]).to_numpy(dtype=float)
         / ordered["origin_close"].to_numpy(dtype=float)
@@ -280,6 +298,7 @@ def residual_diagnostics(records: pd.DataFrame, *, model: str, max_lag: int = 10
     return {
         "model": model,
         "n": int(len(residual)),
+        "step": target_step,
         "mean_residual": mean,
         "mean_residual_t": float(mean / std_error) if std_error > 0 else float("nan"),
         "biased": bool(std_error > 0 and abs(mean / std_error) > 2.0),

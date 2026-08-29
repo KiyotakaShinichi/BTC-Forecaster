@@ -213,6 +213,25 @@ class TestResidualDiagnostics:
         assert report["n"] == len(step_one)
         assert report["n"] < (records["model"] == "random_walk").sum()
 
+    def test_it_uses_the_first_scored_step_under_an_embargo(self):
+        """Filtering on literal step 1 reported every model as having too few
+        residuals in the first live 36-fold run, which used embargo=30."""
+        frame = synthetic_market_frame(periods=1400, seed=23)
+        embargoed = run_walk_forward(
+            frame,
+            [RandomWalk()],
+            WalkForwardSplitter(
+                horizon=10, n_folds=40, min_train_bars=400, embargo_bars=6
+            ),
+        )
+        records = embargoed.prediction_records()
+        assert records["step"].min() == 7
+
+        report = residual_diagnostics(records, model="random_walk")
+        assert "note" not in report, report.get("note")
+        assert report["step"] == 7
+        assert report["n"] == 40
+
     def test_too_few_origins_is_refused_rather_than_computed(self):
         """14 folds gives 14 step-1 residuals, which cannot support a
         Ljung-Box test. Saying so beats returning a number."""
@@ -224,6 +243,7 @@ class TestResidualDiagnostics:
         )
         report = residual_diagnostics(sparse.prediction_records(), model="random_walk")
         assert "too few" in report["note"]
+        assert "Ljung-Box" in report["note"]
         assert "ljung_box" not in report
 
     def test_the_interpretation_is_prose_not_a_verdict(self, backtest):
