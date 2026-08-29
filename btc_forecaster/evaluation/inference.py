@@ -466,7 +466,7 @@ def compare_models(
     baseline: str,
     horizon: int = 1,
     loss: str = "absolute",
-    step: int | None = None,
+    step: int | str | None = None,
     alpha: float = 0.05,
 ) -> pd.DataFrame:
     """Pairwise Diebold-Mariano of every model against ``baseline``.
@@ -477,17 +477,28 @@ def compare_models(
     Nested pairs are computed but excluded from the correction and marked
     unusable -- correcting a statistic that was never valid would launder it.
 
-    ``step`` restricts to a single horizon step (use ``step=1`` for the
-    least-overlapping comparison). Otherwise all scored bars are pooled, which
-    inflates the apparent sample size; the ``horizon`` argument then governs the
-    HAC lag count.
+    ``step`` restricts to a single horizon step -- the least-overlapping
+    comparison. Pass ``"first"`` for the shortest distance actually scored,
+    which under an embargo of ``e`` bars is ``e + 1``, not 1. ``None`` pools all
+    scored bars, which inflates the apparent sample size; the ``horizon``
+    argument then governs the HAC lag count.
     """
     required = {"model", "actual", "predicted"}
     missing = required - set(records.columns)
     if missing:
         raise ValueError(f"records is missing column(s): {sorted(missing)}")
 
+    if step == "first":
+        from .targets import first_scored_step
+
+        step = first_scored_step(records)
+
     data = records if step is None else records[records["step"] == step]
+    if data.empty:
+        raise ValueError(
+            f"no records at step={step!r}. step counts forecast distance from the "
+            "origin, so an embargoed run has no step-1 rows."
+        )
     if baseline not in set(data["model"]):
         raise ValueError(f"baseline {baseline!r} is not present in the records")
 

@@ -265,20 +265,40 @@ def step_metrics_frame(metrics: list[StepMetrics]) -> pd.DataFrame:
     return pd.DataFrame([m.to_dict() for m in metrics]).set_index("step")
 
 
-def one_step_direction_sample(records: pd.DataFrame) -> np.ndarray:
-    """Boolean hit/miss at step 1, one entry per origin, in origin order.
+def first_scored_step(records: pd.DataFrame) -> int:
+    """The shortest forecast distance actually scored.
 
-    This is the series the block bootstrap consumes. Restricting to step 1
-    removes the within-fold correlation that comes from scoring many horizons
-    against a single origin; what remains is serial dependence *between* origins,
-    which is exactly what a block method is designed to handle.
+    ``step`` counts bars from the forecast origin, not position within the
+    scored window. Under an embargo of ``e`` bars the first scored step is
+    ``e + 1``, not 1 -- the model forecasts across the gap and only the tail is
+    scored. Consumers wanting "the shortest-horizon evaluation" must ask for
+    this rather than assuming step 1 exists, or they silently select nothing.
+    """
+    if "step" not in records.columns:
+        raise ValueError("records must carry a 'step' column")
+    if records.empty:
+        raise ValueError("no records to inspect")
+    return int(records["step"].min())
+
+
+def one_step_direction_sample(records: pd.DataFrame, *, step: int | None = None) -> np.ndarray:
+    """Boolean hit/miss at the shortest scored horizon, one entry per origin.
+
+    This is the series the block bootstrap consumes. Restricting to a single
+    step removes the within-fold correlation that comes from scoring many
+    horizons against one origin; what remains is serial dependence *between*
+    origins, which is what a block method is designed to handle.
+
+    ``step`` defaults to :func:`first_scored_step`, so an embargoed run measures
+    direction at distance ``embargo + 1`` rather than silently returning nothing.
     """
     if "step" not in records.columns:
         raise ValueError("records must carry a 'step' column")
 
-    first = records[records["step"] == 1]
+    target = first_scored_step(records) if step is None else step
+    first = records[records["step"] == target]
     if first.empty:
-        raise ValueError("no step-1 rows in records")
+        raise ValueError(f"no step-{target} rows in records")
 
     ordered = first.sort_values("origin") if "origin" in first.columns else first
     actual_return = ordered["actual"].to_numpy(float) / ordered["origin_close"].to_numpy(float) - 1.0
@@ -318,6 +338,7 @@ TARGET_AUDIT = {
 
 __all__ = [
     "TARGET_AUDIT",
+    "first_scored_step",
     "ForecastTask",
     "ReturnView",
     "StepMetrics",

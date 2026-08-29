@@ -58,7 +58,7 @@ class TestBenchmarkTable:
             "mae",
             "mae_skill_vs_random_walk",
             "rmse",
-            "dir_acc_step1",
+            "dir_acc_first_step",
             "dir_ci_lower",
             "dir_ci_upper",
             "interval_coverage",
@@ -69,8 +69,8 @@ class TestBenchmarkTable:
 
     def test_direction_carries_an_interval_not_just_a_point(self, benchmark):
         _, result = benchmark
-        assert (result.table["dir_ci_lower"] < result.table["dir_acc_step1"]).all()
-        assert (result.table["dir_acc_step1"] < result.table["dir_ci_upper"]).all()
+        assert (result.table["dir_ci_lower"] < result.table["dir_acc_first_step"]).all()
+        assert (result.table["dir_acc_first_step"] < result.table["dir_ci_upper"]).all()
 
     def test_no_model_beats_a_coin_on_a_random_walk(self, benchmark):
         """The honest outcome, expressed through the interval rather than a
@@ -83,6 +83,27 @@ class TestBenchmarkTable:
         charge it the one-time scipy import and rank it ~18x the drift model."""
         _, result = benchmark
         assert result.table.loc["random_walk", "cost_multiple_vs_cheapest"] < 3.0
+
+    def test_an_embargoed_run_scores_direction_at_the_first_scored_step(self):
+        """With an embargo of e, step 1 does not exist. Assuming it does made
+        the first live 36-fold run die at 'baseline not present in the records'."""
+        frame = synthetic_market_frame(periods=1500, seed=31)
+        snapshot = MarketSnapshot.build(
+            frame, ticker="TEST-USD", provider="synthetic", normalise=False
+        )
+        result = run_benchmark(
+            frame,
+            [RandomWalk(), RandomWalkWithDrift()],
+            snapshot=snapshot,
+            splitter=WalkForwardSplitter(
+                horizon=10, n_folds=20, min_train_bars=400, embargo_bars=7
+            ),
+            run_id="embargoed",
+        )
+        assert result.scored_step == 8
+        assert not result.table.empty
+        assert result.table["dir_acc_first_step"].notna().all()
+        assert not result.comparisons.empty
 
     def test_per_step_metrics_cover_every_horizon(self, benchmark):
         _, result = benchmark

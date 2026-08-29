@@ -13,6 +13,7 @@ from btc_forecaster.evaluation.targets import (
     ForecastTask,
     cumulative_return_view,
     evaluate_by_step,
+    first_scored_step,
     one_step_direction_sample,
     step_metrics_frame,
     step_return_view,
@@ -176,9 +177,23 @@ class TestEvaluateByStep:
     def test_empty_metrics_give_an_empty_frame(self):
         assert step_metrics_frame([]).empty
 
-    def test_records_without_step_one_are_an_error(self, records):
-        with pytest.raises(ValueError, match="no step-1 rows"):
-            one_step_direction_sample(records[records["step"] > 1])
+    def test_an_explicitly_missing_step_is_an_error(self, records):
+        with pytest.raises(ValueError, match="no step-99 rows"):
+            one_step_direction_sample(records, step=99)
+
+    def test_it_defaults_to_the_first_scored_step_not_literally_step_one(self, records):
+        """Under an embargo the shortest scored distance is embargo+1. Assuming
+        step 1 exists silently selects nothing and the run dies far downstream
+        with 'baseline not present in the records'."""
+        embargoed = records[records["step"] > 3].copy()
+        assert first_scored_step(embargoed) == 4
+
+        sample = one_step_direction_sample(embargoed)
+        assert len(sample) == embargoed["origin"].nunique()
+
+    def test_first_scored_step_needs_a_step_column(self):
+        with pytest.raises(ValueError, match="'step' column"):
+            first_scored_step(pd.DataFrame({"actual": [1.0]}))
 
 
 class TestPooledVersusPerStepDirection:

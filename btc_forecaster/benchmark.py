@@ -54,7 +54,12 @@ from .evaluation.stability import (
     stability_by_period,
     stability_profile,
 )
-from .evaluation.targets import TARGET_AUDIT, evaluate_by_step, one_step_direction_sample
+from .evaluation.targets import (
+    TARGET_AUDIT,
+    evaluate_by_step,
+    first_scored_step,
+    one_step_direction_sample,
+)
 from .evidence import PRESERVED, verify_all
 from .models.base import ForecastModel
 from .timebase import UTC
@@ -84,6 +89,8 @@ class BenchmarkResult:
     splitter: WalkForwardSplitter
     policy: PromotionPolicy
     baseline: str
+    #: Shortest forecast distance scored; equals embargo_bars + 1.
+    scored_step: int = 1
     table: pd.DataFrame = field(default_factory=pd.DataFrame)
     per_step: pd.DataFrame = field(default_factory=pd.DataFrame)
     by_regime: pd.DataFrame = field(default_factory=pd.DataFrame)
@@ -180,7 +187,7 @@ def build_benchmark_table(
     for model in table.index:
         interval = direction_intervals.get(str(model))
         if interval:
-            table.loc[model, "dir_acc_step1"] = interval["statistic"]
+            table.loc[model, "dir_acc_first_step"] = interval["statistic"]
             table.loc[model, "dir_ci_lower"] = interval["ci_lower"]
             table.loc[model, "dir_ci_upper"] = interval["ci_upper"]
             table.loc[model, "dir_beats_coin"] = interval["excludes_null"]
@@ -233,6 +240,9 @@ def run_benchmark(
     stability = stability_profile(per_fold)
     costs = resource_costs(per_fold)
 
+    # Under an embargo the shortest scored forecast distance is embargo+1, not 1.
+    scored_step = first_scored_step(records) if not records.empty else 1
+
     direction_intervals: dict = {}
     skill_intervals: dict = {}
     for name in model_names:
@@ -240,12 +250,12 @@ def run_benchmark(
         if model_records.empty:
             continue
         try:
-            hits = one_step_direction_sample(model_records)
+            hits = one_step_direction_sample(model_records, step=scored_step)
             direction_intervals[name] = directional_accuracy_ci(hits, seed=seed).to_dict()
         except ValueError:
             pass
         if name != baseline:
-            interval = _skill_interval(records, name, baseline, step=1, seed=seed)
+            interval = _skill_interval(records, name, baseline, step=scored_step, seed=seed)
             if interval is not None:
                 skill_intervals[name] = interval
 
@@ -267,7 +277,7 @@ def run_benchmark(
     )
 
     comparisons = (
-        compare_models(records, baseline=baseline, horizon=splitter.horizon, step=1)
+        compare_models(records, baseline=baseline, horizon=splitter.horizon, step=scored_step)
         if not records.empty
         else pd.DataFrame()
     )
@@ -311,6 +321,7 @@ def run_benchmark(
 
     return BenchmarkResult(
         run_id=run_id,
+        scored_step=scored_step,
         snapshot=snapshot,
         backtest=backtest,
         splitter=splitter,
@@ -397,6 +408,7 @@ def benchmark_manifest(result: BenchmarkResult) -> dict:
         "benchmark_table": (
             [] if result.table.empty else result.table.reset_index().to_dict(orient="records")
         ),
+        "scored_step": result.scored_step,
         "direction_intervals": result.direction_intervals,
         "skill_intervals": {k: list(v) for k, v in result.skill_intervals.items()},
         "residual_diagnostics": result.residuals,
@@ -431,6 +443,11 @@ def format_benchmark_report(result: BenchmarkResult) -> str:
         f"embargo={walk['embargo_bars']}, min_train={walk['min_train_bars']}"
     )
     add(f"baseline : {result.baseline}")
+    embargo = walk["embargo_bars"]
+    add(
+        f"direction: step {result.scored_step} (embargo {embargo} + 1), "
+        "one observation per origin"
+    )
 
     if not result.table.empty:
         add("")
@@ -439,7 +456,7 @@ def format_benchmark_report(result: BenchmarkResult) -> str:
             c
             for c in (
                 "mae", f"mae_skill_vs_{result.baseline}", "rmse", "mase",
-                "dir_acc_step1", "dir_ci_lower", "dir_ci_upper",
+                "dir_acc_first_step", "dir_ci_lower", "dir_ci_upper",
                 "interval_coverage", "mae_worst_to_median", "cost_multiple_vs_cheapest",
             )
             if c in result.table.columns
@@ -456,7 +473,10 @@ def format_benchmark_report(result: BenchmarkResult) -> str:
     if not result.comparisons.empty:
         usable = result.comparisons[result.comparisons["usable"]]
         add("")
-        add(f"PAIRWISE vs {result.baseline} (step 1, Diebold-Mariano)")
+        add(
+            f"PAIRWISE vs {result.baseline} "
+            f"(step {result.scored_step}, Diebold-Mariano)"
+        )
         if usable.empty:
             add("  every comparison is nested; see the bootstrap intervals instead")
         else:
