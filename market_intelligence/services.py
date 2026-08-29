@@ -9,6 +9,7 @@ from .cycle import ReplayService
 from .features import FEATURE_CONTRACT_VERSION
 from .operations import IntelligenceSnapshot, ProviderHealth, QualityReport
 from .quality import evaluate_quality
+from .replay_engine import BulkReplayEngine
 from .storage import IntelligenceStore
 
 
@@ -57,11 +58,16 @@ class SnapshotService:
         provider_versions: dict[str, str],
         configuration_fingerprint: str,
     ) -> list[IntelligenceSnapshot]:
-        """Build ordered snapshots from one bounded evidence read."""
+        """Reference implementation. The correctness oracle for the bulk path.
+
+        Retained deliberately (B3.1.1): the optimised engine proves equivalence
+        against this, so it must not be deleted or quietly replaced. It is also
+        the simplest readable statement of the semantics.
+        """
         if not forecast_origins:
             return []
         logging.getLogger("btc_intelligence.replay").info(
-            "snapshot_batch request_id=%s origin_count=%s",
+            "snapshot_batch request_id=%s origin_count=%s mode=REFERENCE",
             request_id_context.get(),
             len(forecast_origins),
         )
@@ -86,5 +92,55 @@ class SnapshotService:
                 FEATURE_CONTRACT_VERSION,
             )
             snapshots.append(snapshot)
+        self.store.put_snapshots(snapshots)
+        return snapshots
+
+    def build_many_bulk(
+        self,
+        forecast_origins: list[datetime],
+        provider_versions: dict[str, str],
+        configuration_fingerprint: str,
+    ) -> list[IntelligenceSnapshot]:
+        """Optimised path (B3.1.2). Semantically identical to build_many.
+
+        Same bounded reads; the difference is entirely in the inner loop, which
+        no longer re-scans the whole history per origin. Snapshot ids are
+        byte-identical, which is the strongest available statement that nothing
+        about membership, features or missingness changed.
+        """
+        if not forecast_origins:
+            return []
+        logging.getLogger("btc_intelligence.replay").info(
+            "snapshot_batch request_id=%s origin_count=%s mode=OPTIMIZED",
+            request_id_context.get(),
+            len(forecast_origins),
+        )
+        horizon = max(forecast_origins)
+        engine = BulkReplayEngine(self.store.documents_as_of(horizon), self.store.signals_as_of(horizon))
+
+        snapshots = []
+        cached_prefix = -1
+        document_ids: tuple[str, ...] = ()
+        source_hashes: tuple[str, ...] = ()
+        for origin in forecast_origins:
+            evidence = engine.evidence_for(origin)
+            if evidence.document_prefix != cached_prefix:
+                # The document set only changes when new evidence becomes
+                # available, which is far rarer than once per origin.
+                document_ids, source_hashes = engine.document_membership(evidence.document_prefix)
+                cached_prefix = evidence.document_prefix
+            snapshots.append(
+                IntelligenceSnapshot.create(
+                    origin,
+                    list(document_ids),
+                    list(evidence.eligible_event_ids),
+                    evidence.features,
+                    provider_versions,
+                    list(evidence.eligible_extractor_versions),
+                    configuration_fingerprint,
+                    list(source_hashes),
+                    FEATURE_CONTRACT_VERSION,
+                )
+            )
         self.store.put_snapshots(snapshots)
         return snapshots

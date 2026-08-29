@@ -5,7 +5,9 @@ import hashlib
 import json
 import os
 import subprocess
+from bisect import bisect_right
 from datetime import datetime
+from enum import Enum
 from pathlib import Path
 
 import duckdb
@@ -15,6 +17,16 @@ from .features import FEATURE_CONTRACT_VERSION, FEATURE_DEFINITIONS
 from .operations import ReplayDatasetManifest
 from .services import SnapshotService
 from .storage import IntelligenceStore
+
+#: Rows per bulk INSERT into the parquet staging table.
+ROW_INSERT_CHUNK = 500
+
+
+class ReplayMode(str, Enum):
+    """Which snapshot path built a dataset. Recorded in the manifest."""
+
+    REFERENCE = "REFERENCE"
+    OPTIMIZED = "OPTIMIZED"
 
 
 class ReplayDatasetBuilder:
@@ -30,16 +42,29 @@ class ReplayDatasetBuilder:
         configuration_fingerprint: str,
         export_format: str = "parquet",
         git_sha: str | None = None,
+        mode: ReplayMode = ReplayMode.OPTIMIZED,
     ) -> ReplayDatasetManifest:
         if not origins or origins != sorted(origins) or len(set(origins)) != len(origins):
             raise ReplayIntegrityError("forecast origins must be non-empty, unique, and ordered")
         if len(origins) > 100_000:
             raise ReplayIntegrityError("origin count exceeds bounded dataset limit")
         rows = []
-        snapshots = self.snapshots.build_many(origins, provider_versions, configuration_fingerprint)
+        build = (
+            self.snapshots.build_many
+            if mode is ReplayMode.REFERENCE
+            else self.snapshots.build_many_bulk
+        )
+        snapshots = build(origins, provider_versions, configuration_fingerprint)
         feature_names = [definition.name for definition in FEATURE_DEFINITIONS]
+
+        # One ordered read instead of one query per origin. Runs are ascending,
+        # so the latest run at an origin is a binary search.
+        runs = self.store.runs_up_to(origins[-1])
+        run_times = [finished_at for finished_at, _ in runs]
+
         for origin, snapshot in zip(origins, snapshots, strict=True):
-            latest_run = self.store.latest_run_as_of(origin)
+            position = bisect_right(run_times, origin)
+            latest_run = runs[position - 1][1] if position else None
             quality = latest_run.quality_summary if latest_run else {}
             row = {
                 "forecast_origin": origin.isoformat(),
@@ -69,10 +94,19 @@ class ReplayDatasetBuilder:
                     "source_stale_flag INTEGER",
                 ]
                 connection.execute(f"CREATE TABLE replay ({', '.join(definitions)})")
-                placeholders = ", ".join("?" for _ in columns)
-                connection.executemany(
-                    f"INSERT INTO replay VALUES ({placeholders})", [[row[column] for column in columns] for row in rows]
-                )
+                # A VALUES insert rather than executemany, for the same reason
+                # put_snapshots uses one: DuckDB's executemany costs milliseconds
+                # per row regardless of row size.
+                row_placeholder = "(" + ", ".join("?" for _ in columns) + ")"
+                for start in range(0, len(rows), ROW_INSERT_CHUNK):
+                    chunk = rows[start : start + ROW_INSERT_CHUNK]
+                    parameters: list[object] = []
+                    for row in chunk:
+                        parameters.extend(row[column] for column in columns)
+                    connection.execute(
+                        f"INSERT INTO replay SELECT * FROM (VALUES {', '.join([row_placeholder] * len(chunk))})",
+                        parameters,
+                    )
                 escaped = str(temporary.resolve()).replace("'", "''")
                 connection.execute(f"COPY replay TO '{escaped}' (FORMAT PARQUET)")
             finally:
@@ -106,6 +140,7 @@ class ReplayDatasetBuilder:
             file_hash=file_hash,
             git_sha=sha,
             format=export_format,
+            mode=mode.value,
         )
         self.store.put_dataset_manifest(manifest)
         manifest.write_atomic(manifest_path)  # written last

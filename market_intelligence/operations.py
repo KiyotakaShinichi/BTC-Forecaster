@@ -214,6 +214,9 @@ class ReplayDatasetManifest(BaseModel):
     file_hash: str
     git_sha: str
     format: str
+    #: REFERENCE or OPTIMIZED -- which snapshot path produced these rows (B3.1.13).
+    #: Defaulted so manifests written before this field remain loadable.
+    mode: str = "REFERENCE"
 
     def write_atomic(self, path: str | Path) -> Path:
         target = Path(path)

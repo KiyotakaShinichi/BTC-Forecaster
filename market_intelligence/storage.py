@@ -27,6 +27,11 @@ if TYPE_CHECKING:
 SCHEMA_VERSION = 3
 
 
+#: Rows per bulk snapshot INSERT. Bounded so a 10,000-origin replay does not
+#: build one statement with 30,000 bound parameters.
+SNAPSHOT_INSERT_CHUNK = 500
+
+
 class IntelligenceStore:
     """Local DuckDB store with idempotent primary-key upserts and JSON provenance."""
 
@@ -171,19 +176,49 @@ class IntelligenceStore:
         self.put_snapshots([snapshot])
 
     def put_snapshots(self, snapshots: Sequence[IntelligenceSnapshot]) -> None:
+        """Persist snapshots. Membership is validated exactly as before.
+
+        Two changes from the original, both measured (research/b31/PROFILE.md):
+
+        * Membership is checked against the *union* of everything the batch
+          references rather than per snapshot. `all subsets valid` and
+          `union valid` are the same statement, and the per-snapshot form was
+          O(origins x history) -- a hidden quadratic in a replay of many origins
+          that all reference the same documents.
+        * Rows go in through a chunked ``VALUES`` insert rather than
+          ``executemany``. For a 200-snapshot batch carrying 22.9 MB of JSON
+          that is 1,578 ms against 96 ms, a 16x difference, with identical rows
+          and identical INSERT OR IGNORE semantics.
+        """
         if not snapshots:
             return
-        known_docs = {row[0] for row in self.connection.execute("SELECT document_id FROM documents").fetchall()}
-        known_events = {row[0] for row in self.connection.execute("SELECT event_id FROM signals").fetchall()}
         for snapshot in snapshots:
             if snapshot.feature_contract_version != FEATURE_CONTRACT_VERSION:
                 raise FeatureContractError(f"unknown feature contract: {snapshot.feature_contract_version}")
-            if not set(snapshot.document_ids) <= known_docs or not set(snapshot.event_ids) <= known_events:
-                raise ReplayIntegrityError("snapshot references unknown membership")
-        self.connection.executemany(
-            "INSERT OR IGNORE INTO snapshots VALUES (?, ?, ?)",
-            [(snapshot.snapshot_id, snapshot.forecast_origin, snapshot.model_dump_json()) for snapshot in snapshots],
-        )
+
+        referenced_docs: set[str] = set()
+        referenced_events: set[str] = set()
+        for snapshot in snapshots:
+            referenced_docs.update(snapshot.document_ids)
+            referenced_events.update(snapshot.event_ids)
+
+        known_docs = {row[0] for row in self.connection.execute("SELECT document_id FROM documents").fetchall()}
+        known_events = {row[0] for row in self.connection.execute("SELECT event_id FROM signals").fetchall()}
+        if not referenced_docs <= known_docs or not referenced_events <= known_events:
+            raise ReplayIntegrityError("snapshot references unknown membership")
+
+        rows = [
+            (snapshot.snapshot_id, snapshot.forecast_origin, snapshot.model_dump_json()) for snapshot in snapshots
+        ]
+        for start in range(0, len(rows), SNAPSHOT_INSERT_CHUNK):
+            chunk = rows[start : start + SNAPSHOT_INSERT_CHUNK]
+            placeholders = ", ".join(["(?, ?, ?)"] * len(chunk))
+            parameters: list[object] = []
+            for row in chunk:
+                parameters.extend(row)
+            self.connection.execute(
+                f"INSERT OR IGNORE INTO snapshots SELECT * FROM (VALUES {placeholders})", parameters
+            )
 
     def get_snapshot(self, snapshot_id: str) -> IntelligenceSnapshot | None:
         row = self.connection.execute("SELECT payload FROM snapshots WHERE snapshot_id=?", [snapshot_id]).fetchone()
@@ -398,6 +433,19 @@ class IntelligenceStore:
             "SELECT payload FROM runs WHERE finished_at <= ? ORDER BY finished_at DESC LIMIT 1", [origin]
         ).fetchone()
         return RunManifest.model_validate(json.loads(row[0])) if row else None
+
+    def runs_up_to(self, origin: datetime) -> list[tuple[datetime, RunManifest]]:
+        """All runs finished at or before ``origin``, ascending.
+
+        Batched counterpart to :meth:`latest_run_as_of`. A DuckDB statement costs
+        ~4 ms of parse and plan time even against an empty table, so asking once
+        per origin costs ~4 s per 1,000 origins for information that one ordered
+        read plus a binary search already contains.
+        """
+        rows = self.connection.execute(
+            "SELECT finished_at, payload FROM runs WHERE finished_at <= ? ORDER BY finished_at", [origin]
+        ).fetchall()
+        return [(row[0], RunManifest.model_validate(json.loads(row[1]))) for row in rows]
 
     def list_snapshots(self, limit: int = 100, offset: int = 0) -> list[IntelligenceSnapshot]:
         rows = self.connection.execute(
