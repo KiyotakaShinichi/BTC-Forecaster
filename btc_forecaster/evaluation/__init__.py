@@ -35,6 +35,15 @@ from .metrics import (
     smape,
     winkler_score,
 )
+from .regimes import (
+    RegimeConfig,
+    TrendRegime,
+    VolatilityRegime,
+    label_fold_origins,
+    label_regimes,
+    performance_by_regime,
+    regime_at,
+)
 from .targets import (
     TARGET_AUDIT,
     ForecastTask,
@@ -49,6 +58,13 @@ from .targets import (
 
 __all__ = [
     "CALIBRATION",
+    "RegimeConfig",
+    "TrendRegime",
+    "VolatilityRegime",
+    "label_fold_origins",
+    "label_regimes",
+    "performance_by_regime",
+    "regime_at",
     "INFERENCE_NOTES",
     "BootstrapCI",
     "DieboldMarianoResult",

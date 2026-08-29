@@ -43,7 +43,9 @@ from datetime import UTC, datetime
 
 import pandas as pd
 
-UTC = UTC
+# UTC is imported here and re-exported via __all__ so the rest of the package has
+# a single place to import it from; `from datetime import UTC` at every call site
+# invites someone to reach for a naive default instead.
 
 #: Bar labels are UTC midnights, one calendar day apart.
 BAR_FREQ = "D"
