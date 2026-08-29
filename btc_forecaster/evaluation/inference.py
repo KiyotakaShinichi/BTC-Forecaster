@@ -129,10 +129,42 @@ class BootstrapCI:
 
     @property
     def excludes_null(self) -> bool:
-        """Whether the interval excludes the null value (e.g. 0.5 for a coin)."""
+        """Whether the interval excludes the null. **Two-sided.**
+
+        True for an interval entirely *below* the null as well as one entirely
+        above it, so this must never be read as "beat the null" on its own --
+        use :attr:`exceeds_null` for that. A flat random-walk forecast scores
+        0.333 against a 0.611 base rate: its interval excludes the null while
+        being significantly *worse* than it.
+        """
         if self.null_value is None:
             return False
         return bool(not (self.lower <= self.null_value <= self.upper))
+
+    @property
+    def exceeds_null(self) -> bool:
+        """Whether the whole interval lies above the null. One-sided."""
+        if self.null_value is None:
+            return False
+        return bool(self.lower > self.null_value)
+
+    @property
+    def below_null(self) -> bool:
+        """Whether the whole interval lies below the null. One-sided."""
+        if self.null_value is None:
+            return False
+        return bool(self.upper < self.null_value)
+
+    @property
+    def versus_null(self) -> str:
+        """``"above"``, ``"below"`` or ``"indistinguishable"``."""
+        if self.null_value is None:
+            return "no null"
+        if self.exceeds_null:
+            return "above"
+        if self.below_null:
+            return "below"
+        return "indistinguishable"
 
     @property
     def width(self) -> float:
@@ -150,6 +182,9 @@ class BootstrapCI:
             "block_length": self.block_length,
             "null_value": self.null_value,
             "excludes_null": self.excludes_null,
+            "exceeds_null": self.exceeds_null,
+            "below_null": self.below_null,
+            "versus_null": self.versus_null,
         }
 
     def __str__(self) -> str:  # pragma: no cover - display helper
@@ -203,6 +238,39 @@ def stationary_bootstrap(
     )
 
 
+def directional_base_rate(actual, reference) -> float:
+    """Share of realised up-moves from the reference price.
+
+    Together with :func:`best_constant_accuracy` this defines the null a
+    directional claim actually has to beat.
+    """
+    a = np.asarray(actual, dtype=float)
+    r = np.asarray(reference, dtype=float)
+    if len(a) == 0:
+        return float("nan")
+    return float(np.mean((a - r) > 0))
+
+
+def best_constant_accuracy(base_rate: float) -> float:
+    """Accuracy of the best *constant* directional predictor.
+
+    A model that always says "up" scores ``base_rate``; one that always says
+    "down" scores ``1 - base_rate``. The better of the two is free, requires no
+    model, and is what any directional claim must exceed.
+
+    This matters enormously here and is easy to get wrong. Over 31-day windows
+    in the A2 sample BTC rose 61% of the time, so a constant "up" forecast
+    scores 0.611 -- comfortably "better than a coin" while containing no
+    information whatsoever. In the first 36-fold run ``random_walk_drift``
+    predicted up on 100% of origins and scored exactly 0.611, and the legacy
+    hybrid predicted up on 67% and scored 0.667. Tested against 0.5 both look
+    significant; against the base rate neither has an edge.
+    """
+    if not np.isfinite(base_rate):
+        return float("nan")
+    return float(max(base_rate, 1.0 - base_rate))
+
+
 def directional_accuracy_ci(
     hits: Sequence[bool] | np.ndarray,
     *,
@@ -210,17 +278,23 @@ def directional_accuracy_ci(
     n_resamples: int = DEFAULT_RESAMPLES,
     block_length: float | None = None,
     seed: int = 0,
+    null: float = 0.5,
 ) -> BootstrapCI:
     """Confidence interval for hit rate, robust to serial dependence.
 
-    ``hits`` should be the per-origin step-1 outcome series from
+    ``hits`` should be the per-origin outcome series at a single forecast
+    distance, from
     :func:`btc_forecaster.evaluation.targets.one_step_direction_sample`, in
     chronological order -- the bootstrap's blocks are only meaningful if
     adjacent entries are adjacent in time.
 
-    The null is 0.5. Read :attr:`BootstrapCI.excludes_null` rather than
-    converting to a p-value: an interval states the magnitude of any edge as
-    well as its sign, which a p-value does not.
+    ``null`` defaults to 0.5 but **should usually be
+    :func:`best_constant_accuracy` of the sample's base rate**. A coin is only
+    the right null when up and down moves are equally likely, which over a
+    multi-week horizon on a trending asset they are not.
+
+    Read :attr:`BootstrapCI.excludes_null` rather than converting to a p-value:
+    an interval states the magnitude of any edge as well as its sign.
     """
     return stationary_bootstrap(
         np.asarray(hits, dtype=float),
@@ -229,7 +303,7 @@ def directional_accuracy_ci(
         n_resamples=n_resamples,
         block_length=block_length,
         seed=seed,
-        null_value=0.5,
+        null_value=null,
     )
 
 
@@ -552,10 +626,17 @@ def compare_models(
 #: Recorded in every benchmark manifest.
 INFERENCE_NOTES = {
     "directional_uncertainty": (
-        "Stationary bootstrap (Politis-Romano) over the per-origin step-1 hit "
-        "series, block length n**(1/3). Replaces the binomial test, whose "
-        "independence assumption fails under overlapping horizons, within-fold "
-        "correlation and volatility clustering."
+        "Stationary bootstrap (Politis-Romano) over the per-origin hit series at "
+        "the shortest scored horizon, block length n**(1/3). Replaces the "
+        "binomial test, whose independence assumption fails under overlapping "
+        "horizons, within-fold correlation and volatility clustering."
+    ),
+    "directional_null": (
+        "The null is the accuracy of the best CONSTANT predictor, max(base_rate, "
+        "1 - base_rate), not 0.5. Over 31-day windows BTC rose 61% of the time, "
+        "so an always-up forecast scores 0.611 while containing no information. "
+        "Testing against a coin would report several models as significant on "
+        "the base rate alone."
     ),
     "forecast_comparison": (
         "Diebold-Mariano with Newey-West HAC variance (h-1 lags) and the "
@@ -579,6 +660,8 @@ INFERENCE_NOTES = {
 
 __all__ = [
     "DEFAULT_RESAMPLES",
+    "best_constant_accuracy",
+    "directional_base_rate",
     "INFERENCE_NOTES",
     "KNOWN_NESTED_PAIRS",
     "BootstrapCI",

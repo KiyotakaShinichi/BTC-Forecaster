@@ -39,8 +39,10 @@ from .backtesting.splits import WalkForwardSplitter
 from .data.snapshot import MarketSnapshot
 from .evaluation.inference import (
     INFERENCE_NOTES,
+    best_constant_accuracy,
     compare_models,
     directional_accuracy_ci,
+    directional_base_rate,
     loss_series,
     stationary_bootstrap,
 )
@@ -91,6 +93,10 @@ class BenchmarkResult:
     baseline: str
     #: Shortest forecast distance scored; equals embargo_bars + 1.
     scored_step: int = 1
+    #: Share of realised up-moves at that distance.
+    directional_base_rate: float = float("nan")
+    #: Accuracy of the best constant predictor -- the null direction must beat.
+    directional_null: float = 0.5
     table: pd.DataFrame = field(default_factory=pd.DataFrame)
     per_step: pd.DataFrame = field(default_factory=pd.DataFrame)
     by_regime: pd.DataFrame = field(default_factory=pd.DataFrame)
@@ -190,7 +196,11 @@ def build_benchmark_table(
             table.loc[model, "dir_acc_first_step"] = interval["statistic"]
             table.loc[model, "dir_ci_lower"] = interval["ci_lower"]
             table.loc[model, "dir_ci_upper"] = interval["ci_upper"]
-            table.loc[model, "dir_beats_coin"] = interval["excludes_null"]
+            table.loc[model, "dir_null"] = interval["null_value"]
+            # One-sided: an interval entirely BELOW the null excludes it too,
+            # and that is significantly worse, not better.
+            table.loc[model, "dir_beats_null"] = interval["exceeds_null"]
+            table.loc[model, "dir_vs_null"] = interval["versus_null"]
 
     for column in ("interval_coverage", "coverage_error", "relative_interval_width", "winkler_score"):
         if column in summary.columns:
@@ -243,6 +253,17 @@ def run_benchmark(
     # Under an embargo the shortest scored forecast distance is embargo+1, not 1.
     scored_step = first_scored_step(records) if not records.empty else 1
 
+    # The directional null is the best constant predictor, not a coin. Realised
+    # moves are the same for every model, so this is computed once.
+    base_rate = float("nan")
+    directional_null = 0.5
+    if not records.empty:
+        realised = records[records["step"] == scored_step].drop_duplicates(
+            subset=["origin"]
+        )
+        base_rate = directional_base_rate(realised["actual"], realised["origin_close"])
+        directional_null = best_constant_accuracy(base_rate)
+
     direction_intervals: dict = {}
     skill_intervals: dict = {}
     for name in model_names:
@@ -251,7 +272,9 @@ def run_benchmark(
             continue
         try:
             hits = one_step_direction_sample(model_records, step=scored_step)
-            direction_intervals[name] = directional_accuracy_ci(hits, seed=seed).to_dict()
+            direction_intervals[name] = directional_accuracy_ci(
+                hits, seed=seed, null=directional_null
+            ).to_dict()
         except ValueError:
             pass
         if name != baseline:
@@ -322,6 +345,8 @@ def run_benchmark(
     return BenchmarkResult(
         run_id=run_id,
         scored_step=scored_step,
+        directional_base_rate=base_rate,
+        directional_null=directional_null,
         snapshot=snapshot,
         backtest=backtest,
         splitter=splitter,
@@ -409,6 +434,8 @@ def benchmark_manifest(result: BenchmarkResult) -> dict:
             [] if result.table.empty else result.table.reset_index().to_dict(orient="records")
         ),
         "scored_step": result.scored_step,
+        "directional_base_rate": result.directional_base_rate,
+        "directional_null": result.directional_null,
         "direction_intervals": result.direction_intervals,
         "skill_intervals": {k: list(v) for k, v in result.skill_intervals.items()},
         "residual_diagnostics": result.residuals,
@@ -448,6 +475,10 @@ def format_benchmark_report(result: BenchmarkResult) -> str:
         f"direction: step {result.scored_step} (embargo {embargo} + 1), "
         "one observation per origin"
     )
+    add(
+        f"           base rate of UP = {result.directional_base_rate:.4f}, so the null "
+        f"(best constant predictor) is {result.directional_null:.4f}, NOT 0.5"
+    )
 
     if not result.table.empty:
         add("")
@@ -456,7 +487,7 @@ def format_benchmark_report(result: BenchmarkResult) -> str:
             c
             for c in (
                 "mae", f"mae_skill_vs_{result.baseline}", "rmse", "mase",
-                "dir_acc_first_step", "dir_ci_lower", "dir_ci_upper",
+                "dir_acc_first_step", "dir_ci_lower", "dir_ci_upper", "dir_vs_null",
                 "interval_coverage", "mae_worst_to_median", "cost_multiple_vs_cheapest",
             )
             if c in result.table.columns

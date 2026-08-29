@@ -13,9 +13,11 @@ import pytest
 from btc_forecaster.evaluation.inference import (
     INFERENCE_NOTES,
     KNOWN_NESTED_PAIRS,
+    best_constant_accuracy,
     compare_models,
     diebold_mariano,
     directional_accuracy_ci,
+    directional_base_rate,
     is_nested,
     loss_series,
     moving_block_indices,
@@ -166,6 +168,100 @@ class TestDirectionalAccuracyCi:
         blocked = directional_accuracy_ci(clustered, seed=0, block_length=10)
         naive = directional_accuracy_ci(clustered, seed=0, block_length=1)
         assert blocked.width > naive.width
+
+
+class TestDirectionalNull:
+    """A coin is the wrong null on a trending asset over a multi-week horizon."""
+
+    def test_base_rate_counts_realised_up_moves(self):
+        actual = np.array([110.0, 120.0, 90.0, 105.0])
+        reference = np.full(4, 100.0)
+        assert directional_base_rate(actual, reference) == pytest.approx(0.75)
+
+    def test_the_best_constant_predictor_is_the_null(self):
+        assert best_constant_accuracy(0.61) == pytest.approx(0.61)
+        assert best_constant_accuracy(0.39) == pytest.approx(0.61)
+        assert best_constant_accuracy(0.5) == pytest.approx(0.5)
+
+    def test_an_always_up_forecast_scores_the_base_rate_and_has_no_edge(self):
+        """The exact artefact found in the first 36-fold live run:
+        random_walk_drift predicted up on 100% of origins and scored 0.611,
+        which is the base rate. Against 0.5 that looks significant."""
+        # Construct the base rate exactly rather than sampling it, so the test
+        # is about the null and not about which draw the RNG produced.
+        n, n_up = 300, 183  # 0.61
+        actual_up = np.array([True] * n_up + [False] * (n - n_up))
+        actual_up = np.random.default_rng(0).permutation(actual_up)
+        hits = actual_up  # an always-up predictor is right exactly when it went up
+
+        base_rate = float(actual_up.mean())
+        assert base_rate == pytest.approx(0.61)
+        against_coin = directional_accuracy_ci(hits, seed=0, null=0.5)
+        against_base = directional_accuracy_ci(
+            hits, seed=0, null=best_constant_accuracy(base_rate)
+        )
+
+        assert against_coin.exceeds_null, "a coin null calls the base rate significant"
+        assert not against_base.exceeds_null, "the correct null finds no edge"
+
+    def test_a_genuine_edge_survives_the_base_rate_null(self):
+        # Right 85% of the time regardless of direction -- real skill.
+        n, n_hit = 300, 255
+        hits = np.array([True] * n_hit + [False] * (n - n_hit))
+        hits = np.random.default_rng(1).permutation(hits)
+
+        against_base = directional_accuracy_ci(hits, seed=0, null=best_constant_accuracy(0.61))
+        assert against_base.exceeds_null
+        assert against_base.lower > 0.61
+
+    def test_excluding_the_null_is_two_sided_and_beating_it_is_not(self):
+        """The bug this distinction exists to prevent: a flat random-walk
+        forecast scores 0.333 against a 0.611 base rate. Its interval excludes
+        the null while being significantly WORSE than it, and a two-sided flag
+        reported that as 'beats the null'."""
+        n, n_hit = 300, 100  # 0.333
+        hits = np.random.default_rng(2).permutation(
+            np.array([True] * n_hit + [False] * (n - n_hit))
+        )
+        ci = directional_accuracy_ci(hits, seed=0, null=0.6111)
+
+        assert ci.excludes_null, "two-sided: the interval does exclude the null"
+        assert not ci.exceeds_null, "but it lies below, so it does not beat it"
+        assert ci.below_null
+        assert ci.versus_null == "below"
+
+    def test_a_genuinely_better_model_exceeds_the_null(self):
+        n, n_hit = 300, 255
+        hits = np.random.default_rng(3).permutation(
+            np.array([True] * n_hit + [False] * (n - n_hit))
+        )
+        ci = directional_accuracy_ci(hits, seed=0, null=0.6111)
+        assert ci.exceeds_null
+        assert not ci.below_null
+        assert ci.versus_null == "above"
+
+    def test_an_indistinguishable_model_is_labelled_as_such(self):
+        n, n_hit = 300, 184
+        hits = np.random.default_rng(4).permutation(
+            np.array([True] * n_hit + [False] * (n - n_hit))
+        )
+        ci = directional_accuracy_ci(hits, seed=0, null=0.6111)
+        assert not ci.exceeds_null
+        assert not ci.below_null
+        assert ci.versus_null == "indistinguishable"
+
+    def test_the_null_is_recorded_on_the_result(self):
+        ci = directional_accuracy_ci([True, False, True], seed=0, null=0.61)
+        assert ci.null_value == pytest.approx(0.61)
+        assert ci.to_dict()["null_value"] == pytest.approx(0.61)
+
+    def test_the_default_remains_a_coin_but_is_documented_as_usually_wrong(self):
+        assert directional_accuracy_ci([True, False], seed=0).null_value == 0.5
+        assert "base rate" in INFERENCE_NOTES["directional_null"]
+
+    def test_an_empty_sample_gives_nan(self):
+        assert np.isnan(directional_base_rate([], []))
+        assert np.isnan(best_constant_accuracy(float("nan")))
 
 
 class TestDieboldMariano:

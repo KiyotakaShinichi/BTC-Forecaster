@@ -61,6 +61,9 @@ class TestBenchmarkTable:
             "dir_acc_first_step",
             "dir_ci_lower",
             "dir_ci_upper",
+            "dir_null",
+            "dir_beats_null",
+            "dir_vs_null",
             "interval_coverage",
             "mae_worst_to_median",
             "cost_multiple_vs_cheapest",
@@ -72,11 +75,31 @@ class TestBenchmarkTable:
         assert (result.table["dir_ci_lower"] < result.table["dir_acc_first_step"]).all()
         assert (result.table["dir_acc_first_step"] < result.table["dir_ci_upper"]).all()
 
-    def test_no_model_beats_a_coin_on_a_random_walk(self, benchmark):
+    def test_no_model_beats_the_directional_null_on_a_random_walk(self, benchmark):
         """The honest outcome, expressed through the interval rather than a
-        p-value: every directional CI contains 0.5."""
+        p-value: no model's interval lies above the null."""
         _, result = benchmark
-        assert not result.table["dir_beats_coin"].any()
+        assert not result.table["dir_beats_null"].any()
+
+    def test_beating_the_null_is_one_sided(self, benchmark):
+        """An interval entirely below the null excludes it too. Reporting that
+        as 'beats the null' is how a flat forecast scoring 0.333 against a 0.611
+        base rate gets recorded as significant."""
+        _, result = benchmark
+        for model, row in result.table.iterrows():
+            if row["dir_beats_null"]:
+                assert row["dir_ci_lower"] > row["dir_null"], model
+            assert row["dir_vs_null"] in {"above", "below", "indistinguishable"}
+
+    def test_the_directional_null_is_the_base_rate_not_a_coin(self, benchmark):
+        """An always-up forecast scores the base rate while containing no
+        information, so a coin null would call it significant."""
+        _, result = benchmark
+        assert result.directional_null == pytest.approx(
+            max(result.directional_base_rate, 1 - result.directional_base_rate)
+        )
+        assert result.directional_null >= 0.5
+        assert (result.table["dir_null"] == result.directional_null).all()
 
     def test_cost_multiple_is_not_distorted_by_import_warm_up(self, benchmark):
         """RandomWalk is the cheapest model there is. Using the mean fold would
@@ -166,6 +189,8 @@ class TestManifest:
         manifest = benchmark_manifest(result)
         assert manifest["target_audit"]["primary_task"] == "price_level"
         assert "binomial" in manifest["inference_notes"]["directional_uncertainty"]
+        assert "base rate" in manifest["inference_notes"]["directional_null"]
+        assert manifest["directional_null"] >= 0.5
 
     def test_it_re_verifies_the_preserved_evidence(self, benchmark):
         """A benchmark run confirms the negative results are still intact."""
