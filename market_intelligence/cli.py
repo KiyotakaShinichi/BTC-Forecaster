@@ -6,11 +6,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from .catalog import DatasetCatalog
 from .configuration import ProviderConfig, ProviderRegistry, QueryPlanner, WatchEntity
 from .cycle import run_intelligence_cycle
 from .extractors import RuleBasedExtractor
+from .historical import HistoricalDatasetService
+from .origins import OriginFrequency, generate_origins
 from .providers import JsonSearchApiProvider, RssSearchProvider
-from .replay_dataset import ReplayDatasetBuilder
+from .replay_dataset import ReplayDatasetBuilder, ReplayMode
 from .retrieval import MultiProviderRetriever
 from .services import IntelligenceReadService, SnapshotService
 from .storage import IntelligenceStore
@@ -55,6 +58,38 @@ def build_parser() -> argparse.ArgumentParser:
     dataset.add_argument("--manifest", required=True)
     dataset.add_argument("--config-fingerprint", required=True)
     dataset.add_argument("--format", choices=("parquet", "csv"), default="parquet")
+    dataset.add_argument(
+        "--mode",
+        choices=("OPTIMIZED", "REFERENCE"),
+        default="OPTIMIZED",
+        help="REFERENCE is the correctness oracle; both produce identical output",
+    )
+
+    replay_dataset = sub.add_parser(
+        "replay-dataset",
+        help="historical intelligence feature matrix over a generated origin schedule",
+    )
+    replay_dataset.add_argument("--start", type=_time, required=True)
+    replay_dataset.add_argument("--end", type=_time, required=True)
+    replay_dataset.add_argument(
+        "--frequency", choices=("HOURLY", "4H", "DAILY"), default="HOURLY"
+    )
+    replay_dataset.add_argument("--output", required=True)
+    replay_dataset.add_argument("--manifest", required=True)
+    replay_dataset.add_argument("--config-fingerprint", required=True)
+    replay_dataset.add_argument("--format", choices=("parquet", "csv"), default="parquet")
+    replay_dataset.add_argument("--mode", choices=("OPTIMIZED", "REFERENCE"), default="OPTIMIZED")
+    replay_dataset.add_argument("--chunk-size", type=int, default=None)
+    replay_dataset.add_argument(
+        "--extend",
+        default=None,
+        metavar="DATASET_ID",
+        help="append to an existing dataset instead of building a new one",
+    )
+    replay_dataset.add_argument("--no-resume", action="store_true")
+
+    catalog = sub.add_parser("catalog", help="list registered historical datasets")
+    catalog.add_argument("--limit", type=int, default=20)
     demo = sub.add_parser("demo")
     demo.add_argument("--output-dir", default="market-intelligence-demo")
     gold = sub.add_parser("gold-report")
@@ -144,9 +179,67 @@ def main(argv: list[str] | None = None) -> int:
                 if value.strip()
             ]
             dataset_manifest = ReplayDatasetBuilder(store).build(
-                origins, args.output, args.manifest, {}, args.config_fingerprint, args.format
+                origins,
+                args.output,
+                args.manifest,
+                {},
+                args.config_fingerprint,
+                args.format,
+                mode=ReplayMode(args.mode),
             )
             print(dataset_manifest.model_dump_json(indent=2))
+            return 0
+        if args.command == "replay-dataset":
+            # Same service the API calls, so the two cannot drift.
+            service = (
+                HistoricalDatasetService(store, chunk_size=args.chunk_size)
+                if args.chunk_size
+                else HistoricalDatasetService(store)
+            )
+            origins = generate_origins(args.start, args.end, OriginFrequency(args.frequency))
+            if args.extend:
+                result = service.extend(
+                    args.extend,
+                    origins,
+                    args.output,
+                    args.manifest,
+                    {},
+                    args.config_fingerprint,
+                    export_format=args.format,
+                    mode=ReplayMode(args.mode),
+                )
+            else:
+                result = service.build(
+                    origins,
+                    args.output,
+                    args.manifest,
+                    {},
+                    args.config_fingerprint,
+                    export_format=args.format,
+                    mode=ReplayMode(args.mode),
+                    resume=not args.no_resume,
+                )
+            print(
+                json.dumps(
+                    {
+                        "dataset_id": result.manifest.dataset_id,
+                        "rows": result.manifest.row_count,
+                        "rows_appended": result.rows_appended,
+                        "chunks": result.chunk_count,
+                        "resumed_chunks": result.resumed_chunks,
+                        "mode": result.manifest.mode,
+                        "origin_frequency": result.catalog_entry.origin_frequency,
+                        "output": str(result.output_path),
+                        "manifest": str(result.manifest_path),
+                        "file_hash": result.manifest.file_hash,
+                    },
+                    indent=2,
+                )
+            )
+            return 0
+        if args.command == "catalog":
+            entries = DatasetCatalog(store.connection).list_datasets(limit=args.limit)
+            print(json.dumps([entry.model_dump(mode="json") for entry in entries], indent=2))
             return 0
         if args.command == "backfill":
             from .backfill import BackfillRunner

@@ -14,9 +14,12 @@ from fastapi import FastAPI, HTTPException, Query, Request
 from fastapi.responses import HTMLResponse, JSONResponse, Response
 from pydantic import BaseModel, Field, field_validator
 
+from .catalog import DatasetCatalog, DatasetCatalogEntry
 from .context import request_id_context
 from .errors import FeatureContractError, IntelligenceError, ReplayIntegrityError, SnapshotMismatchError, StorageError
+from .feature_matrix import DEFAULT_CHUNK_SIZE
 from .features import FEATURE_CONTRACT_VERSION, FEATURE_DEFINITIONS, FeatureDefinition
+from .historical import HistoricalDatasetService
 from .models import Direction, Document, EventSignal, EventType
 from .operations import (
     IntelligenceSnapshot,
@@ -26,6 +29,8 @@ from .operations import (
     RunManifest,
     RunStatus,
 )
+from .origins import OriginFrequency, generate_origins
+from .replay_dataset import ReplayMode
 from .services import SnapshotService
 from .storage import SCHEMA_VERSION, IntelligenceStore
 
@@ -36,6 +41,22 @@ class Page(BaseModel, Generic[T]):
     items: list[T]
     limit: int
     offset: int
+
+
+class HistoricalDatasetRequest(BaseModel):
+    """A historical feature-matrix build. Origins are generated, not supplied,
+    so the schedule is guaranteed sorted, unique and UTC by construction."""
+
+    start: datetime
+    end: datetime
+    frequency: str = Field(default="HOURLY", pattern="^(HOURLY|4H|DAILY)$")
+    output_path: str = Field(min_length=1, max_length=1024)
+    manifest_path: str = Field(min_length=1, max_length=1024)
+    configuration_fingerprint: str = Field(min_length=1, max_length=128)
+    provider_versions: dict[str, str] = Field(default_factory=dict)
+    export_format: str = Field(default="parquet", pattern="^(parquet|csv)$")
+    mode: str = Field(default="OPTIMIZED", pattern="^(OPTIMIZED|REFERENCE)$")
+    chunk_size: int = Field(default=DEFAULT_CHUNK_SIZE, ge=1, le=10_000)
 
 
 class ReplayRequest(BaseModel):
@@ -317,6 +338,46 @@ def create_app(db_path: str | Path | None = None, store: IntelligenceStore | Non
         return SnapshotService(store).build_snapshot(
             body.forecast_origin, body.provider_versions, body.configuration_fingerprint
         )
+
+    @app.post("/replay/dataset")
+    def replay_dataset(body: HistoricalDatasetRequest) -> dict[str, object]:
+        """Build a historical feature matrix over a generated origin schedule.
+
+        Calls the same HistoricalDatasetService the CLI does, so the two paths
+        cannot produce different datasets from the same request.
+        """
+        service = HistoricalDatasetService(store, chunk_size=body.chunk_size)
+        origins = generate_origins(body.start, body.end, OriginFrequency(body.frequency))
+        result = service.build(
+            origins,
+            body.output_path,
+            body.manifest_path,
+            body.provider_versions,
+            body.configuration_fingerprint,
+            export_format=body.export_format,
+            mode=ReplayMode(body.mode),
+        )
+        return {
+            "dataset_id": result.manifest.dataset_id,
+            "row_count": result.manifest.row_count,
+            "chunk_count": result.chunk_count,
+            "mode": result.manifest.mode,
+            "origin_frequency": result.catalog_entry.origin_frequency,
+            "file_hash": result.manifest.file_hash,
+            "output": str(result.output_path),
+            "manifest": str(result.manifest_path),
+        }
+
+    @app.get("/datasets", response_model=list[DatasetCatalogEntry])
+    def datasets(limit: int = 50, offset: int = 0) -> list[DatasetCatalogEntry]:
+        return DatasetCatalog(store.connection).list_datasets(limit=limit, offset=offset)
+
+    @app.get("/datasets/{dataset_id}", response_model=DatasetCatalogEntry)
+    def dataset_entry(dataset_id: str) -> DatasetCatalogEntry:
+        entry = DatasetCatalog(store.connection).get(dataset_id)
+        if entry is None:
+            raise HTTPException(status_code=404, detail=f"unknown dataset {dataset_id}")
+        return entry
 
     @app.get("/quarantine", response_model=Page[QuarantineRecord])
     def quarantine(

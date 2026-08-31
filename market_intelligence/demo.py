@@ -6,7 +6,9 @@ from pathlib import Path
 from .configuration import ProviderCategory, ProviderConfig, QuerySpec
 from .cycle import run_intelligence_cycle
 from .extractors import RuleBasedExtractor
+from .historical import HistoricalDatasetService
 from .models import Document, EventType, SourceMetadata, SourceType
+from .origins import OriginFrequency, generate_origins
 from .providers import FixtureSearchProvider
 from .replay_dataset import ReplayDatasetBuilder
 from .retrieval import MultiProviderRetriever
@@ -70,12 +72,31 @@ def run_offline_demo(output_directory: str | Path) -> dict[str, object]:
             "SYNTHETIC_DEMO_V1",
             git_sha="offline-demo",
         )
+
+        # B3.1.23: the same fixtures through the optimised historical path,
+        # producing a chunked feature matrix, a manifest and a catalog entry.
+        historical = HistoricalDatasetService(store, chunk_size=4)
+        matrix = historical.build(
+            generate_origins(origin, origin + timedelta(hours=11), OriginFrequency.HOURLY),
+            output / "historical-features.parquet",
+            output / "historical-features.manifest.json",
+            {"synthetic-demo": "fixture-v1"},
+            "SYNTHETIC_DEMO_V1",
+            git_sha="offline-demo",
+        )
         return {
             "label": "MARKET INTELLIGENCE / RESEARCH — SYNTHETIC FIXTURES — NOT INVESTMENT ADVICE",
             "run_id": report.run_id,
             "dataset_id": dataset.dataset_id,
             "database": str(database),
             "dataset": str(output / "replay-features.parquet"),
+            "historical_dataset_id": matrix.manifest.dataset_id,
+            "historical_dataset": str(matrix.output_path),
+            "historical_manifest": str(matrix.manifest_path),
+            "historical_rows": matrix.manifest.row_count,
+            "historical_chunks": matrix.chunk_count,
+            "historical_mode": matrix.manifest.mode,
+            "catalog_entries": len(historical.catalog.list_datasets()),
         }
     finally:
         store.close()
