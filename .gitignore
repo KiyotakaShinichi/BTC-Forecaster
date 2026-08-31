@@ -8,3 +8,7 @@ __pycache__/
 # build outputs are reproducible from the manifest and do not belong in git.
 *.csv
 .coverage
+# B4 market-data cache. 28MB of raw third-party quotes: Yahoo's terms do not
+# grant redistribution, and the cache is rebuildable from the run manifest's
+# series fingerprints. Only derived statistics are committed.
+research/market_intelligence/b4/cache/
