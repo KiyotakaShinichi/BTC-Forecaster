@@ -25,10 +25,10 @@ from datetime import timedelta
 from pathlib import Path
 from typing import Any
 
+from profile_replay import BASE, build_fixture
+
 from market_intelligence.services import SnapshotService
 from market_intelligence.storage import IntelligenceStore
-
-from profile_replay import BASE, build_fixture
 
 PROVIDERS = {"benchmark": "v1"}
 CONFIG = "benchmark"

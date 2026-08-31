@@ -123,9 +123,8 @@ class HistoricalDatasetService:
         }
         dataset_id = hashlib.sha256(json.dumps(identity, sort_keys=True).encode()).hexdigest()
 
-        extractor_versions = tuple(
-            sorted({version for snapshot in self._snapshots_for(snapshot_ids) for version in snapshot})
-        )
+        # Batched, not one get_snapshot per origin: see storage.extractor_versions_for.
+        extractor_versions = self.store.extractor_versions_for(snapshot_ids)
 
         entry = build_catalog_entry(
             dataset_id=dataset_id,
@@ -236,15 +235,8 @@ class HistoricalDatasetService:
             resumed_chunks=result.resumed_chunks,
         )
 
-    # -- helpers ----------------------------------------------------------
 
-    def _snapshots_for(self, snapshot_ids: list[str]) -> list[tuple[str, ...]]:
-        versions: list[tuple[str, ...]] = []
-        for snapshot_id in snapshot_ids:
-            snapshot = self.store.get_snapshot(snapshot_id)
-            if snapshot is not None:
-                versions.append(snapshot.extractor_versions)
-        return versions
+# -- helpers --------------------------------------------------------------
 
 
 def _origins_between(start: datetime, end: datetime, frequency: str) -> list[datetime]:

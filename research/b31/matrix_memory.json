@@ -1,0 +1,66 @@
+{
+  "chunk_sweep": [
+    {
+      "records": 1000,
+      "origins": 1000,
+      "chunk_size": 50,
+      "chunks": 20,
+      "rows": 1000,
+      "wall_ms": 29171.13590000008,
+      "peak_mb": 8.59440279006958,
+      "output_kb": 8.3828125
+    },
+    {
+      "records": 1000,
+      "origins": 1000,
+      "chunk_size": 200,
+      "chunks": 5,
+      "rows": 1000,
+      "wall_ms": 26217.473249998875,
+      "peak_mb": 28.52670955657959,
+      "output_kb": 8.3828125
+    },
+    {
+      "records": 1000,
+      "origins": 1000,
+      "chunk_size": 1000,
+      "chunks": 1,
+      "rows": 1000,
+      "wall_ms": 29510.21320000291,
+      "peak_mb": 135.0380072593689,
+      "output_kb": 8.3828125
+    }
+  ],
+  "origin_sweep": [
+    {
+      "records": 1000,
+      "origins": 250,
+      "chunk_size": 200,
+      "chunks": 2,
+      "rows": 250,
+      "wall_ms": 8596.730749999551,
+      "peak_mb": 27.900536060333252,
+      "output_kb": 3.9775390625
+    },
+    {
+      "records": 1000,
+      "origins": 500,
+      "chunk_size": 200,
+      "chunks": 3,
+      "rows": 500,
+      "wall_ms": 15328.294999999343,
+      "peak_mb": 28.061720848083496,
+      "output_kb": 5.4453125
+    },
+    {
+      "records": 1000,
+      "origins": 1000,
+      "chunk_size": 200,
+      "chunks": 5,
+      "rows": 1000,
+      "wall_ms": 30890.370900000562,
+      "peak_mb": 28.52922487258911,
+      "output_kb": 8.3828125
+    }
+  ]
+}

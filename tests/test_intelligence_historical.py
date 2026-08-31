@@ -12,6 +12,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Iterator
 
+import duckdb
 import pytest
 
 from market_intelligence.errors import ReplayIntegrityError
@@ -547,6 +548,57 @@ def _sample_entry():
     )
 
 
+class TestTimezoneIndependence:
+    """A dataset must not depend on the timezone of the machine that built it.
+
+    DuckDB renders TIMESTAMPTZ in the session timezone, which makes a read-back
+    *look* local and invites the assumption that the bytes are local too. If they
+    were, the same build on two machines would produce two file hashes and two
+    dataset ids, and reproducibility would fail in a way that looks like data
+    corruption.
+    """
+
+    def test_the_dataset_id_and_file_hash_do_not_move_with_the_session_timezone(
+        self, store: IntelligenceStore, tmp_path: Path
+    ) -> None:
+        results = {}
+        for zone in ("UTC", "Asia/Manila", "America/New_York"):
+            store.connection.execute(f"SET TimeZone='{zone}'")
+            result = HistoricalDatasetService(store, chunk_size=5).build(
+                hourly(11),
+                tmp_path / f"{zone.replace('/', '_')}.parquet",
+                tmp_path / f"{zone.replace('/', '_')}.json",
+                PROVIDERS,
+                CONFIG,
+                git_sha="test",
+            )
+            results[zone] = (result.manifest.dataset_id, result.manifest.file_hash)
+        store.connection.execute("SET TimeZone='UTC'")
+        assert len(set(results.values())) == 1, results
+
+    def test_origins_round_trip_as_the_same_instant(
+        self, store: IntelligenceStore, tmp_path: Path
+    ) -> None:
+        origins = hourly(5)
+        result = HistoricalDatasetService(store, chunk_size=3).build(
+            origins, tmp_path / "tz.parquet", tmp_path / "tz.json", PROVIDERS, CONFIG, git_sha="test"
+        )
+        path = str(result.output_path).replace("\\", "/")
+        connection = duckdb.connect()
+        try:
+            for zone in ("UTC", "Asia/Manila"):
+                connection.execute(f"SET TimeZone='{zone}'")
+                epochs = [
+                    row[0]
+                    for row in connection.execute(
+                        f"SELECT epoch(forecast_origin) FROM read_parquet('{path}') ORDER BY forecast_origin"
+                    ).fetchall()
+                ]
+                assert epochs == [origin.timestamp() for origin in origins], zone
+        finally:
+            connection.close()
+
+
 class TestQueryComplexityRegression:
     """B3.1.20. A contract, not an exact count: implementation details may
     legitimately change, but bulk replay must not return to one history scan
@@ -571,6 +623,68 @@ class TestQueryComplexityRegression:
         # additive difference is fine (chunking, dedupe checks); proportional
         # growth means the per-origin query pattern came back.
         assert counts[24] <= counts[6] + 4, counts
+
+    def test_the_whole_service_does_not_query_once_per_origin(
+        self, store: IntelligenceStore, tmp_path: Path
+    ) -> None:
+        """The builder was already covered; the service around it was not.
+
+        A memory benchmark caught this: collecting extractor versions with one
+        ``get_snapshot`` per origin reintroduced exactly the per-origin query
+        pattern bulk replay removed, downstream of the assertion above.
+        """
+        counts = {}
+        for origin_count in (6, 24):
+            counter = _CountingConnection(store.connection)
+            store.connection = counter  # type: ignore[assignment]
+            try:
+                HistoricalDatasetService(store, chunk_size=100).build(
+                    hourly(origin_count - 1),
+                    tmp_path / f"s{origin_count}.parquet",
+                    tmp_path / f"s{origin_count}.manifest.json",
+                    PROVIDERS,
+                    CONFIG,
+                    git_sha="test",
+                )
+            finally:
+                store.connection = counter.inner  # type: ignore[assignment]
+            counts[origin_count] = counter.execute_count
+
+        assert counts[24] <= counts[6] + 4, counts
+
+    def test_batched_extractor_versions_match_the_naive_union(
+        self, store: IntelligenceStore, tmp_path: Path
+    ) -> None:
+        """The optimisation must not change the recorded provenance."""
+        result = HistoricalDatasetService(store, chunk_size=3).build(
+            hourly(11),
+            tmp_path / "m.parquet",
+            tmp_path / "m.manifest.json",
+            PROVIDERS,
+            CONFIG,
+            git_sha="test",
+        )
+        snapshot_ids = list(result.manifest.snapshot_fingerprints)
+        naive = sorted(
+            {
+                version
+                for snapshot_id in snapshot_ids
+                for version in (store.get_snapshot(snapshot_id) or _NO_SNAPSHOT).extractor_versions
+            }
+        )
+        assert list(store.extractor_versions_for(snapshot_ids)) == naive
+        assert list(result.manifest.extractor_versions) == naive
+        assert naive, "the fixture should produce at least one extractor version"
+
+    def test_unknown_snapshot_ids_are_skipped_not_fatal(self, store: IntelligenceStore) -> None:
+        assert store.extractor_versions_for(["0" * 64]) == ()
+
+
+class _NoSnapshot:
+    extractor_versions: tuple[str, ...] = ()
+
+
+_NO_SNAPSHOT = _NoSnapshot()
 
 
 class _CountingConnection:

@@ -224,6 +224,33 @@ class IntelligenceStore:
         row = self.connection.execute("SELECT payload FROM snapshots WHERE snapshot_id=?", [snapshot_id]).fetchone()
         return IntelligenceSnapshot.model_validate(json.loads(row[0])) if row else None
 
+    def extractor_versions_for(self, snapshot_ids: Sequence[str]) -> tuple[str, ...]:
+        """Union of extractor versions across many snapshots, in batches.
+
+        The obvious spelling -- ``get_snapshot`` in a loop -- is one round trip
+        *and* one full payload parse per origin, which is how a long historical
+        build quietly reacquires the per-origin query pattern bulk replay was
+        built to remove. Extracting just the versions array server-side keeps the
+        parsed JSON small, and batching keeps the statement count sub-proportional.
+
+        Missing ids are skipped rather than raising: callers that need existence
+        guarantees have already checked, and a dataset should not fail to record
+        its provenance because one snapshot was pruned.
+        """
+        versions: set[str] = set()
+        unique = list(dict.fromkeys(snapshot_ids))
+        for start in range(0, len(unique), SNAPSHOT_INSERT_CHUNK):
+            batch = unique[start : start + SNAPSHOT_INSERT_CHUNK]
+            placeholders = ", ".join(["?"] * len(batch))
+            rows = self.connection.execute(
+                f"SELECT json_extract(payload, '$.extractor_versions') FROM snapshots "
+                f"WHERE snapshot_id IN ({placeholders})",
+                list(batch),
+            ).fetchall()
+            for row in rows:
+                versions.update(json.loads(row[0]))
+        return tuple(sorted(versions))
+
     def verify_snapshot(
         self, snapshot_id: str, configuration_fingerprint: str, feature_contract_version: str = FEATURE_CONTRACT_VERSION
     ) -> IntelligenceSnapshot:

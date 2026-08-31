@@ -1,0 +1,55 @@
+[
+  {
+    "records": 1000,
+    "origins": 100,
+    "reference_ms_median": 1857.2849999982282,
+    "reference_ms_runs": [
+      1815.871299993887,
+      2329.621600001701,
+      1857.2849999982282
+    ],
+    "optimized_ms_median": 1113.1787000049371,
+    "optimized_ms_runs": [
+      2144.48380000249,
+      789.3402000045171,
+      1113.1787000049371
+    ],
+    "speedup": 1.668451794837604,
+    "origins_per_second": 89.83283636271202,
+    "optimized_peak_mb": 14.443873405456543
+  },
+  {
+    "records": 1000,
+    "origins": 1000,
+    "reference_ms_median": 17282.44260000065,
+    "reference_ms_runs": [
+      17282.44260000065,
+      19388.65210000222,
+      16856.59399999713
+    ],
+    "optimized_ms_median": 7204.747399999178,
+    "optimized_ms_runs": [
+      15865.746099996613,
+      6971.398300003784,
+      7204.747399999178
+    ],
+    "speedup": 2.398757602522279,
+    "origins_per_second": 138.7973712999451,
+    "optimized_peak_mb": 134.88997173309326
+  },
+  {
+    "records": 1000,
+    "origins": 10000,
+    "reference_ms_median": NaN,
+    "reference_ms_runs": [],
+    "optimized_ms_median": 111898.83800000098,
+    "optimized_ms_runs": [
+      198116.2511999937,
+      111898.83800000098,
+      111638.21329999337
+    ],
+    "speedup": NaN,
+    "origins_per_second": 89.36643292041971,
+    "optimized_peak_mb": 1339.9340705871582
+  }
+]

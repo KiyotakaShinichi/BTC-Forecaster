@@ -1,4 +1,10 @@
+# Must stay UTF-8. Git reads this file as bytes, so a UTF-16 save makes every
+# rule below silently inert -- it looks correct in an editor and ignores nothing.
+# Verify changes with `git check-ignore -v <path>`, not by reading it.
 __pycache__/
 *.pyc
 *.png
+# Generated datasets. `btc-intel replay-dataset --format csv` writes here too:
+# build outputs are reproducible from the manifest and do not belong in git.
 *.csv
+.coverage

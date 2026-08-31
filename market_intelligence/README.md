@@ -58,6 +58,30 @@ The RSS adapter is for operator-verified public feeds. The generic JSON adapter 
 
 The manually defined gold labels in `gold_fixtures.json` exercise regulation, monetary policy, ETF, exchange incident, whale, irrelevant, ambiguous social, duplicate, and multi-source cases. `evaluation.py` compares extraction quality only; its outputs are not forecast weights, and the small fixture set is not evidence of production accuracy.
 
+## B3.1 historical feature materialisation
+
+`replay-dataset` builds a point-in-time-safe intelligence feature matrix over a
+generated origin schedule, in bounded resumable chunks, and registers it in an
+immutable dataset catalog:
+
+```powershell
+python btc-intel.py --db data/intelligence.duckdb replay-dataset --start 2026-01-01T00:00:00Z --end 2026-03-01T00:00:00Z --frequency HOURLY --output data/features.parquet --manifest data/features.manifest.json --config-fingerprint PROD_V1
+python btc-intel.py --db data/intelligence.duckdb replay-dataset --extend <dataset_id> --start 2026-03-01T00:00:00Z --end 2026-04-01T00:00:00Z --output data/features-v2.parquet --manifest data/features-v2.manifest.json --config-fingerprint PROD_V1
+python btc-intel.py --db data/intelligence.duckdb catalog
+```
+
+The same `HistoricalDatasetService` backs `POST /replay/dataset`, `GET /datasets`
+and `GET /datasets/{dataset_id}`, so the CLI and API cannot drift; a test asserts
+it. An interrupted build resumes from the first incomplete chunk, and the
+manifest is written last, so partial output is never mistaken for a dataset.
+Extension fails closed on a changed feature contract, configuration, cadence,
+schedule continuity, or source history.
+
+`--mode REFERENCE` runs the pre-optimisation engine, which is retained as the
+correctness oracle. Both modes produce the same dataset id: mode is provenance,
+not semantics. Measurements and the decisions they drove are in
+`research/b31/PROFILE.md` and `research/b31/PERFORMANCE.md`.
+
 ## B3 service and replay datasets
 
 The import-safe FastAPI factory, SQL-filtered read repository, schema-v3 migration, replay dataset builder, offline demo, dashboard, observability contracts, static checks, and service operations are documented in `docs/market-intelligence-service.md`. Representative local timings are recorded in `docs/market-intelligence-performance.md`.

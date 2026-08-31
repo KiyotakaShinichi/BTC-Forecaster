@@ -1,0 +1,36 @@
+{
+  "chunk_sweep": [
+    {
+      "records": 1000,
+      "origins": 1000,
+      "chunk_size": 200,
+      "chunks": 5,
+      "rows": 1000,
+      "wall_ms": 29101.603000002797,
+      "peak_mb": 28.53567886352539,
+      "output_kb": 8.3828125
+    }
+  ],
+  "origin_sweep": [
+    {
+      "records": 1000,
+      "origins": 1000,
+      "chunk_size": 200,
+      "chunks": 5,
+      "rows": 1000,
+      "wall_ms": 18345.300699998916,
+      "peak_mb": 28.52130889892578,
+      "output_kb": 8.3828125
+    },
+    {
+      "records": 1000,
+      "origins": 10000,
+      "chunk_size": 200,
+      "chunks": 50,
+      "rows": 10000,
+      "wall_ms": 263686.12980000034,
+      "peak_mb": 34.87447643280029,
+      "output_kb": 62.18359375
+    }
+  ]
+}

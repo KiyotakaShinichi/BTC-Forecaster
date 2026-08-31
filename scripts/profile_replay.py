@@ -173,7 +173,7 @@ def measure(record_count: int, origin_count: int, *, profile: bool) -> dict[str,
             stats.sort_stats("tottime").print_stats(22)
             result["profile_tottime"] = stream.getvalue()
 
-        store.connection = counter._inner  # type: ignore[assignment]
+        store.connection = counter._inner
         store.close()
         return result
 
