@@ -1,0 +1,113 @@
+{
+  "created_at": "2026-09-01T13:35:24.773686Z",
+  "event_counts": {
+    "entity_musk": 0,
+    "entity_powell": 0,
+    "entity_saylor": 0,
+    "entity_sec": 0,
+    "entity_statement": 0,
+    "entity_trump": 0,
+    "etf_flow": 0,
+    "exchange_incident": 0,
+    "geopolitical_event": 0,
+    "institutional_adoption": 0,
+    "liquidity_event": 0,
+    "macro_shock": 0,
+    "monetary_policy": 0,
+    "regulation": 0,
+    "security_incident": 0,
+    "whale_custody": 0,
+    "whale_exchange_inflow": 0,
+    "whale_exchange_outflow": 0,
+    "whale_internal_transfer": 0,
+    "whale_unknown_context": 0
+  },
+  "evidence_tier_counts": {
+    "PIT_VALIDATED": 21,
+    "RETROSPECTIVE_ONLY": 0,
+    "UNKNOWN": 20
+  },
+  "feature_contract_version": "market-intelligence-features-v1",
+  "intelligence_dataset_id": null,
+  "intelligence_row_count": 0,
+  "manifest_hash": "11bc97ed1fc7a1b1bf52bfd62ff2e07c1083e3768888e769725e1a2ef597250e",
+  "market_series_fingerprints": {
+    "bnb_usd_daily": "278c558f655374dd0d8400afab847112880b31fed2445d421b18d9d96f40947a",
+    "btc_usd_daily": "37809c95533cbefecb88693b773e06532eb5e4aec2e0fa64a61f6e6b3de0b2d9",
+    "dxy_daily": "db14dcc169527b6bcd9f6d46bdb5d4ea73f4057339d048b36751d229d0b1a427",
+    "eth_usd_daily": "f3135b5270fee9caa46d242ce4443c4ee488a72eff2142206f777880831cc0f7",
+    "gold_daily": "7bb11cd5cba79fd25230de89815a07a62804988ab2ee53f02d8042b60dde83df",
+    "ltc_usd_daily": "65061e660bd4146a57181ebfc062148291e2378843acfbd028bc8e8de06ef8ac",
+    "nasdaq_daily": "8eae71210e20fda535343a732892a5cf7c155d692dab047f3db86f5c9c63e5b5",
+    "oil_daily": "1f724f354bc3f5f3fe8390f19943be7ef9c770a38a12f716fe1632d08d34204d",
+    "sp500_daily": "cd80dc00ba49f960c12d0e8b1836f47fb1a9953579384fe255fd8d0548d1d3e4",
+    "ust10y_daily": "f78cac81a80b906ee08bd20ddfdc42f4ab2e010334be913c397a3d8944cc087c",
+    "vix_daily": "659e37bec41487e070f0c9fcf064a31a9a26ec66fe84a7507b7b3d417723a2ca",
+    "xrp_usd_daily": "178715479f4f4d1466714503347faec0c80f8ff87a6b0d57d452e9ffa9eb9ac2"
+  },
+  "notes": [
+    "0 intelligence events available in the store",
+    "the last 30% of the history spans 949 days, at or above the 180-day minimum for a useful holdout"
+  ],
+  "origin_count": 3166,
+  "preregistration_hash": "389aa76f703d125412efc29c6f678e76e3267772f8ab99e60f6c137ea3794aa8",
+  "result_hashes": {
+    "corrected_tests.json": "ffc525b61753fbe1f02b91a3eeb757f11cd59719ac4e72199f3cc01a31c7ee00",
+    "cross_asset_lead_lag.json": "27a591540a9b0b9e37739ed9281b5c06938b71427f8eaa7a5fe1e430c4209838",
+    "event_studies.json": "5ddba817417e558abc94abb05890ada9e54dc38045ef85c642472e68365a910c",
+    "granger.json": "b05f3f9ebda7f2d4bc9f1ed2bdeb2d93538f01838203862bff112de2d8ba95a5",
+    "preregistration.json": "389aa76f703d125412efc29c6f678e76e3267772f8ab99e60f6c137ea3794aa8",
+    "signal_decay.json": "fa3f730f3414d69ab25e4fa507f66aae954c9f6b093c3deef9e84ad8fce45ae5",
+    "signal_registry.json": "ce84c31da3701c821735aaa7b911f3e8859d4dd54c20c47583c186ca6e2f2a09",
+    "target_manifest.json": "60169f25012abd1526a7974d38823cfbcacbc67323d54d185c4d3c46d7b167bb",
+    "targets.json": "7748efb405bfcca340b650549da87219f2a7fed899546f6956207dfbd83ad999"
+  },
+  "run_contract_version": "b4-run-v1",
+  "run_id": "b4-3980bac0b72aeaa0",
+  "software_versions": {
+    "duckdb": "1.5.5",
+    "pydantic": "2.12.5",
+    "python": "3.14.3",
+    "yfinance": "1.2.0"
+  },
+  "source_git_sha": "a816a3c6ecf22791924725a3e5613a51278d8140",
+  "study_spec_hashes": {
+    "entity_musk": "9e2fb6158f822c4675b272c06a055eaa41edb5661dd1da4b5022f5ab0b89045f",
+    "entity_powell": "22a7c1e84b98176c380fc63cf07d671b24aca811b0efa5be686c65f37a9db830",
+    "entity_saylor": "59fc7fa2388bad72d64c98e6ff3990c005ae0535bb3ce6c71e3a4a1b16da678e",
+    "entity_sec": "0a6e8125d32917b11cb2327a4a51f12bb874788da6ad6dcddd725745fbe7daf0",
+    "entity_statement": "1069ebebee8cbd59cbe34f3c12ad06e1a95454a3a04fcaa3a0b44e25d88aba51",
+    "entity_trump": "885ed36c0faead9f2a3127ea0b9577f7e71c6d50e84ca22ac505a27d35442a59",
+    "etf_flow": "b1ee1de428d039906d355521d34ac95f7c5f25e9e9cb06a0910bf8e911b54e94",
+    "exchange_incident": "9fb944579a811ec51cc764d9aa4768e5e15f0bcbc3a365602f89ed5f63793d53",
+    "geopolitical_event": "cb593cda5587a91c25b82fa71ed9ecaaffbe81a6f30e5ed5ec3e8c24ebb79dc8",
+    "institutional_adoption": "f5ad5eff2119f5c6ccb4da90c28b8897e24e4ae75c69f635cfd84b4e4b024da0",
+    "liquidity_event": "906d464bdd609d7e04259132c3d4e0cccb02f813b8b4e039a694fe1a4205b31b",
+    "macro_shock": "26ae7167ca95d44cf8d4bea20e5543d88cd6dcb39da8058ae26d5385b0c88406",
+    "monetary_policy": "6030072d64a7714b23d534fe23440237560a8835c88a91a6d33b1ab4efa00563",
+    "regulation": "808a3ab5f75e2ee1fc6e50aa32b8ee6c0ba45f8b93adbfff9e75c5e177c6de0b",
+    "security_incident": "9e41e78912c4fc9d64f770fd271ad76bcbfa7b2dc442bf82eb5b71f866b9039f",
+    "whale_custody": "cc71ab65707a5b3cdb3ed4b2eb9a9f937c7ed0c09057886a1406eb25b21d432c",
+    "whale_exchange_inflow": "857128552641b31012d128e7b1927a96fe548958e4451d90cf9d37c9a116359f",
+    "whale_exchange_outflow": "794b5828cc1aeba5d750f64f2208d49f326f8b42f8b37567539eb83161fcc0c1",
+    "whale_internal_transfer": "9a14d48f1ddafd015864223f2f46e107d8c4510ee224e09bf14d865401e2cbb1",
+    "whale_unknown_context": "d14ae53c7b719717cf9a5c5de388c4a5129a67f31d703cbe83b296ac92d9dfc9"
+  },
+  "target_contract_version": "b4-targets-v1",
+  "target_dataset_fingerprint": "37809c95533cbefecb88693b773e06532eb5e4aec2e0fa64a61f6e6b3de0b2d9",
+  "telemetry": {
+    "event_count": 0,
+    "market_bar_count": 109292,
+    "origin_count": 3166,
+    "peak_python_mb": 75.93873500823975,
+    "stage_seconds": {
+      "benchmark": 0.6773853000013332,
+      "cross_asset": 1538.0806233000003,
+      "event_studies": 0.048032300001068506,
+      "granger": 40.427436099998886,
+      "inference": 0.010738500001025386,
+      "stability": 100.91277560000162,
+      "targets": 8.313460000001214
+    }
+  }
+}

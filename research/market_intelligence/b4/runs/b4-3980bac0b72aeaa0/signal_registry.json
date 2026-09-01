@@ -1,0 +1,2008 @@
+{
+  "run_id": "b4-3980bac0b72aeaa0",
+  "created_at": "2026-09-01T13:34:41.573222Z",
+  "preregistration_hash": "389aa76f703d125412efc29c6f678e76e3267772f8ab99e60f6c137ea3794aa8",
+  "candidates": [
+    {
+      "signal_id": "dxy_daily:LAGGED_RETURN:1d",
+      "definition": "cross_asset_lead_lag: dxy_daily:LAGGED_RETURN:1d against BTC forward return",
+      "source_domain": "CROSS_ASSET",
+      "feature_version": "b4-crossasset-v1",
+      "sample_count": 2177,
+      "effective_sample_count": 2177,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": -0.0006268936876996295,
+        "3d": -0.0010204965691860883,
+        "7d": 0.0008736044233058346
+      },
+      "intervals": {
+        "1d": [
+          -0.0022458547733708845,
+          0.0007260745176671207
+        ],
+        "3d": [
+          -0.003563025109653095,
+          0.0010069401270474095
+        ],
+        "7d": [
+          -0.0032247414377528155,
+          0.004636127550040553
+        ]
+      },
+      "q_values": {
+        "1d": 0.8892692307692307,
+        "3d": 0.8892692307692307,
+        "7d": 0.8892692307692307
+      },
+      "evidence": {
+        "1d": "NO_EVIDENCE",
+        "3d": "NO_EVIDENCE",
+        "7d": "NO_EVIDENCE"
+      },
+      "stability_verdict": "UNSTABLE — the effect changes sign between periods",
+      "concentration_verdict": "FRAGILE — removing one observation moves or flips the observation estimate",
+      "largest_source_share": null,
+      "pit_status": "PIT_VALIDATED",
+      "multiple_testing_family": "cross_asset_lead_lag",
+      "decision": "REJECT",
+      "decision_reasons": [
+        "q=0.8893 exceeds the preregistered 0.10",
+        "the interval [-0.00225, 0.00073] contains zero",
+        "the estimate is not stable across periods",
+        "removing a single observation moves or flips the estimate"
+      ],
+      "notes": ""
+    },
+    {
+      "signal_id": "dxy_daily:LAGGED_RETURN:3d",
+      "definition": "cross_asset_lead_lag: dxy_daily:LAGGED_RETURN:3d against BTC forward return",
+      "source_domain": "CROSS_ASSET",
+      "feature_version": "b4-crossasset-v1",
+      "sample_count": 3104,
+      "effective_sample_count": 3104,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": -0.0005021243109504676,
+        "3d": 0.0009997167169445756,
+        "7d": 0.0029314411571873204
+      },
+      "intervals": {
+        "1d": [
+          -0.001653428484673058,
+          0.0004995059919013499
+        ],
+        "3d": [
+          -0.001909854169769549,
+          0.0038981544910583667
+        ],
+        "7d": [
+          -0.0023431647040915264,
+          0.008187808413325101
+        ]
+      },
+      "q_values": {
+        "1d": 0.8892692307692307,
+        "3d": 0.8892692307692307,
+        "7d": 0.8892692307692307
+      },
+      "evidence": {
+        "1d": "NO_EVIDENCE",
+        "3d": "NO_EVIDENCE",
+        "7d": "NO_EVIDENCE"
+      },
+      "stability_verdict": "UNSTABLE — the effect changes sign between periods",
+      "concentration_verdict": "DIVERSE — no single observation contributes half the observations, and no single observation drives the estimate",
+      "largest_source_share": null,
+      "pit_status": "PIT_VALIDATED",
+      "multiple_testing_family": "cross_asset_lead_lag",
+      "decision": "REJECT",
+      "decision_reasons": [
+        "q=0.8893 exceeds the preregistered 0.10",
+        "the interval [-0.00165, 0.00050] contains zero",
+        "the estimate is not stable across periods"
+      ],
+      "notes": ""
+    },
+    {
+      "signal_id": "dxy_daily:REALIZED_VOLATILITY:7d",
+      "definition": "cross_asset_lead_lag: dxy_daily:REALIZED_VOLATILITY:7d against BTC forward return",
+      "source_domain": "CROSS_ASSET",
+      "feature_version": "b4-crossasset-v1",
+      "sample_count": 3163,
+      "effective_sample_count": 3163,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": -0.0008590835024894319,
+        "3d": -0.002019233459657361,
+        "7d": -0.0013561901532025767
+      },
+      "intervals": {
+        "1d": [
+          -0.002206342656661701,
+          0.0003785825692285025
+        ],
+        "3d": [
+          -0.005850631680684941,
+          0.001435279340959834
+        ],
+        "7d": [
+          -0.009000425624398553,
+          0.004968328292376422
+        ]
+      },
+      "q_values": {
+        "1d": 0.8892692307692307,
+        "3d": 0.8892692307692307,
+        "7d": 0.8892692307692307
+      },
+      "evidence": {
+        "1d": "NO_EVIDENCE",
+        "3d": "NO_EVIDENCE",
+        "7d": "NO_EVIDENCE"
+      },
+      "stability_verdict": "UNSTABLE — the effect changes sign between periods",
+      "concentration_verdict": "FRAGILE — removing one observation moves or flips the observation estimate",
+      "largest_source_share": null,
+      "pit_status": "PIT_VALIDATED",
+      "multiple_testing_family": "cross_asset_lead_lag",
+      "decision": "REJECT",
+      "decision_reasons": [
+        "q=0.8893 exceeds the preregistered 0.10",
+        "the interval [-0.00221, 0.00038] contains zero",
+        "the estimate is not stable across periods",
+        "removing a single observation moves or flips the estimate"
+      ],
+      "notes": ""
+    },
+    {
+      "signal_id": "gold_daily:LAGGED_RETURN:1d",
+      "definition": "cross_asset_lead_lag: gold_daily:LAGGED_RETURN:1d against BTC forward return",
+      "source_domain": "CROSS_ASSET",
+      "feature_version": "b4-crossasset-v1",
+      "sample_count": 2176,
+      "effective_sample_count": 2176,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": 0.0001554897836468954,
+        "3d": 0.0004433401489041172,
+        "7d": -0.002197289660537591
+      },
+      "intervals": {
+        "1d": [
+          -0.0010073948777643573,
+          0.0014491510214984576
+        ],
+        "3d": [
+          -0.0018133881738470025,
+          0.002726151042138496
+        ],
+        "7d": [
+          -0.005718775079019203,
+          0.0016131078478471503
+        ]
+      },
+      "q_values": {
+        "1d": 0.9406551724137932,
+        "3d": 0.8892692307692307,
+        "7d": 0.8892692307692307
+      },
+      "evidence": {
+        "1d": "NO_EVIDENCE",
+        "3d": "NO_EVIDENCE",
+        "7d": "NO_EVIDENCE"
+      },
+      "stability_verdict": "UNSTABLE — the effect changes sign between periods",
+      "concentration_verdict": "DIVERSE — no single observation contributes half the observations, and no single observation drives the estimate",
+      "largest_source_share": null,
+      "pit_status": "PIT_VALIDATED",
+      "multiple_testing_family": "cross_asset_lead_lag",
+      "decision": "REJECT",
+      "decision_reasons": [
+        "q=0.8893 exceeds the preregistered 0.10",
+        "the interval [-0.00181, 0.00273] contains zero",
+        "the estimate is not stable across periods"
+      ],
+      "notes": ""
+    },
+    {
+      "signal_id": "gold_daily:LAGGED_RETURN:3d",
+      "definition": "cross_asset_lead_lag: gold_daily:LAGGED_RETURN:3d against BTC forward return",
+      "source_domain": "CROSS_ASSET",
+      "feature_version": "b4-crossasset-v1",
+      "sample_count": 3103,
+      "effective_sample_count": 3103,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": 0.00018873563040340343,
+        "3d": -0.0008978836465263622,
+        "7d": -0.0033879623826271166
+      },
+      "intervals": {
+        "1d": [
+          -0.0008874765760791319,
+          0.001321840234969642
+        ],
+        "3d": [
+          -0.0037356069878256813,
+          0.0018986361864602155
+        ],
+        "7d": [
+          -0.008912650767339658,
+          0.0015880763405201222
+        ]
+      },
+      "q_values": {
+        "1d": 0.8892692307692307,
+        "3d": 0.8892692307692307,
+        "7d": 0.8892692307692307
+      },
+      "evidence": {
+        "1d": "NO_EVIDENCE",
+        "3d": "NO_EVIDENCE",
+        "7d": "NO_EVIDENCE"
+      },
+      "stability_verdict": "UNSTABLE — the effect changes sign between periods",
+      "concentration_verdict": "DIVERSE — no single observation contributes half the observations, and no single observation drives the estimate",
+      "largest_source_share": null,
+      "pit_status": "PIT_VALIDATED",
+      "multiple_testing_family": "cross_asset_lead_lag",
+      "decision": "REJECT",
+      "decision_reasons": [
+        "q=0.8893 exceeds the preregistered 0.10",
+        "the interval [-0.00089, 0.00132] contains zero",
+        "the estimate is not stable across periods"
+      ],
+      "notes": ""
+    },
+    {
+      "signal_id": "gold_daily:REALIZED_VOLATILITY:7d",
+      "definition": "cross_asset_lead_lag: gold_daily:REALIZED_VOLATILITY:7d against BTC forward return",
+      "source_domain": "CROSS_ASSET",
+      "feature_version": "b4-crossasset-v1",
+      "sample_count": 3163,
+      "effective_sample_count": 3163,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": -0.00032368991281451706,
+        "3d": -0.0011830376382125094,
+        "7d": -0.0014975204286275625
+      },
+      "intervals": {
+        "1d": [
+          -0.001421282467221261,
+          0.0008559031976223467
+        ],
+        "3d": [
+          -0.0040958883277854175,
+          0.001946701282651841
+        ],
+        "7d": [
+          -0.007574972870392929,
+          0.003957109444959527
+        ]
+      },
+      "q_values": {
+        "1d": 0.8892692307692307,
+        "3d": 0.8892692307692307,
+        "7d": 0.8892692307692307
+      },
+      "evidence": {
+        "1d": "NO_EVIDENCE",
+        "3d": "NO_EVIDENCE",
+        "7d": "NO_EVIDENCE"
+      },
+      "stability_verdict": "UNSTABLE — the effect changes sign between periods",
+      "concentration_verdict": "DIVERSE — no single observation contributes half the observations, and no single observation drives the estimate",
+      "largest_source_share": null,
+      "pit_status": "PIT_VALIDATED",
+      "multiple_testing_family": "cross_asset_lead_lag",
+      "decision": "REJECT",
+      "decision_reasons": [
+        "q=0.8893 exceeds the preregistered 0.10",
+        "the interval [-0.00142, 0.00086] contains zero",
+        "the estimate is not stable across periods"
+      ],
+      "notes": ""
+    },
+    {
+      "signal_id": "oil_daily:LAGGED_RETURN:1d",
+      "definition": "cross_asset_lead_lag: oil_daily:LAGGED_RETURN:1d against BTC forward return",
+      "source_domain": "CROSS_ASSET",
+      "feature_version": "b4-crossasset-v1",
+      "sample_count": 2175,
+      "effective_sample_count": 2175,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": -0.0006476828455892479,
+        "3d": 0.0009779602506120638,
+        "7d": -1.726715806859504e-6
+      },
+      "intervals": {
+        "1d": [
+          -0.0020057217145101505,
+          0.0010978916968406023
+        ],
+        "3d": [
+          -0.001554154218863929,
+          0.0035424141070939086
+        ],
+        "7d": [
+          -0.0036868339217449,
+          0.004180513611444425
+        ]
+      },
+      "q_values": {
+        "1d": 0.8892692307692307,
+        "3d": 0.8892692307692307,
+        "7d": 0.992
+      },
+      "evidence": {
+        "1d": "NO_EVIDENCE",
+        "3d": "NO_EVIDENCE",
+        "7d": "NO_EVIDENCE"
+      },
+      "stability_verdict": "UNSTABLE — the effect changes sign between periods",
+      "concentration_verdict": "FRAGILE — removing one observation moves or flips the observation estimate",
+      "largest_source_share": null,
+      "pit_status": "PIT_VALIDATED",
+      "multiple_testing_family": "cross_asset_lead_lag",
+      "decision": "REJECT",
+      "decision_reasons": [
+        "q=0.8893 exceeds the preregistered 0.10",
+        "the interval [-0.00201, 0.00110] contains zero",
+        "the estimate is not stable across periods",
+        "removing a single observation moves or flips the estimate"
+      ],
+      "notes": ""
+    },
+    {
+      "signal_id": "oil_daily:LAGGED_RETURN:3d",
+      "definition": "cross_asset_lead_lag: oil_daily:LAGGED_RETURN:3d against BTC forward return",
+      "source_domain": "CROSS_ASSET",
+      "feature_version": "b4-crossasset-v1",
+      "sample_count": 3102,
+      "effective_sample_count": 3102,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": 0.00048732135717503627,
+        "3d": 0.0007520127923893872,
+        "7d": -0.0013155057227832267
+      },
+      "intervals": {
+        "1d": [
+          -0.0006467275988399373,
+          0.0018172843045260526
+        ],
+        "3d": [
+          -0.0020159627128875863,
+          0.003964851212777871
+        ],
+        "7d": [
+          -0.005956039342041895,
+          0.003720371312390303
+        ]
+      },
+      "q_values": {
+        "1d": 0.8892692307692307,
+        "3d": 0.8892692307692307,
+        "7d": 0.8892692307692307
+      },
+      "evidence": {
+        "1d": "NO_EVIDENCE",
+        "3d": "NO_EVIDENCE",
+        "7d": "NO_EVIDENCE"
+      },
+      "stability_verdict": "UNSTABLE — the effect changes sign between periods",
+      "concentration_verdict": "FRAGILE — removing one observation moves or flips the observation estimate",
+      "largest_source_share": null,
+      "pit_status": "PIT_VALIDATED",
+      "multiple_testing_family": "cross_asset_lead_lag",
+      "decision": "REJECT",
+      "decision_reasons": [
+        "q=0.8893 exceeds the preregistered 0.10",
+        "the interval [-0.00065, 0.00182] contains zero",
+        "the estimate is not stable across periods",
+        "removing a single observation moves or flips the estimate"
+      ],
+      "notes": ""
+    },
+    {
+      "signal_id": "oil_daily:REALIZED_VOLATILITY:7d",
+      "definition": "cross_asset_lead_lag: oil_daily:REALIZED_VOLATILITY:7d against BTC forward return",
+      "source_domain": "CROSS_ASSET",
+      "feature_version": "b4-crossasset-v1",
+      "sample_count": 3163,
+      "effective_sample_count": 3163,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": 0.0003417466699947652,
+        "3d": 0.0015560591242340632,
+        "7d": 0.00405354780673262
+      },
+      "intervals": {
+        "1d": [
+          -0.0018674478371927198,
+          0.0017077537879063855
+        ],
+        "3d": [
+          -0.004364805929585503,
+          0.004763040039191116
+        ],
+        "7d": [
+          -0.0047790576578940645,
+          0.009523658146197682
+        ]
+      },
+      "q_values": {
+        "1d": 0.8892692307692307,
+        "3d": 0.8892692307692307,
+        "7d": 0.8892692307692307
+      },
+      "evidence": {
+        "1d": "NO_EVIDENCE",
+        "3d": "NO_EVIDENCE",
+        "7d": "NO_EVIDENCE"
+      },
+      "stability_verdict": "UNSTABLE — the effect changes sign between periods",
+      "concentration_verdict": "DIVERSE — no single observation contributes half the observations, and no single observation drives the estimate",
+      "largest_source_share": null,
+      "pit_status": "PIT_VALIDATED",
+      "multiple_testing_family": "cross_asset_lead_lag",
+      "decision": "REJECT",
+      "decision_reasons": [
+        "q=0.8893 exceeds the preregistered 0.10",
+        "the interval [-0.00187, 0.00171] contains zero",
+        "the estimate is not stable across periods"
+      ],
+      "notes": ""
+    },
+    {
+      "signal_id": "sp500_daily:LAGGED_RETURN:1d",
+      "definition": "cross_asset_lead_lag: sp500_daily:LAGGED_RETURN:1d against BTC forward return",
+      "source_domain": "CROSS_ASSET",
+      "feature_version": "b4-crossasset-v1",
+      "sample_count": 2175,
+      "effective_sample_count": 2175,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": 0.0011030237175647477,
+        "3d": 0.0009264279223905082,
+        "7d": 0.001556257532045843
+      },
+      "intervals": {
+        "1d": [
+          -0.0006941144840553933,
+          0.0027732794096875946
+        ],
+        "3d": [
+          -0.001569163211643693,
+          0.003927482454071867
+        ],
+        "7d": [
+          -0.0019440193021130533,
+          0.006202341111446074
+        ]
+      },
+      "q_values": {
+        "1d": 0.8892692307692307,
+        "3d": 0.8892692307692307,
+        "7d": 0.8892692307692307
+      },
+      "evidence": {
+        "1d": "NO_EVIDENCE",
+        "3d": "NO_EVIDENCE",
+        "7d": "NO_EVIDENCE"
+      },
+      "stability_verdict": "UNSTABLE — the effect changes sign between periods",
+      "concentration_verdict": "FRAGILE — removing one observation moves or flips the observation estimate",
+      "largest_source_share": null,
+      "pit_status": "PIT_VALIDATED",
+      "multiple_testing_family": "cross_asset_lead_lag",
+      "decision": "REJECT",
+      "decision_reasons": [
+        "q=0.8893 exceeds the preregistered 0.10",
+        "the interval [-0.00069, 0.00277] contains zero",
+        "the estimate is not stable across periods",
+        "removing a single observation moves or flips the estimate"
+      ],
+      "notes": ""
+    },
+    {
+      "signal_id": "sp500_daily:LAGGED_RETURN:3d",
+      "definition": "cross_asset_lead_lag: sp500_daily:LAGGED_RETURN:3d against BTC forward return",
+      "source_domain": "CROSS_ASSET",
+      "feature_version": "b4-crossasset-v1",
+      "sample_count": 3103,
+      "effective_sample_count": 3103,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": 0.00044041305476343057,
+        "3d": 0.00067798935211092,
+        "7d": 0.001767331220864613
+      },
+      "intervals": {
+        "1d": [
+          -0.0008214413556061262,
+          0.0019175873585253298
+        ],
+        "3d": [
+          -0.0022142568319062483,
+          0.003912030812239104
+        ],
+        "7d": [
+          -0.003036195769641099,
+          0.0068102503337913725
+        ]
+      },
+      "q_values": {
+        "1d": 0.8892692307692307,
+        "3d": 0.8892692307692307,
+        "7d": 0.8892692307692307
+      },
+      "evidence": {
+        "1d": "NO_EVIDENCE",
+        "3d": "NO_EVIDENCE",
+        "7d": "NO_EVIDENCE"
+      },
+      "stability_verdict": "UNSTABLE — the effect changes sign between periods",
+      "concentration_verdict": "DIVERSE — no single observation contributes half the observations, and no single observation drives the estimate",
+      "largest_source_share": null,
+      "pit_status": "PIT_VALIDATED",
+      "multiple_testing_family": "cross_asset_lead_lag",
+      "decision": "REJECT",
+      "decision_reasons": [
+        "q=0.8893 exceeds the preregistered 0.10",
+        "the interval [-0.00082, 0.00192] contains zero",
+        "the estimate is not stable across periods"
+      ],
+      "notes": ""
+    },
+    {
+      "signal_id": "sp500_daily:REALIZED_VOLATILITY:7d",
+      "definition": "cross_asset_lead_lag: sp500_daily:REALIZED_VOLATILITY:7d against BTC forward return",
+      "source_domain": "CROSS_ASSET",
+      "feature_version": "b4-crossasset-v1",
+      "sample_count": 3163,
+      "effective_sample_count": 3163,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": 0.00020240901996494156,
+        "3d": 0.0005654513068784033,
+        "7d": 0.003616203589201543
+      },
+      "intervals": {
+        "1d": [
+          -0.0018932765096432915,
+          0.001695994966698024
+        ],
+        "3d": [
+          -0.004992393746449559,
+          0.004098491257821971
+        ],
+        "7d": [
+          -0.007027587005712489,
+          0.010520288864806129
+        ]
+      },
+      "q_values": {
+        "1d": 0.9406551724137932,
+        "3d": 0.9406551724137932,
+        "7d": 0.8892692307692307
+      },
+      "evidence": {
+        "1d": "NO_EVIDENCE",
+        "3d": "NO_EVIDENCE",
+        "7d": "NO_EVIDENCE"
+      },
+      "stability_verdict": "UNSTABLE — the effect changes sign between periods",
+      "concentration_verdict": "DIVERSE — no single observation contributes half the observations, and no single observation drives the estimate",
+      "largest_source_share": null,
+      "pit_status": "PIT_VALIDATED",
+      "multiple_testing_family": "cross_asset_lead_lag",
+      "decision": "REJECT",
+      "decision_reasons": [
+        "q=0.8893 exceeds the preregistered 0.10",
+        "the interval [-0.00703, 0.01052] contains zero",
+        "the estimate is not stable across periods"
+      ],
+      "notes": ""
+    },
+    {
+      "signal_id": "nasdaq_daily:LAGGED_RETURN:1d",
+      "definition": "cross_asset_lead_lag: nasdaq_daily:LAGGED_RETURN:1d against BTC forward return",
+      "source_domain": "CROSS_ASSET",
+      "feature_version": "b4-crossasset-v1",
+      "sample_count": 2175,
+      "effective_sample_count": 2175,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": 0.0011406405754770352,
+        "3d": 0.0008492756202614558,
+        "7d": 0.001456760177405614
+      },
+      "intervals": {
+        "1d": [
+          -0.0007062378510980203,
+          0.002680944460563462
+        ],
+        "3d": [
+          -0.0017455861199718065,
+          0.0035309740587418145
+        ],
+        "7d": [
+          -0.001927411387930513,
+          0.005561131543943516
+        ]
+      },
+      "q_values": {
+        "1d": 0.8892692307692307,
+        "3d": 0.8892692307692307,
+        "7d": 0.8892692307692307
+      },
+      "evidence": {
+        "1d": "NO_EVIDENCE",
+        "3d": "NO_EVIDENCE",
+        "7d": "NO_EVIDENCE"
+      },
+      "stability_verdict": "UNSTABLE — the effect changes sign between periods",
+      "concentration_verdict": "DIVERSE — no single observation contributes half the observations, and no single observation drives the estimate",
+      "largest_source_share": null,
+      "pit_status": "PIT_VALIDATED",
+      "multiple_testing_family": "cross_asset_lead_lag",
+      "decision": "REJECT",
+      "decision_reasons": [
+        "q=0.8893 exceeds the preregistered 0.10",
+        "the interval [-0.00071, 0.00268] contains zero",
+        "the estimate is not stable across periods"
+      ],
+      "notes": ""
+    },
+    {
+      "signal_id": "nasdaq_daily:LAGGED_RETURN:3d",
+      "definition": "cross_asset_lead_lag: nasdaq_daily:LAGGED_RETURN:3d against BTC forward return",
+      "source_domain": "CROSS_ASSET",
+      "feature_version": "b4-crossasset-v1",
+      "sample_count": 3103,
+      "effective_sample_count": 3103,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": 0.0004201260552542715,
+        "3d": 0.0007016293049505827,
+        "7d": 0.001815333171260764
+      },
+      "intervals": {
+        "1d": [
+          -0.0008169672627826691,
+          0.00185335460727415
+        ],
+        "3d": [
+          -0.0021004090917738187,
+          0.003652258302948989
+        ],
+        "7d": [
+          -0.0028566401526021134,
+          0.00663047166203062
+        ]
+      },
+      "q_values": {
+        "1d": 0.8892692307692307,
+        "3d": 0.8892692307692307,
+        "7d": 0.8892692307692307
+      },
+      "evidence": {
+        "1d": "NO_EVIDENCE",
+        "3d": "NO_EVIDENCE",
+        "7d": "NO_EVIDENCE"
+      },
+      "stability_verdict": "UNSTABLE — the effect changes sign between periods",
+      "concentration_verdict": "DIVERSE — no single observation contributes half the observations, and no single observation drives the estimate",
+      "largest_source_share": null,
+      "pit_status": "PIT_VALIDATED",
+      "multiple_testing_family": "cross_asset_lead_lag",
+      "decision": "REJECT",
+      "decision_reasons": [
+        "q=0.8893 exceeds the preregistered 0.10",
+        "the interval [-0.00082, 0.00185] contains zero",
+        "the estimate is not stable across periods"
+      ],
+      "notes": ""
+    },
+    {
+      "signal_id": "nasdaq_daily:REALIZED_VOLATILITY:7d",
+      "definition": "cross_asset_lead_lag: nasdaq_daily:REALIZED_VOLATILITY:7d against BTC forward return",
+      "source_domain": "CROSS_ASSET",
+      "feature_version": "b4-crossasset-v1",
+      "sample_count": 3163,
+      "effective_sample_count": 3163,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": 0.00006705274444327556,
+        "3d": -0.000040593125844914434,
+        "7d": 0.002506628236790577
+      },
+      "intervals": {
+        "1d": [
+          -0.0017921590477472267,
+          0.0014576061089737295
+        ],
+        "3d": [
+          -0.005069813365055622,
+          0.0033836428077580736
+        ],
+        "7d": [
+          -0.007499565994021387,
+          0.008782638205847184
+        ]
+      },
+      "q_values": {
+        "1d": 0.992,
+        "3d": 0.9911999999999999,
+        "7d": 0.8892692307692307
+      },
+      "evidence": {
+        "1d": "NO_EVIDENCE",
+        "3d": "NO_EVIDENCE",
+        "7d": "NO_EVIDENCE"
+      },
+      "stability_verdict": "UNSTABLE — the effect changes sign between periods",
+      "concentration_verdict": "DIVERSE — no single observation contributes half the observations, and no single observation drives the estimate",
+      "largest_source_share": null,
+      "pit_status": "PIT_VALIDATED",
+      "multiple_testing_family": "cross_asset_lead_lag",
+      "decision": "REJECT",
+      "decision_reasons": [
+        "q=0.8893 exceeds the preregistered 0.10",
+        "the interval [-0.00750, 0.00878] contains zero",
+        "the estimate is not stable across periods"
+      ],
+      "notes": ""
+    },
+    {
+      "signal_id": "vix_daily:LAGGED_RETURN:1d",
+      "definition": "cross_asset_lead_lag: vix_daily:LAGGED_RETURN:1d against BTC forward return",
+      "source_domain": "CROSS_ASSET",
+      "feature_version": "b4-crossasset-v1",
+      "sample_count": 2176,
+      "effective_sample_count": 2176,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": -0.0005923899059120126,
+        "3d": -0.00042174066504806787,
+        "7d": -0.0016379781637999133
+      },
+      "intervals": {
+        "1d": [
+          -0.002082934594494039,
+          0.0010449079406857644
+        ],
+        "3d": [
+          -0.0029578389872049415,
+          0.0019199039068009992
+        ],
+        "7d": [
+          -0.005741833780373994,
+          0.0021307450920098696
+        ]
+      },
+      "q_values": {
+        "1d": 0.8892692307692307,
+        "3d": 0.8892692307692307,
+        "7d": 0.8892692307692307
+      },
+      "evidence": {
+        "1d": "NO_EVIDENCE",
+        "3d": "NO_EVIDENCE",
+        "7d": "NO_EVIDENCE"
+      },
+      "stability_verdict": "UNSTABLE — the effect changes sign between periods",
+      "concentration_verdict": "DIVERSE — no single observation contributes half the observations, and no single observation drives the estimate",
+      "largest_source_share": null,
+      "pit_status": "PIT_VALIDATED",
+      "multiple_testing_family": "cross_asset_lead_lag",
+      "decision": "REJECT",
+      "decision_reasons": [
+        "q=0.8893 exceeds the preregistered 0.10",
+        "the interval [-0.00208, 0.00104] contains zero",
+        "the estimate is not stable across periods"
+      ],
+      "notes": ""
+    },
+    {
+      "signal_id": "vix_daily:LAGGED_RETURN:3d",
+      "definition": "cross_asset_lead_lag: vix_daily:LAGGED_RETURN:3d against BTC forward return",
+      "source_domain": "CROSS_ASSET",
+      "feature_version": "b4-crossasset-v1",
+      "sample_count": 3104,
+      "effective_sample_count": 3104,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": -0.0003010032436064934,
+        "3d": -0.0006296562330269374,
+        "7d": -0.0015201329330280157
+      },
+      "intervals": {
+        "1d": [
+          -0.001480040015012163,
+          0.0009807739339961182
+        ],
+        "3d": [
+          -0.0033749514409052482,
+          0.002088328048801253
+        ],
+        "7d": [
+          -0.006922179386507727,
+          0.003612943752074559
+        ]
+      },
+      "q_values": {
+        "1d": 0.8892692307692307,
+        "3d": 0.8892692307692307,
+        "7d": 0.8892692307692307
+      },
+      "evidence": {
+        "1d": "NO_EVIDENCE",
+        "3d": "NO_EVIDENCE",
+        "7d": "NO_EVIDENCE"
+      },
+      "stability_verdict": "UNSTABLE — the effect changes sign between periods",
+      "concentration_verdict": "FRAGILE — removing one observation moves or flips the observation estimate",
+      "largest_source_share": null,
+      "pit_status": "PIT_VALIDATED",
+      "multiple_testing_family": "cross_asset_lead_lag",
+      "decision": "REJECT",
+      "decision_reasons": [
+        "q=0.8893 exceeds the preregistered 0.10",
+        "the interval [-0.00148, 0.00098] contains zero",
+        "the estimate is not stable across periods",
+        "removing a single observation moves or flips the estimate"
+      ],
+      "notes": ""
+    },
+    {
+      "signal_id": "vix_daily:REALIZED_VOLATILITY:7d",
+      "definition": "cross_asset_lead_lag: vix_daily:REALIZED_VOLATILITY:7d against BTC forward return",
+      "source_domain": "CROSS_ASSET",
+      "feature_version": "b4-crossasset-v1",
+      "sample_count": 3163,
+      "effective_sample_count": 3163,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": 8.653228610993156e-6,
+        "3d": 0.0005153076401494414,
+        "7d": 0.003956265013130538
+      },
+      "intervals": {
+        "1d": [
+          -0.0014825834307150938,
+          0.0012200268442182582
+        ],
+        "3d": [
+          -0.004139597565558796,
+          0.004433757715866311
+        ],
+        "7d": [
+          -0.006942332420026883,
+          0.012931318689805932
+        ]
+      },
+      "q_values": {
+        "1d": 0.992,
+        "3d": 0.9406551724137932,
+        "7d": 0.8892692307692307
+      },
+      "evidence": {
+        "1d": "NO_EVIDENCE",
+        "3d": "NO_EVIDENCE",
+        "7d": "NO_EVIDENCE"
+      },
+      "stability_verdict": "UNSTABLE — the effect changes sign between periods",
+      "concentration_verdict": "DIVERSE — no single observation contributes half the observations, and no single observation drives the estimate",
+      "largest_source_share": null,
+      "pit_status": "PIT_VALIDATED",
+      "multiple_testing_family": "cross_asset_lead_lag",
+      "decision": "REJECT",
+      "decision_reasons": [
+        "q=0.8893 exceeds the preregistered 0.10",
+        "the interval [-0.00694, 0.01293] contains zero",
+        "the estimate is not stable across periods"
+      ],
+      "notes": ""
+    },
+    {
+      "signal_id": "ust10y_daily:LAGGED_RETURN:1d",
+      "definition": "cross_asset_lead_lag: ust10y_daily:LAGGED_RETURN:1d against BTC forward return",
+      "source_domain": "CROSS_ASSET",
+      "feature_version": "b4-crossasset-v1",
+      "sample_count": 2175,
+      "effective_sample_count": 2175,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": -0.0008319738175160804,
+        "3d": -0.002571855052184235,
+        "7d": -0.00014509024980440398
+      },
+      "intervals": {
+        "1d": [
+          -0.004075646047013645,
+          0.002535345740675967
+        ],
+        "3d": [
+          -0.0057414332249736836,
+          0.0001662402575918907
+        ],
+        "7d": [
+          -0.006733679078497434,
+          0.00431654831529455
+        ]
+      },
+      "q_values": {
+        "1d": 0.8892692307692307,
+        "3d": 0.8892692307692307,
+        "7d": 0.9406551724137932
+      },
+      "evidence": {
+        "1d": "NO_EVIDENCE",
+        "3d": "NO_EVIDENCE",
+        "7d": "NO_EVIDENCE"
+      },
+      "stability_verdict": "UNSTABLE — the effect changes sign between periods",
+      "concentration_verdict": "FRAGILE — removing one observation moves or flips the observation estimate",
+      "largest_source_share": null,
+      "pit_status": "PIT_VALIDATED",
+      "multiple_testing_family": "cross_asset_lead_lag",
+      "decision": "REJECT",
+      "decision_reasons": [
+        "q=0.8893 exceeds the preregistered 0.10",
+        "the interval [-0.00408, 0.00254] contains zero",
+        "the estimate is not stable across periods",
+        "removing a single observation moves or flips the estimate"
+      ],
+      "notes": ""
+    },
+    {
+      "signal_id": "ust10y_daily:LAGGED_RETURN:3d",
+      "definition": "cross_asset_lead_lag: ust10y_daily:LAGGED_RETURN:3d against BTC forward return",
+      "source_domain": "CROSS_ASSET",
+      "feature_version": "b4-crossasset-v1",
+      "sample_count": 3103,
+      "effective_sample_count": 3103,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": -0.001167294261222349,
+        "3d": -0.0018110769368781133,
+        "7d": 0.0012219628339816002
+      },
+      "intervals": {
+        "1d": [
+          -0.0024864696098431654,
+          0.00004795578899794911
+        ],
+        "3d": [
+          -0.005987727575400473,
+          0.0016644920635215305
+        ],
+        "7d": [
+          -0.008462860690501062,
+          0.009646366311910614
+        ]
+      },
+      "q_values": {
+        "1d": 0.8892692307692307,
+        "3d": 0.8892692307692307,
+        "7d": 0.9406551724137932
+      },
+      "evidence": {
+        "1d": "NO_EVIDENCE",
+        "3d": "NO_EVIDENCE",
+        "7d": "NO_EVIDENCE"
+      },
+      "stability_verdict": "UNSTABLE — the effect changes sign between periods",
+      "concentration_verdict": "DIVERSE — no single observation contributes half the observations, and no single observation drives the estimate",
+      "largest_source_share": null,
+      "pit_status": "PIT_VALIDATED",
+      "multiple_testing_family": "cross_asset_lead_lag",
+      "decision": "REJECT",
+      "decision_reasons": [
+        "q=0.8893 exceeds the preregistered 0.10",
+        "the interval [-0.00249, 0.00005] contains zero",
+        "the estimate is not stable across periods"
+      ],
+      "notes": ""
+    },
+    {
+      "signal_id": "ust10y_daily:REALIZED_VOLATILITY:7d",
+      "definition": "cross_asset_lead_lag: ust10y_daily:REALIZED_VOLATILITY:7d against BTC forward return",
+      "source_domain": "CROSS_ASSET",
+      "feature_version": "b4-crossasset-v1",
+      "sample_count": 3163,
+      "effective_sample_count": 3163,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": -0.00034911627773112305,
+        "3d": 0.0010629044100803227,
+        "7d": 0.005416059181080321
+      },
+      "intervals": {
+        "1d": [
+          -0.003115466136650074,
+          0.0019079106598569838
+        ],
+        "3d": [
+          -0.004625945880575293,
+          0.005594070624301428
+        ],
+        "7d": [
+          -0.0033978168731314765,
+          0.012207329583210086
+        ]
+      },
+      "q_values": {
+        "1d": 0.9524745762711864,
+        "3d": 0.8892692307692307,
+        "7d": 0.8892692307692307
+      },
+      "evidence": {
+        "1d": "NO_EVIDENCE",
+        "3d": "NO_EVIDENCE",
+        "7d": "NO_EVIDENCE"
+      },
+      "stability_verdict": "UNSTABLE — the effect changes sign between periods",
+      "concentration_verdict": "DIVERSE — no single observation contributes half the observations, and no single observation drives the estimate",
+      "largest_source_share": null,
+      "pit_status": "PIT_VALIDATED",
+      "multiple_testing_family": "cross_asset_lead_lag",
+      "decision": "REJECT",
+      "decision_reasons": [
+        "q=0.8893 exceeds the preregistered 0.10",
+        "the interval [-0.00463, 0.00559] contains zero",
+        "the estimate is not stable across periods"
+      ],
+      "notes": ""
+    },
+    {
+      "signal_id": "regulation",
+      "definition": "event study: types=('REGULATION',) entities=(all) contexts=(all)",
+      "source_domain": "INTELLIGENCE",
+      "feature_version": "b4-eventstudy-v1",
+      "sample_count": 0,
+      "effective_sample_count": 0,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "intervals": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "q_values": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "evidence": {
+        "1d": "INSUFFICIENT_SAMPLE",
+        "3d": "INSUFFICIENT_SAMPLE",
+        "7d": "INSUFFICIENT_SAMPLE"
+      },
+      "stability_verdict": null,
+      "concentration_verdict": null,
+      "largest_source_share": null,
+      "pit_status": null,
+      "multiple_testing_family": "event_studies",
+      "decision": "INSUFFICIENT_DATA",
+      "decision_reasons": [
+        "no observations exist for this signal"
+      ],
+      "notes": "0 observations is below the declared minimum of 30; no inference is reported"
+    },
+    {
+      "signal_id": "monetary_policy",
+      "definition": "event study: types=('MONETARY_POLICY',) entities=(all) contexts=(all)",
+      "source_domain": "INTELLIGENCE",
+      "feature_version": "b4-eventstudy-v1",
+      "sample_count": 0,
+      "effective_sample_count": 0,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "intervals": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "q_values": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "evidence": {
+        "1d": "INSUFFICIENT_SAMPLE",
+        "3d": "INSUFFICIENT_SAMPLE",
+        "7d": "INSUFFICIENT_SAMPLE"
+      },
+      "stability_verdict": null,
+      "concentration_verdict": null,
+      "largest_source_share": null,
+      "pit_status": null,
+      "multiple_testing_family": "event_studies",
+      "decision": "INSUFFICIENT_DATA",
+      "decision_reasons": [
+        "no observations exist for this signal"
+      ],
+      "notes": "0 observations is below the declared minimum of 30; no inference is reported"
+    },
+    {
+      "signal_id": "etf_flow",
+      "definition": "event study: types=('ETF_FLOW',) entities=(all) contexts=(all)",
+      "source_domain": "INTELLIGENCE",
+      "feature_version": "b4-eventstudy-v1",
+      "sample_count": 0,
+      "effective_sample_count": 0,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "intervals": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "q_values": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "evidence": {
+        "1d": "INSUFFICIENT_SAMPLE",
+        "3d": "INSUFFICIENT_SAMPLE",
+        "7d": "INSUFFICIENT_SAMPLE"
+      },
+      "stability_verdict": null,
+      "concentration_verdict": null,
+      "largest_source_share": null,
+      "pit_status": null,
+      "multiple_testing_family": "event_studies",
+      "decision": "INSUFFICIENT_DATA",
+      "decision_reasons": [
+        "no observations exist for this signal"
+      ],
+      "notes": "0 observations is below the declared minimum of 30; no inference is reported"
+    },
+    {
+      "signal_id": "institutional_adoption",
+      "definition": "event study: types=('INSTITUTIONAL_ADOPTION',) entities=(all) contexts=(all)",
+      "source_domain": "INTELLIGENCE",
+      "feature_version": "b4-eventstudy-v1",
+      "sample_count": 0,
+      "effective_sample_count": 0,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "intervals": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "q_values": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "evidence": {
+        "1d": "INSUFFICIENT_SAMPLE",
+        "3d": "INSUFFICIENT_SAMPLE",
+        "7d": "INSUFFICIENT_SAMPLE"
+      },
+      "stability_verdict": null,
+      "concentration_verdict": null,
+      "largest_source_share": null,
+      "pit_status": null,
+      "multiple_testing_family": "event_studies",
+      "decision": "INSUFFICIENT_DATA",
+      "decision_reasons": [
+        "no observations exist for this signal"
+      ],
+      "notes": "0 observations is below the declared minimum of 30; no inference is reported"
+    },
+    {
+      "signal_id": "exchange_incident",
+      "definition": "event study: types=('EXCHANGE_INCIDENT',) entities=(all) contexts=(all)",
+      "source_domain": "INTELLIGENCE",
+      "feature_version": "b4-eventstudy-v1",
+      "sample_count": 0,
+      "effective_sample_count": 0,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "intervals": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "q_values": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "evidence": {
+        "1d": "INSUFFICIENT_SAMPLE",
+        "3d": "INSUFFICIENT_SAMPLE",
+        "7d": "INSUFFICIENT_SAMPLE"
+      },
+      "stability_verdict": null,
+      "concentration_verdict": null,
+      "largest_source_share": null,
+      "pit_status": null,
+      "multiple_testing_family": "event_studies",
+      "decision": "INSUFFICIENT_DATA",
+      "decision_reasons": [
+        "no observations exist for this signal"
+      ],
+      "notes": "0 observations is below the declared minimum of 30; no inference is reported"
+    },
+    {
+      "signal_id": "security_incident",
+      "definition": "event study: types=('SECURITY_INCIDENT',) entities=(all) contexts=(all)",
+      "source_domain": "INTELLIGENCE",
+      "feature_version": "b4-eventstudy-v1",
+      "sample_count": 0,
+      "effective_sample_count": 0,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "intervals": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "q_values": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "evidence": {
+        "1d": "INSUFFICIENT_SAMPLE",
+        "3d": "INSUFFICIENT_SAMPLE",
+        "7d": "INSUFFICIENT_SAMPLE"
+      },
+      "stability_verdict": null,
+      "concentration_verdict": null,
+      "largest_source_share": null,
+      "pit_status": null,
+      "multiple_testing_family": "event_studies",
+      "decision": "INSUFFICIENT_DATA",
+      "decision_reasons": [
+        "no observations exist for this signal"
+      ],
+      "notes": "0 observations is below the declared minimum of 30; no inference is reported"
+    },
+    {
+      "signal_id": "macro_shock",
+      "definition": "event study: types=('MACRO_SHOCK',) entities=(all) contexts=(all)",
+      "source_domain": "INTELLIGENCE",
+      "feature_version": "b4-eventstudy-v1",
+      "sample_count": 0,
+      "effective_sample_count": 0,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "intervals": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "q_values": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "evidence": {
+        "1d": "INSUFFICIENT_SAMPLE",
+        "3d": "INSUFFICIENT_SAMPLE",
+        "7d": "INSUFFICIENT_SAMPLE"
+      },
+      "stability_verdict": null,
+      "concentration_verdict": null,
+      "largest_source_share": null,
+      "pit_status": null,
+      "multiple_testing_family": "event_studies",
+      "decision": "INSUFFICIENT_DATA",
+      "decision_reasons": [
+        "no observations exist for this signal"
+      ],
+      "notes": "0 observations is below the declared minimum of 30; no inference is reported"
+    },
+    {
+      "signal_id": "geopolitical_event",
+      "definition": "event study: types=('GEOPOLITICAL_EVENT',) entities=(all) contexts=(all)",
+      "source_domain": "INTELLIGENCE",
+      "feature_version": "b4-eventstudy-v1",
+      "sample_count": 0,
+      "effective_sample_count": 0,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "intervals": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "q_values": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "evidence": {
+        "1d": "INSUFFICIENT_SAMPLE",
+        "3d": "INSUFFICIENT_SAMPLE",
+        "7d": "INSUFFICIENT_SAMPLE"
+      },
+      "stability_verdict": null,
+      "concentration_verdict": null,
+      "largest_source_share": null,
+      "pit_status": null,
+      "multiple_testing_family": "event_studies",
+      "decision": "INSUFFICIENT_DATA",
+      "decision_reasons": [
+        "no observations exist for this signal"
+      ],
+      "notes": "0 observations is below the declared minimum of 30; no inference is reported"
+    },
+    {
+      "signal_id": "liquidity_event",
+      "definition": "event study: types=('LIQUIDITY_EVENT',) entities=(all) contexts=(all)",
+      "source_domain": "INTELLIGENCE",
+      "feature_version": "b4-eventstudy-v1",
+      "sample_count": 0,
+      "effective_sample_count": 0,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "intervals": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "q_values": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "evidence": {
+        "1d": "INSUFFICIENT_SAMPLE",
+        "3d": "INSUFFICIENT_SAMPLE",
+        "7d": "INSUFFICIENT_SAMPLE"
+      },
+      "stability_verdict": null,
+      "concentration_verdict": null,
+      "largest_source_share": null,
+      "pit_status": null,
+      "multiple_testing_family": "event_studies",
+      "decision": "INSUFFICIENT_DATA",
+      "decision_reasons": [
+        "no observations exist for this signal"
+      ],
+      "notes": "0 observations is below the declared minimum of 30; no inference is reported"
+    },
+    {
+      "signal_id": "entity_statement",
+      "definition": "event study: types=('ENTITY_STATEMENT',) entities=(all) contexts=(all)",
+      "source_domain": "INTELLIGENCE",
+      "feature_version": "b4-eventstudy-v1",
+      "sample_count": 0,
+      "effective_sample_count": 0,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "intervals": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "q_values": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "evidence": {
+        "1d": "INSUFFICIENT_SAMPLE",
+        "3d": "INSUFFICIENT_SAMPLE",
+        "7d": "INSUFFICIENT_SAMPLE"
+      },
+      "stability_verdict": null,
+      "concentration_verdict": null,
+      "largest_source_share": null,
+      "pit_status": null,
+      "multiple_testing_family": "event_studies",
+      "decision": "INSUFFICIENT_DATA",
+      "decision_reasons": [
+        "no observations exist for this signal"
+      ],
+      "notes": "0 observations is below the declared minimum of 30; no inference is reported"
+    },
+    {
+      "signal_id": "entity_trump",
+      "definition": "event study: types=('ENTITY_STATEMENT', 'REGULATION') entities=('Donald Trump',) contexts=(all)",
+      "source_domain": "INTELLIGENCE",
+      "feature_version": "b4-eventstudy-v1",
+      "sample_count": 0,
+      "effective_sample_count": 0,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "intervals": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "q_values": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "evidence": {
+        "1d": "INSUFFICIENT_SAMPLE",
+        "3d": "INSUFFICIENT_SAMPLE",
+        "7d": "INSUFFICIENT_SAMPLE"
+      },
+      "stability_verdict": null,
+      "concentration_verdict": null,
+      "largest_source_share": null,
+      "pit_status": null,
+      "multiple_testing_family": "event_studies",
+      "decision": "INSUFFICIENT_DATA",
+      "decision_reasons": [
+        "no observations exist for this signal"
+      ],
+      "notes": "0 observations is below the declared minimum of 30; no inference is reported"
+    },
+    {
+      "signal_id": "entity_musk",
+      "definition": "event study: types=('ENTITY_STATEMENT',) entities=('Elon Musk',) contexts=(all)",
+      "source_domain": "INTELLIGENCE",
+      "feature_version": "b4-eventstudy-v1",
+      "sample_count": 0,
+      "effective_sample_count": 0,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "intervals": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "q_values": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "evidence": {
+        "1d": "INSUFFICIENT_SAMPLE",
+        "3d": "INSUFFICIENT_SAMPLE",
+        "7d": "INSUFFICIENT_SAMPLE"
+      },
+      "stability_verdict": null,
+      "concentration_verdict": null,
+      "largest_source_share": null,
+      "pit_status": null,
+      "multiple_testing_family": "event_studies",
+      "decision": "INSUFFICIENT_DATA",
+      "decision_reasons": [
+        "no observations exist for this signal"
+      ],
+      "notes": "0 observations is below the declared minimum of 30; no inference is reported"
+    },
+    {
+      "signal_id": "entity_powell",
+      "definition": "event study: types=('MONETARY_POLICY', 'ENTITY_STATEMENT') entities=('Jerome Powell',) contexts=(all)",
+      "source_domain": "INTELLIGENCE",
+      "feature_version": "b4-eventstudy-v1",
+      "sample_count": 0,
+      "effective_sample_count": 0,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "intervals": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "q_values": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "evidence": {
+        "1d": "INSUFFICIENT_SAMPLE",
+        "3d": "INSUFFICIENT_SAMPLE",
+        "7d": "INSUFFICIENT_SAMPLE"
+      },
+      "stability_verdict": null,
+      "concentration_verdict": null,
+      "largest_source_share": null,
+      "pit_status": null,
+      "multiple_testing_family": "event_studies",
+      "decision": "INSUFFICIENT_DATA",
+      "decision_reasons": [
+        "no observations exist for this signal"
+      ],
+      "notes": "0 observations is below the declared minimum of 30; no inference is reported"
+    },
+    {
+      "signal_id": "entity_saylor",
+      "definition": "event study: types=('ENTITY_STATEMENT', 'INSTITUTIONAL_ADOPTION') entities=('Michael Saylor',) contexts=(all)",
+      "source_domain": "INTELLIGENCE",
+      "feature_version": "b4-eventstudy-v1",
+      "sample_count": 0,
+      "effective_sample_count": 0,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "intervals": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "q_values": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "evidence": {
+        "1d": "INSUFFICIENT_SAMPLE",
+        "3d": "INSUFFICIENT_SAMPLE",
+        "7d": "INSUFFICIENT_SAMPLE"
+      },
+      "stability_verdict": null,
+      "concentration_verdict": null,
+      "largest_source_share": null,
+      "pit_status": null,
+      "multiple_testing_family": "event_studies",
+      "decision": "INSUFFICIENT_DATA",
+      "decision_reasons": [
+        "no observations exist for this signal"
+      ],
+      "notes": "0 observations is below the declared minimum of 30; no inference is reported"
+    },
+    {
+      "signal_id": "entity_sec",
+      "definition": "event study: types=('REGULATION',) entities=('SEC',) contexts=(all)",
+      "source_domain": "INTELLIGENCE",
+      "feature_version": "b4-eventstudy-v1",
+      "sample_count": 0,
+      "effective_sample_count": 0,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "intervals": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "q_values": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "evidence": {
+        "1d": "INSUFFICIENT_SAMPLE",
+        "3d": "INSUFFICIENT_SAMPLE",
+        "7d": "INSUFFICIENT_SAMPLE"
+      },
+      "stability_verdict": null,
+      "concentration_verdict": null,
+      "largest_source_share": null,
+      "pit_status": null,
+      "multiple_testing_family": "event_studies",
+      "decision": "INSUFFICIENT_DATA",
+      "decision_reasons": [
+        "no observations exist for this signal"
+      ],
+      "notes": "0 observations is below the declared minimum of 30; no inference is reported"
+    },
+    {
+      "signal_id": "whale_exchange_inflow",
+      "definition": "event study: types=('WHALE_TRANSFER',) entities=(all) contexts=('EXCHANGE_INFLOW',)",
+      "source_domain": "INTELLIGENCE",
+      "feature_version": "b4-eventstudy-v1",
+      "sample_count": 0,
+      "effective_sample_count": 0,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "intervals": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "q_values": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "evidence": {
+        "1d": "INSUFFICIENT_SAMPLE",
+        "3d": "INSUFFICIENT_SAMPLE",
+        "7d": "INSUFFICIENT_SAMPLE"
+      },
+      "stability_verdict": null,
+      "concentration_verdict": null,
+      "largest_source_share": null,
+      "pit_status": null,
+      "multiple_testing_family": "whale_studies",
+      "decision": "INSUFFICIENT_DATA",
+      "decision_reasons": [
+        "no observations exist for this signal"
+      ],
+      "notes": "0 observations is below the declared minimum of 30; no inference is reported"
+    },
+    {
+      "signal_id": "whale_exchange_outflow",
+      "definition": "event study: types=('WHALE_TRANSFER',) entities=(all) contexts=('EXCHANGE_OUTFLOW',)",
+      "source_domain": "INTELLIGENCE",
+      "feature_version": "b4-eventstudy-v1",
+      "sample_count": 0,
+      "effective_sample_count": 0,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "intervals": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "q_values": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "evidence": {
+        "1d": "INSUFFICIENT_SAMPLE",
+        "3d": "INSUFFICIENT_SAMPLE",
+        "7d": "INSUFFICIENT_SAMPLE"
+      },
+      "stability_verdict": null,
+      "concentration_verdict": null,
+      "largest_source_share": null,
+      "pit_status": null,
+      "multiple_testing_family": "whale_studies",
+      "decision": "INSUFFICIENT_DATA",
+      "decision_reasons": [
+        "no observations exist for this signal"
+      ],
+      "notes": "0 observations is below the declared minimum of 30; no inference is reported"
+    },
+    {
+      "signal_id": "whale_custody",
+      "definition": "event study: types=('WHALE_TRANSFER',) entities=(all) contexts=('CUSTODY',)",
+      "source_domain": "INTELLIGENCE",
+      "feature_version": "b4-eventstudy-v1",
+      "sample_count": 0,
+      "effective_sample_count": 0,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "intervals": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "q_values": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "evidence": {
+        "1d": "INSUFFICIENT_SAMPLE",
+        "3d": "INSUFFICIENT_SAMPLE",
+        "7d": "INSUFFICIENT_SAMPLE"
+      },
+      "stability_verdict": null,
+      "concentration_verdict": null,
+      "largest_source_share": null,
+      "pit_status": null,
+      "multiple_testing_family": "whale_studies",
+      "decision": "INSUFFICIENT_DATA",
+      "decision_reasons": [
+        "no observations exist for this signal"
+      ],
+      "notes": "0 observations is below the declared minimum of 30; no inference is reported"
+    },
+    {
+      "signal_id": "whale_internal_transfer",
+      "definition": "event study: types=('WHALE_TRANSFER',) entities=(all) contexts=('INTERNAL_TRANSFER',)",
+      "source_domain": "INTELLIGENCE",
+      "feature_version": "b4-eventstudy-v1",
+      "sample_count": 0,
+      "effective_sample_count": 0,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "intervals": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "q_values": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "evidence": {
+        "1d": "INSUFFICIENT_SAMPLE",
+        "3d": "INSUFFICIENT_SAMPLE",
+        "7d": "INSUFFICIENT_SAMPLE"
+      },
+      "stability_verdict": null,
+      "concentration_verdict": null,
+      "largest_source_share": null,
+      "pit_status": null,
+      "multiple_testing_family": "whale_studies",
+      "decision": "INSUFFICIENT_DATA",
+      "decision_reasons": [
+        "no observations exist for this signal"
+      ],
+      "notes": "0 observations is below the declared minimum of 30; no inference is reported"
+    },
+    {
+      "signal_id": "whale_unknown_context",
+      "definition": "event study: types=('WHALE_TRANSFER',) entities=(all) contexts=('UNKNOWN',)",
+      "source_domain": "INTELLIGENCE",
+      "feature_version": "b4-eventstudy-v1",
+      "sample_count": 0,
+      "effective_sample_count": 0,
+      "tested_horizons": [
+        "1d",
+        "3d",
+        "7d"
+      ],
+      "effects": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "intervals": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "q_values": {
+        "1d": null,
+        "3d": null,
+        "7d": null
+      },
+      "evidence": {
+        "1d": "INSUFFICIENT_SAMPLE",
+        "3d": "INSUFFICIENT_SAMPLE",
+        "7d": "INSUFFICIENT_SAMPLE"
+      },
+      "stability_verdict": null,
+      "concentration_verdict": null,
+      "largest_source_share": null,
+      "pit_status": null,
+      "multiple_testing_family": "whale_studies",
+      "decision": "INSUFFICIENT_DATA",
+      "decision_reasons": [
+        "no observations exist for this signal"
+      ],
+      "notes": "0 observations is below the declared minimum of 30; no inference is reported"
+    }
+  ]
+}

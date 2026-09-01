@@ -12,3 +12,10 @@ __pycache__/
 # grant redistribution, and the cache is rebuildable from the run manifest's
 # series fingerprints. Only derived statistics are committed.
 research/market_intelligence/b4/cache/
+# B4 row-level target file. It carries raw BTC closes, which Yahoo's terms do
+# not grant redistribution of; its sha256 is recorded in the run manifest so a
+# regenerated copy can be checked against the published run. See the README in
+# each run directory.
+research/market_intelligence/b4/runs/*/targets.json
+# Generated DuckDB store for the B4.39 feature-matrix demonstration.
+research/market_intelligence/b4/feature_matrix/*.duckdb

@@ -1,0 +1,13 @@
+{
+  "origins": 366,
+  "documents_in_store": 0,
+  "signals_in_store": 0,
+  "matrix_rows": 366,
+  "matrix_columns": 11,
+  "dataset_id": "1d9ba61d29dbb1246316781fc7fd61269d1d36cb954025039be92b4d9cc819fc",
+  "file_hash": "b94303429d86cb4daa0b3c2d4c5ec4711f1507bd9056c6553b34e77826dd6076",
+  "joined_rows": 366,
+  "rows_with_any_non_zero_intelligence_feature": 0,
+  "mean_provider_coverage_ratio": 0.0,
+  "verdict": "STRUCTURALLY EMPTY \u2014 the join works and produces one row per origin, but every intelligence feature is at its missing-data default because no corpus exists"
+}

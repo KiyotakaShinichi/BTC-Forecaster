@@ -1,0 +1,103 @@
+{
+  "version": "b4-preregistration-v1",
+  "created_at": "2026-09-01T13:07:21.778375Z",
+  "git_sha": "a816a3c6ecf22791924725a3e5613a51278d8140",
+  "research_questions": [
+    "Do regulatory, ETF, monetary-policy, entity-statement or whale events precede abnormal BTC returns?",
+    "Do cross-asset moves (DXY, gold, oil, equities, VIX, yields) lead BTC?",
+    "Does sentiment add information beyond event count?",
+    "How quickly do external signals decay, and are effects stable across periods?"
+  ],
+  "event_types": [
+    "ENTITY_STATEMENT",
+    "ETF_FLOW",
+    "EXCHANGE_INCIDENT",
+    "GEOPOLITICAL_EVENT",
+    "INSTITUTIONAL_ADOPTION",
+    "LIQUIDITY_EVENT",
+    "MACRO_SHOCK",
+    "MONETARY_POLICY",
+    "REGULATION",
+    "SECURITY_INCIDENT"
+  ],
+  "entities": [
+    "Donald Trump",
+    "Elon Musk",
+    "Jerome Powell",
+    "Michael Saylor",
+    "SEC"
+  ],
+  "horizons": [
+    "1d",
+    "3d",
+    "7d"
+  ],
+  "extraction_quality_filters": {
+    "minimum_relevance": 0.5,
+    "minimum_confidence": 0.5
+  },
+  "minimum_event_count": 30,
+  "bootstrap": {
+    "method": "stationary",
+    "block_length": 10,
+    "replicates": 1000,
+    "confidence": 0.95,
+    "seed": 20260831,
+    "ci_method": "percentile"
+  },
+  "practical_thresholds": [
+    {
+      "outcome": "forward_return_1d",
+      "minimum_absolute_effect": 0.009063248338255128,
+      "justification": "0.25 x the development-period standard deviation of forward_return_1d (sd=0.036253 over n=2216)",
+      "minimum_sample": 30,
+      "q_threshold": 0.1
+    },
+    {
+      "outcome": "forward_return_3d",
+      "minimum_absolute_effect": 0.0155129673324549,
+      "justification": "0.25 x the development-period standard deviation of forward_return_3d (sd=0.062052 over n=2216)",
+      "minimum_sample": 30,
+      "q_threshold": 0.1
+    },
+    {
+      "outcome": "forward_return_7d",
+      "minimum_absolute_effect": 0.02449621970463976,
+      "justification": "0.25 x the development-period standard deviation of forward_return_7d (sd=0.097985 over n=2216)",
+      "minimum_sample": 30,
+      "q_threshold": 0.1
+    }
+  ],
+  "multiple_testing_families": [
+    "cross_asset_lead_lag",
+    "event_studies",
+    "whale_studies"
+  ],
+  "carry_forward_policy": {
+    "minimum_observations": 30,
+    "minimum_effective_observations": 20,
+    "require_pit_validated": true,
+    "maximum_q_value": 0.1,
+    "require_interval_excludes_zero": true,
+    "require_stability": true,
+    "require_not_fragile": true,
+    "maximum_single_source_share": 0.8,
+    "allow_exploratory": true,
+    "maximum_exploratory_candidates": 3
+  },
+  "period_split": {
+    "development_start": "2018-01-01T00:00:00Z",
+    "development_end": "2024-01-25T12:00:00Z",
+    "validation_start": "2024-01-25T12:00:00Z",
+    "validation_end": "2026-09-01T00:00:00Z",
+    "validation_is_useful": true,
+    "rationale": "the last 30% of the history spans 949 days, at or above the 180-day minimum for a useful holdout"
+  },
+  "predefined_composites": [
+    "sentiment",
+    "sentiment x relevance",
+    "sentiment x relevance x confidence"
+  ],
+  "notes": "Composites are named before results are seen (B4.8). Thresholds are 0.25 x the development-period sd of the 1d forward return.",
+  "content_hash": "389aa76f703d125412efc29c6f678e76e3267772f8ab99e60f6c137ea3794aa8"
+}

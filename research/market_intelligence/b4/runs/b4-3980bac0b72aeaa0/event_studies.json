@@ -1,0 +1,2062 @@
+[
+  {
+    "benchmark": "CRYPTO_MARKET_EXCESS",
+    "cluster_count": 0,
+    "effective_event_count": 0,
+    "horizons": {
+      "1d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "1d"
+      },
+      "3d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "3d"
+      },
+      "7d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "7d"
+      }
+    },
+    "insufficient": true,
+    "notes": [
+      "0 observations is below the declared minimum of 30; no inference is reported"
+    ],
+    "observation_count": 0,
+    "origin_span": null,
+    "overlap_policy": "AGGREGATE_CLUSTER",
+    "pre_event_trend": {
+      "-1h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-24h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-6h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      }
+    },
+    "raw_event_count": 0,
+    "spec_hash": "808a3ab5f75e2ee1fc6e50aa32b8ee6c0ba45f8b93adbfff9e75c5e177c6de0b",
+    "study_id": "regulation"
+  },
+  {
+    "benchmark": "CRYPTO_MARKET_EXCESS",
+    "cluster_count": 0,
+    "effective_event_count": 0,
+    "horizons": {
+      "1d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "1d"
+      },
+      "3d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "3d"
+      },
+      "7d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "7d"
+      }
+    },
+    "insufficient": true,
+    "notes": [
+      "0 observations is below the declared minimum of 30; no inference is reported"
+    ],
+    "observation_count": 0,
+    "origin_span": null,
+    "overlap_policy": "AGGREGATE_CLUSTER",
+    "pre_event_trend": {
+      "-1h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-24h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-6h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      }
+    },
+    "raw_event_count": 0,
+    "spec_hash": "6030072d64a7714b23d534fe23440237560a8835c88a91a6d33b1ab4efa00563",
+    "study_id": "monetary_policy"
+  },
+  {
+    "benchmark": "CRYPTO_MARKET_EXCESS",
+    "cluster_count": 0,
+    "effective_event_count": 0,
+    "horizons": {
+      "1d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "1d"
+      },
+      "3d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "3d"
+      },
+      "7d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "7d"
+      }
+    },
+    "insufficient": true,
+    "notes": [
+      "0 observations is below the declared minimum of 30; no inference is reported"
+    ],
+    "observation_count": 0,
+    "origin_span": null,
+    "overlap_policy": "AGGREGATE_CLUSTER",
+    "pre_event_trend": {
+      "-1h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-24h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-6h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      }
+    },
+    "raw_event_count": 0,
+    "spec_hash": "b1ee1de428d039906d355521d34ac95f7c5f25e9e9cb06a0910bf8e911b54e94",
+    "study_id": "etf_flow"
+  },
+  {
+    "benchmark": "CRYPTO_MARKET_EXCESS",
+    "cluster_count": 0,
+    "effective_event_count": 0,
+    "horizons": {
+      "1d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "1d"
+      },
+      "3d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "3d"
+      },
+      "7d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "7d"
+      }
+    },
+    "insufficient": true,
+    "notes": [
+      "0 observations is below the declared minimum of 30; no inference is reported"
+    ],
+    "observation_count": 0,
+    "origin_span": null,
+    "overlap_policy": "AGGREGATE_CLUSTER",
+    "pre_event_trend": {
+      "-1h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-24h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-6h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      }
+    },
+    "raw_event_count": 0,
+    "spec_hash": "f5ad5eff2119f5c6ccb4da90c28b8897e24e4ae75c69f635cfd84b4e4b024da0",
+    "study_id": "institutional_adoption"
+  },
+  {
+    "benchmark": "CRYPTO_MARKET_EXCESS",
+    "cluster_count": 0,
+    "effective_event_count": 0,
+    "horizons": {
+      "1d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "1d"
+      },
+      "3d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "3d"
+      },
+      "7d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "7d"
+      }
+    },
+    "insufficient": true,
+    "notes": [
+      "0 observations is below the declared minimum of 30; no inference is reported"
+    ],
+    "observation_count": 0,
+    "origin_span": null,
+    "overlap_policy": "AGGREGATE_CLUSTER",
+    "pre_event_trend": {
+      "-1h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-24h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-6h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      }
+    },
+    "raw_event_count": 0,
+    "spec_hash": "9fb944579a811ec51cc764d9aa4768e5e15f0bcbc3a365602f89ed5f63793d53",
+    "study_id": "exchange_incident"
+  },
+  {
+    "benchmark": "CRYPTO_MARKET_EXCESS",
+    "cluster_count": 0,
+    "effective_event_count": 0,
+    "horizons": {
+      "1d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "1d"
+      },
+      "3d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "3d"
+      },
+      "7d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "7d"
+      }
+    },
+    "insufficient": true,
+    "notes": [
+      "0 observations is below the declared minimum of 30; no inference is reported"
+    ],
+    "observation_count": 0,
+    "origin_span": null,
+    "overlap_policy": "AGGREGATE_CLUSTER",
+    "pre_event_trend": {
+      "-1h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-24h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-6h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      }
+    },
+    "raw_event_count": 0,
+    "spec_hash": "9e41e78912c4fc9d64f770fd271ad76bcbfa7b2dc442bf82eb5b71f866b9039f",
+    "study_id": "security_incident"
+  },
+  {
+    "benchmark": "CRYPTO_MARKET_EXCESS",
+    "cluster_count": 0,
+    "effective_event_count": 0,
+    "horizons": {
+      "1d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "1d"
+      },
+      "3d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "3d"
+      },
+      "7d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "7d"
+      }
+    },
+    "insufficient": true,
+    "notes": [
+      "0 observations is below the declared minimum of 30; no inference is reported"
+    ],
+    "observation_count": 0,
+    "origin_span": null,
+    "overlap_policy": "AGGREGATE_CLUSTER",
+    "pre_event_trend": {
+      "-1h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-24h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-6h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      }
+    },
+    "raw_event_count": 0,
+    "spec_hash": "26ae7167ca95d44cf8d4bea20e5543d88cd6dcb39da8058ae26d5385b0c88406",
+    "study_id": "macro_shock"
+  },
+  {
+    "benchmark": "CRYPTO_MARKET_EXCESS",
+    "cluster_count": 0,
+    "effective_event_count": 0,
+    "horizons": {
+      "1d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "1d"
+      },
+      "3d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "3d"
+      },
+      "7d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "7d"
+      }
+    },
+    "insufficient": true,
+    "notes": [
+      "0 observations is below the declared minimum of 30; no inference is reported"
+    ],
+    "observation_count": 0,
+    "origin_span": null,
+    "overlap_policy": "AGGREGATE_CLUSTER",
+    "pre_event_trend": {
+      "-1h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-24h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-6h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      }
+    },
+    "raw_event_count": 0,
+    "spec_hash": "cb593cda5587a91c25b82fa71ed9ecaaffbe81a6f30e5ed5ec3e8c24ebb79dc8",
+    "study_id": "geopolitical_event"
+  },
+  {
+    "benchmark": "CRYPTO_MARKET_EXCESS",
+    "cluster_count": 0,
+    "effective_event_count": 0,
+    "horizons": {
+      "1d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "1d"
+      },
+      "3d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "3d"
+      },
+      "7d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "7d"
+      }
+    },
+    "insufficient": true,
+    "notes": [
+      "0 observations is below the declared minimum of 30; no inference is reported"
+    ],
+    "observation_count": 0,
+    "origin_span": null,
+    "overlap_policy": "AGGREGATE_CLUSTER",
+    "pre_event_trend": {
+      "-1h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-24h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-6h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      }
+    },
+    "raw_event_count": 0,
+    "spec_hash": "906d464bdd609d7e04259132c3d4e0cccb02f813b8b4e039a694fe1a4205b31b",
+    "study_id": "liquidity_event"
+  },
+  {
+    "benchmark": "CRYPTO_MARKET_EXCESS",
+    "cluster_count": 0,
+    "effective_event_count": 0,
+    "horizons": {
+      "1d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "1d"
+      },
+      "3d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "3d"
+      },
+      "7d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "7d"
+      }
+    },
+    "insufficient": true,
+    "notes": [
+      "0 observations is below the declared minimum of 30; no inference is reported"
+    ],
+    "observation_count": 0,
+    "origin_span": null,
+    "overlap_policy": "AGGREGATE_CLUSTER",
+    "pre_event_trend": {
+      "-1h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-24h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-6h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      }
+    },
+    "raw_event_count": 0,
+    "spec_hash": "1069ebebee8cbd59cbe34f3c12ad06e1a95454a3a04fcaa3a0b44e25d88aba51",
+    "study_id": "entity_statement"
+  },
+  {
+    "benchmark": "CRYPTO_MARKET_EXCESS",
+    "cluster_count": 0,
+    "effective_event_count": 0,
+    "horizons": {
+      "1d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "1d"
+      },
+      "3d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "3d"
+      },
+      "7d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "7d"
+      }
+    },
+    "insufficient": true,
+    "notes": [
+      "0 observations is below the declared minimum of 30; no inference is reported"
+    ],
+    "observation_count": 0,
+    "origin_span": null,
+    "overlap_policy": "AGGREGATE_CLUSTER",
+    "pre_event_trend": {
+      "-1h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-24h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-6h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      }
+    },
+    "raw_event_count": 0,
+    "spec_hash": "885ed36c0faead9f2a3127ea0b9577f7e71c6d50e84ca22ac505a27d35442a59",
+    "study_id": "entity_trump"
+  },
+  {
+    "benchmark": "CRYPTO_MARKET_EXCESS",
+    "cluster_count": 0,
+    "effective_event_count": 0,
+    "horizons": {
+      "1d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "1d"
+      },
+      "3d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "3d"
+      },
+      "7d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "7d"
+      }
+    },
+    "insufficient": true,
+    "notes": [
+      "0 observations is below the declared minimum of 30; no inference is reported"
+    ],
+    "observation_count": 0,
+    "origin_span": null,
+    "overlap_policy": "AGGREGATE_CLUSTER",
+    "pre_event_trend": {
+      "-1h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-24h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-6h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      }
+    },
+    "raw_event_count": 0,
+    "spec_hash": "9e2fb6158f822c4675b272c06a055eaa41edb5661dd1da4b5022f5ab0b89045f",
+    "study_id": "entity_musk"
+  },
+  {
+    "benchmark": "CRYPTO_MARKET_EXCESS",
+    "cluster_count": 0,
+    "effective_event_count": 0,
+    "horizons": {
+      "1d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "1d"
+      },
+      "3d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "3d"
+      },
+      "7d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "7d"
+      }
+    },
+    "insufficient": true,
+    "notes": [
+      "0 observations is below the declared minimum of 30; no inference is reported"
+    ],
+    "observation_count": 0,
+    "origin_span": null,
+    "overlap_policy": "AGGREGATE_CLUSTER",
+    "pre_event_trend": {
+      "-1h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-24h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-6h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      }
+    },
+    "raw_event_count": 0,
+    "spec_hash": "22a7c1e84b98176c380fc63cf07d671b24aca811b0efa5be686c65f37a9db830",
+    "study_id": "entity_powell"
+  },
+  {
+    "benchmark": "CRYPTO_MARKET_EXCESS",
+    "cluster_count": 0,
+    "effective_event_count": 0,
+    "horizons": {
+      "1d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "1d"
+      },
+      "3d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "3d"
+      },
+      "7d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "7d"
+      }
+    },
+    "insufficient": true,
+    "notes": [
+      "0 observations is below the declared minimum of 30; no inference is reported"
+    ],
+    "observation_count": 0,
+    "origin_span": null,
+    "overlap_policy": "AGGREGATE_CLUSTER",
+    "pre_event_trend": {
+      "-1h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-24h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-6h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      }
+    },
+    "raw_event_count": 0,
+    "spec_hash": "59fc7fa2388bad72d64c98e6ff3990c005ae0535bb3ce6c71e3a4a1b16da678e",
+    "study_id": "entity_saylor"
+  },
+  {
+    "benchmark": "CRYPTO_MARKET_EXCESS",
+    "cluster_count": 0,
+    "effective_event_count": 0,
+    "horizons": {
+      "1d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "1d"
+      },
+      "3d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "3d"
+      },
+      "7d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "7d"
+      }
+    },
+    "insufficient": true,
+    "notes": [
+      "0 observations is below the declared minimum of 30; no inference is reported"
+    ],
+    "observation_count": 0,
+    "origin_span": null,
+    "overlap_policy": "AGGREGATE_CLUSTER",
+    "pre_event_trend": {
+      "-1h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-24h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-6h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      }
+    },
+    "raw_event_count": 0,
+    "spec_hash": "0a6e8125d32917b11cb2327a4a51f12bb874788da6ad6dcddd725745fbe7daf0",
+    "study_id": "entity_sec"
+  },
+  {
+    "benchmark": "CRYPTO_MARKET_EXCESS",
+    "cluster_count": 0,
+    "effective_event_count": 0,
+    "horizons": {
+      "1d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "1d"
+      },
+      "3d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "3d"
+      },
+      "7d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "7d"
+      }
+    },
+    "insufficient": true,
+    "notes": [
+      "0 observations is below the declared minimum of 30; no inference is reported"
+    ],
+    "observation_count": 0,
+    "origin_span": null,
+    "overlap_policy": "AGGREGATE_CLUSTER",
+    "pre_event_trend": {
+      "-1h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-24h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-6h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      }
+    },
+    "raw_event_count": 0,
+    "spec_hash": "857128552641b31012d128e7b1927a96fe548958e4451d90cf9d37c9a116359f",
+    "study_id": "whale_exchange_inflow"
+  },
+  {
+    "benchmark": "CRYPTO_MARKET_EXCESS",
+    "cluster_count": 0,
+    "effective_event_count": 0,
+    "horizons": {
+      "1d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "1d"
+      },
+      "3d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "3d"
+      },
+      "7d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "7d"
+      }
+    },
+    "insufficient": true,
+    "notes": [
+      "0 observations is below the declared minimum of 30; no inference is reported"
+    ],
+    "observation_count": 0,
+    "origin_span": null,
+    "overlap_policy": "AGGREGATE_CLUSTER",
+    "pre_event_trend": {
+      "-1h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-24h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-6h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      }
+    },
+    "raw_event_count": 0,
+    "spec_hash": "794b5828cc1aeba5d750f64f2208d49f326f8b42f8b37567539eb83161fcc0c1",
+    "study_id": "whale_exchange_outflow"
+  },
+  {
+    "benchmark": "CRYPTO_MARKET_EXCESS",
+    "cluster_count": 0,
+    "effective_event_count": 0,
+    "horizons": {
+      "1d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "1d"
+      },
+      "3d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "3d"
+      },
+      "7d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "7d"
+      }
+    },
+    "insufficient": true,
+    "notes": [
+      "0 observations is below the declared minimum of 30; no inference is reported"
+    ],
+    "observation_count": 0,
+    "origin_span": null,
+    "overlap_policy": "AGGREGATE_CLUSTER",
+    "pre_event_trend": {
+      "-1h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-24h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-6h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      }
+    },
+    "raw_event_count": 0,
+    "spec_hash": "cc71ab65707a5b3cdb3ed4b2eb9a9f937c7ed0c09057886a1406eb25b21d432c",
+    "study_id": "whale_custody"
+  },
+  {
+    "benchmark": "CRYPTO_MARKET_EXCESS",
+    "cluster_count": 0,
+    "effective_event_count": 0,
+    "horizons": {
+      "1d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "1d"
+      },
+      "3d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "3d"
+      },
+      "7d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "7d"
+      }
+    },
+    "insufficient": true,
+    "notes": [
+      "0 observations is below the declared minimum of 30; no inference is reported"
+    ],
+    "observation_count": 0,
+    "origin_span": null,
+    "overlap_policy": "AGGREGATE_CLUSTER",
+    "pre_event_trend": {
+      "-1h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-24h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-6h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      }
+    },
+    "raw_event_count": 0,
+    "spec_hash": "9a14d48f1ddafd015864223f2f46e107d8c4510ee224e09bf14d865401e2cbb1",
+    "study_id": "whale_internal_transfer"
+  },
+  {
+    "benchmark": "CRYPTO_MARKET_EXCESS",
+    "cluster_count": 0,
+    "effective_event_count": 0,
+    "horizons": {
+      "1d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "1d"
+      },
+      "3d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "3d"
+      },
+      "7d": {
+        "abs_descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "bootstrap": null,
+        "descriptive": {
+          "mean": null,
+          "median": null,
+          "n": 0,
+          "positive_fraction": null,
+          "quantiles": {},
+          "std": null
+        },
+        "horizon": "7d"
+      }
+    },
+    "insufficient": true,
+    "notes": [
+      "0 observations is below the declared minimum of 30; no inference is reported"
+    ],
+    "observation_count": 0,
+    "origin_span": null,
+    "overlap_policy": "AGGREGATE_CLUSTER",
+    "pre_event_trend": {
+      "-1h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-24h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      },
+      "-6h": {
+        "mean": null,
+        "median": null,
+        "n": 0,
+        "positive_fraction": null,
+        "quantiles": {},
+        "std": null
+      }
+    },
+    "raw_event_count": 0,
+    "spec_hash": "d14ae53c7b719717cf9a5c5de388c4a5129a67f31d703cbe83b296ac92d9dfc9",
+    "study_id": "whale_unknown_context"
+  }
+]

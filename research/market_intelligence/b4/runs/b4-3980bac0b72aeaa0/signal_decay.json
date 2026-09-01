@@ -1,0 +1,522 @@
+[
+  {
+    "monotone_decreasing": false,
+    "note": "no horizon has an observable effect",
+    "peak_horizon": null,
+    "points": [
+      {
+        "horizon": "1d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "3d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "7d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      }
+    ],
+    "signal_id": "regulation"
+  },
+  {
+    "monotone_decreasing": false,
+    "note": "no horizon has an observable effect",
+    "peak_horizon": null,
+    "points": [
+      {
+        "horizon": "1d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "3d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "7d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      }
+    ],
+    "signal_id": "monetary_policy"
+  },
+  {
+    "monotone_decreasing": false,
+    "note": "no horizon has an observable effect",
+    "peak_horizon": null,
+    "points": [
+      {
+        "horizon": "1d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "3d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "7d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      }
+    ],
+    "signal_id": "etf_flow"
+  },
+  {
+    "monotone_decreasing": false,
+    "note": "no horizon has an observable effect",
+    "peak_horizon": null,
+    "points": [
+      {
+        "horizon": "1d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "3d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "7d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      }
+    ],
+    "signal_id": "institutional_adoption"
+  },
+  {
+    "monotone_decreasing": false,
+    "note": "no horizon has an observable effect",
+    "peak_horizon": null,
+    "points": [
+      {
+        "horizon": "1d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "3d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "7d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      }
+    ],
+    "signal_id": "exchange_incident"
+  },
+  {
+    "monotone_decreasing": false,
+    "note": "no horizon has an observable effect",
+    "peak_horizon": null,
+    "points": [
+      {
+        "horizon": "1d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "3d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "7d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      }
+    ],
+    "signal_id": "security_incident"
+  },
+  {
+    "monotone_decreasing": false,
+    "note": "no horizon has an observable effect",
+    "peak_horizon": null,
+    "points": [
+      {
+        "horizon": "1d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "3d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "7d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      }
+    ],
+    "signal_id": "macro_shock"
+  },
+  {
+    "monotone_decreasing": false,
+    "note": "no horizon has an observable effect",
+    "peak_horizon": null,
+    "points": [
+      {
+        "horizon": "1d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "3d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "7d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      }
+    ],
+    "signal_id": "geopolitical_event"
+  },
+  {
+    "monotone_decreasing": false,
+    "note": "no horizon has an observable effect",
+    "peak_horizon": null,
+    "points": [
+      {
+        "horizon": "1d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "3d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "7d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      }
+    ],
+    "signal_id": "liquidity_event"
+  },
+  {
+    "monotone_decreasing": false,
+    "note": "no horizon has an observable effect",
+    "peak_horizon": null,
+    "points": [
+      {
+        "horizon": "1d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "3d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "7d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      }
+    ],
+    "signal_id": "entity_statement"
+  },
+  {
+    "monotone_decreasing": false,
+    "note": "no horizon has an observable effect",
+    "peak_horizon": null,
+    "points": [
+      {
+        "horizon": "1d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "3d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "7d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      }
+    ],
+    "signal_id": "entity_trump"
+  },
+  {
+    "monotone_decreasing": false,
+    "note": "no horizon has an observable effect",
+    "peak_horizon": null,
+    "points": [
+      {
+        "horizon": "1d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "3d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "7d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      }
+    ],
+    "signal_id": "entity_musk"
+  },
+  {
+    "monotone_decreasing": false,
+    "note": "no horizon has an observable effect",
+    "peak_horizon": null,
+    "points": [
+      {
+        "horizon": "1d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "3d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "7d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      }
+    ],
+    "signal_id": "entity_powell"
+  },
+  {
+    "monotone_decreasing": false,
+    "note": "no horizon has an observable effect",
+    "peak_horizon": null,
+    "points": [
+      {
+        "horizon": "1d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "3d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "7d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      }
+    ],
+    "signal_id": "entity_saylor"
+  },
+  {
+    "monotone_decreasing": false,
+    "note": "no horizon has an observable effect",
+    "peak_horizon": null,
+    "points": [
+      {
+        "horizon": "1d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "3d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "7d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      }
+    ],
+    "signal_id": "entity_sec"
+  },
+  {
+    "monotone_decreasing": false,
+    "note": "no horizon has an observable effect",
+    "peak_horizon": null,
+    "points": [
+      {
+        "horizon": "1d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "3d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "7d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      }
+    ],
+    "signal_id": "whale_exchange_inflow"
+  },
+  {
+    "monotone_decreasing": false,
+    "note": "no horizon has an observable effect",
+    "peak_horizon": null,
+    "points": [
+      {
+        "horizon": "1d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "3d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "7d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      }
+    ],
+    "signal_id": "whale_exchange_outflow"
+  },
+  {
+    "monotone_decreasing": false,
+    "note": "no horizon has an observable effect",
+    "peak_horizon": null,
+    "points": [
+      {
+        "horizon": "1d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "3d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "7d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      }
+    ],
+    "signal_id": "whale_custody"
+  },
+  {
+    "monotone_decreasing": false,
+    "note": "no horizon has an observable effect",
+    "peak_horizon": null,
+    "points": [
+      {
+        "horizon": "1d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "3d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "7d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      }
+    ],
+    "signal_id": "whale_internal_transfer"
+  },
+  {
+    "monotone_decreasing": false,
+    "note": "no horizon has an observable effect",
+    "peak_horizon": null,
+    "points": [
+      {
+        "horizon": "1d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "3d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      },
+      {
+        "horizon": "7d",
+        "mean": null,
+        "n": 0,
+        "ratio_to_first": null
+      }
+    ],
+    "signal_id": "whale_unknown_context"
+  }
+]

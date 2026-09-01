@@ -9,6 +9,8 @@ on:
       - "scripts/profile_replay.py"
       - "scripts/bench_replay.py"
       - "scripts/bench_matrix.py"
+      - "scripts/b4_data_audit.py"
+      - "scripts/b4_run_study.py"
       - "requirements-market-intelligence*.txt"
       - ".github/workflows/market-intelligence.yml"
   pull_request:
@@ -45,3 +47,71 @@ jobs:
       - name: Verify catalog entry and dataset API
         run: python -c "from fastapi.testclient import TestClient; from market_intelligence.api import create_app; c=TestClient(create_app('.ci-intelligence-demo/demo-intelligence.duckdb')); d=c.get('/datasets').json(); assert len(d)>=1; assert c.get('/datasets/'+d[0]['dataset_id']).status_code==200; assert c.get('/datasets/'+'0'*64).status_code==404"
       - run: python -c "from fastapi.testclient import TestClient; from market_intelligence.api import create_app; c=TestClient(create_app('.ci-intelligence-demo/demo-intelligence.duckdb')); assert c.get('/health').status_code==200; assert c.get('/ready').json()['status']=='ready'"
+      # B4.54: research smoke tests only. The full historical study needs the
+      # network and takes minutes; CI proves the machinery is wired correctly on
+      # fixtures instead. No network, no wall-clock assertions.
+      - name: B4 target semantics and leakage audit
+        run: |
+          python - <<'PY'
+          from datetime import datetime, timedelta, timezone
+          from market_intelligence.b4.contracts import (
+              EvidenceTier, MarketBar, MarketSeries, SourceDomain, TimestampConvention,
+          )
+          from market_intelligence.b4.targets import (
+              assert_targets_are_future_only, build_targets,
+          )
+          base = datetime(2026, 1, 1, tzinfo=timezone.utc)
+          series = MarketSeries(
+              series_id="s", ticker="T", domain=SourceDomain.BTC_MARKET, provider="fixture",
+              timestamp_convention=TimestampConvention.PERIOD_OPEN,
+              evidence_tier=EvidenceTier.PIT_VALIDATED, source_timezone="UTC",
+              bars=tuple(
+                  MarketBar(period_start=base + timedelta(hours=i), period_seconds=3600,
+                            open=100.0 + i, high=100.0 + i, low=100.0 + i, close=100.0 + i, volume=1.0)
+                  for i in range(48)
+              ),
+          )
+          origins = [base + timedelta(hours=i) for i in range(1, 24)]
+          rows = build_targets(series, origins, ["1h", "6h"])
+          assert rows, "targets must be produced"
+          assert all(r.base_available_at <= r.forecast_origin for r in rows)
+          assert_targets_are_future_only(series, rows, ["1h", "6h"])
+          print(f"B4 targets OK: {len(rows)} rows, leakage audit passed")
+          PY
+      - name: B4 preregistration, registry and evidence-tier separation
+        run: |
+          python - <<'PY'
+          from datetime import datetime, timedelta, timezone
+          from market_intelligence.b4.contracts import EvidenceTier
+          from market_intelligence.b4.prereg import CarryForwardPolicy, Preregistration, split_history
+          from market_intelligence.b4.registry import SignalDecision, decide
+          from market_intelligence.b4.stats import BootstrapConfig, PracticalThreshold
+          base = datetime(2022, 1, 1, tzinfo=timezone.utc)
+          plan = Preregistration(
+              created_at=base, git_sha="ci", research_questions=("q",), event_types=("REGULATION",),
+              entities=("SEC",), horizons=("1h",), extraction_quality_filters={"minimum_relevance": 0.5},
+              minimum_event_count=30, bootstrap=BootstrapConfig(replicates=100),
+              practical_thresholds=(PracticalThreshold(outcome="forward_return_1h",
+                                                       minimum_absolute_effect=0.004, justification="ci"),),
+              multiple_testing_families=("f",), carry_forward_policy=CarryForwardPolicy(),
+              period_split=split_history(base, base + timedelta(days=1000)),
+          )
+          assert plan.content_hash() == Preregistration.model_validate(
+              plan.model_dump(mode="json")).content_hash()
+          decision, reasons = decide(
+              signal_id="s", policy=plan.carry_forward_policy, sample_count=0,
+              effective_sample_count=0, pit_status=None, best=None, evidence=None,
+              stable=None, fragile=None, largest_source_share=None,
+          )
+          assert decision is SignalDecision.INSUFFICIENT_DATA, decision
+          decision, _ = decide(
+              signal_id="s", policy=plan.carry_forward_policy, sample_count=200,
+              effective_sample_count=60, pit_status=EvidenceTier.RETROSPECTIVE_ONLY,
+              best=None, evidence=None, stable=True, fragile=False, largest_source_share=0.1,
+          )
+          assert decision is SignalDecision.INSUFFICIENT_DATA, decision
+          print("B4 preregistration and registry OK")
+          PY
+      - name: B4 bootstrap determinism
+        run: |
+          python -c "from market_intelligence.b4.stats import BootstrapConfig, block_bootstrap; c=BootstrapConfig(replicates=200,block_length=5,seed=42); v=[(i*7%13)/100.0 for i in range(200)]; a=block_bootstrap(v,c); b=block_bootstrap(v,c); assert (a.lower,a.upper,a.p_value)==(b.lower,b.upper,b.p_value); print('B4 bootstrap deterministic')"

@@ -1,0 +1,286 @@
+{
+  "corrected": [
+    {
+      "effect": 0.0,
+      "family": "granger",
+      "family_size": 7,
+      "lower": 0.0,
+      "n": 3165,
+      "p_value": 0.0024244862526169144,
+      "q_value": 0.0169714037683184,
+      "significant_at_q": true,
+      "test_id": "granger:ust10y_daily->btc_usd_daily",
+      "upper": 0.0
+    },
+    {
+      "effect": 0.0,
+      "family": "granger",
+      "family_size": 7,
+      "lower": 0.0,
+      "n": 3165,
+      "p_value": 0.0323277502763329,
+      "q_value": 0.11314712596716517,
+      "significant_at_q": false,
+      "test_id": "granger:oil_daily->btc_usd_daily",
+      "upper": 0.0
+    },
+    {
+      "effect": 0.0,
+      "family": "granger",
+      "family_size": 7,
+      "lower": 0.0,
+      "n": 3165,
+      "p_value": 0.060687116218664065,
+      "q_value": 0.14160327117688282,
+      "significant_at_q": false,
+      "test_id": "granger:dxy_daily->btc_usd_daily",
+      "upper": 0.0
+    },
+    {
+      "effect": 0.0,
+      "family": "granger",
+      "family_size": 7,
+      "lower": 0.0,
+      "n": 3165,
+      "p_value": 0.14177798101212225,
+      "q_value": 0.22344099148446714,
+      "significant_at_q": false,
+      "test_id": "granger:nasdaq_daily->btc_usd_daily",
+      "upper": 0.0
+    },
+    {
+      "effect": 0.0,
+      "family": "granger",
+      "family_size": 7,
+      "lower": 0.0,
+      "n": 3165,
+      "p_value": 0.1596007082031908,
+      "q_value": 0.22344099148446714,
+      "significant_at_q": false,
+      "test_id": "granger:sp500_daily->btc_usd_daily",
+      "upper": 0.0
+    },
+    {
+      "effect": 0.0,
+      "family": "granger",
+      "family_size": 7,
+      "lower": 0.0,
+      "n": 3165,
+      "p_value": 0.4586439023355266,
+      "q_value": 0.5350845527247811,
+      "significant_at_q": false,
+      "test_id": "granger:vix_daily->btc_usd_daily",
+      "upper": 0.0
+    },
+    {
+      "effect": 0.0,
+      "family": "granger",
+      "family_size": 7,
+      "lower": 0.0,
+      "n": 3165,
+      "p_value": 0.5911313950506132,
+      "q_value": 0.5911313950506132,
+      "significant_at_q": false,
+      "test_id": "granger:gold_daily->btc_usd_daily",
+      "upper": 0.0
+    }
+  ],
+  "tests": [
+    {
+      "gate": {
+        "max_lag": 5,
+        "observations": 3165,
+        "outcome_stationary": true,
+        "predictor_stationary": true,
+        "reason": "sample size and stationarity screen are both satisfied",
+        "run": true,
+        "stationarity_checked": true
+      },
+      "predictor": "dxy_daily",
+      "result": {
+        "best_lag": 4,
+        "lag_p_values": {
+          "1": 0.3947135499218474,
+          "2": 0.7978292480614939,
+          "3": 0.7535902214469762,
+          "4": 0.060687116218664065,
+          "5": 0.07858658501756206
+        },
+        "max_lag": 5,
+        "note": "observational: this tests whether past values of the predictor improve a linear forecast of the outcome beyond the outcome's own past. It is not evidence of causation, and the minimum over lags is corrected as part of its family.",
+        "observations": 3165,
+        "outcome_id": "btc_usd_daily",
+        "p_value": 0.060687116218664065,
+        "predictor_id": "dxy_daily"
+      }
+    },
+    {
+      "gate": {
+        "max_lag": 5,
+        "observations": 3165,
+        "outcome_stationary": true,
+        "predictor_stationary": true,
+        "reason": "sample size and stationarity screen are both satisfied",
+        "run": true,
+        "stationarity_checked": true
+      },
+      "predictor": "gold_daily",
+      "result": {
+        "best_lag": 4,
+        "lag_p_values": {
+          "1": 0.827836511643812,
+          "2": 0.9309187407540621,
+          "3": 0.989635745498773,
+          "4": 0.5911313950506132,
+          "5": 0.6471602871518753
+        },
+        "max_lag": 5,
+        "note": "observational: this tests whether past values of the predictor improve a linear forecast of the outcome beyond the outcome's own past. It is not evidence of causation, and the minimum over lags is corrected as part of its family.",
+        "observations": 3165,
+        "outcome_id": "btc_usd_daily",
+        "p_value": 0.5911313950506132,
+        "predictor_id": "gold_daily"
+      }
+    },
+    {
+      "gate": {
+        "max_lag": 5,
+        "observations": 3165,
+        "outcome_stationary": true,
+        "predictor_stationary": true,
+        "reason": "sample size and stationarity screen are both satisfied",
+        "run": true,
+        "stationarity_checked": true
+      },
+      "predictor": "oil_daily",
+      "result": {
+        "best_lag": 2,
+        "lag_p_values": {
+          "1": 0.35670122410999056,
+          "2": 0.0323277502763329,
+          "3": 0.07760839660052055,
+          "4": 0.08948047563207433,
+          "5": 0.10847287223549568
+        },
+        "max_lag": 5,
+        "note": "observational: this tests whether past values of the predictor improve a linear forecast of the outcome beyond the outcome's own past. It is not evidence of causation, and the minimum over lags is corrected as part of its family.",
+        "observations": 3165,
+        "outcome_id": "btc_usd_daily",
+        "p_value": 0.0323277502763329,
+        "predictor_id": "oil_daily"
+      }
+    },
+    {
+      "gate": {
+        "max_lag": 5,
+        "observations": 3165,
+        "outcome_stationary": true,
+        "predictor_stationary": true,
+        "reason": "sample size and stationarity screen are both satisfied",
+        "run": true,
+        "stationarity_checked": true
+      },
+      "predictor": "sp500_daily",
+      "result": {
+        "best_lag": 1,
+        "lag_p_values": {
+          "1": 0.1596007082031908,
+          "2": 0.6669118278751208,
+          "3": 0.8187867694912319,
+          "4": 0.8542180130253305,
+          "5": 0.8655716041336431
+        },
+        "max_lag": 5,
+        "note": "observational: this tests whether past values of the predictor improve a linear forecast of the outcome beyond the outcome's own past. It is not evidence of causation, and the minimum over lags is corrected as part of its family.",
+        "observations": 3165,
+        "outcome_id": "btc_usd_daily",
+        "p_value": 0.1596007082031908,
+        "predictor_id": "sp500_daily"
+      }
+    },
+    {
+      "gate": {
+        "max_lag": 5,
+        "observations": 3165,
+        "outcome_stationary": true,
+        "predictor_stationary": true,
+        "reason": "sample size and stationarity screen are both satisfied",
+        "run": true,
+        "stationarity_checked": true
+      },
+      "predictor": "nasdaq_daily",
+      "result": {
+        "best_lag": 1,
+        "lag_p_values": {
+          "1": 0.14177798101212225,
+          "2": 0.6987182880469586,
+          "3": 0.855193610855831,
+          "4": 0.9009443187559089,
+          "5": 0.936513963405034
+        },
+        "max_lag": 5,
+        "note": "observational: this tests whether past values of the predictor improve a linear forecast of the outcome beyond the outcome's own past. It is not evidence of causation, and the minimum over lags is corrected as part of its family.",
+        "observations": 3165,
+        "outcome_id": "btc_usd_daily",
+        "p_value": 0.14177798101212225,
+        "predictor_id": "nasdaq_daily"
+      }
+    },
+    {
+      "gate": {
+        "max_lag": 5,
+        "observations": 3165,
+        "outcome_stationary": true,
+        "predictor_stationary": true,
+        "reason": "sample size and stationarity screen are both satisfied",
+        "run": true,
+        "stationarity_checked": true
+      },
+      "predictor": "vix_daily",
+      "result": {
+        "best_lag": 1,
+        "lag_p_values": {
+          "1": 0.4586439023355266,
+          "2": 0.7844139689890449,
+          "3": 0.8372752152076548,
+          "4": 0.5707840077326687,
+          "5": 0.7566928211572463
+        },
+        "max_lag": 5,
+        "note": "observational: this tests whether past values of the predictor improve a linear forecast of the outcome beyond the outcome's own past. It is not evidence of causation, and the minimum over lags is corrected as part of its family.",
+        "observations": 3165,
+        "outcome_id": "btc_usd_daily",
+        "p_value": 0.4586439023355266,
+        "predictor_id": "vix_daily"
+      }
+    },
+    {
+      "gate": {
+        "max_lag": 5,
+        "observations": 3165,
+        "outcome_stationary": true,
+        "predictor_stationary": true,
+        "reason": "sample size and stationarity screen are both satisfied",
+        "run": true,
+        "stationarity_checked": true
+      },
+      "predictor": "ust10y_daily",
+      "result": {
+        "best_lag": 5,
+        "lag_p_values": {
+          "1": 0.25531141262072526,
+          "2": 0.3794811176797613,
+          "3": 0.005247448245812009,
+          "4": 0.009999061737350008,
+          "5": 0.0024244862526169144
+        },
+        "max_lag": 5,
+        "note": "observational: this tests whether past values of the predictor improve a linear forecast of the outcome beyond the outcome's own past. It is not evidence of causation, and the minimum over lags is corrected as part of its family.",
+        "observations": 3165,
+        "outcome_id": "btc_usd_daily",
+        "p_value": 0.0024244862526169144,
+        "predictor_id": "ust10y_daily"
+      }
+    }
+  ]
+}
