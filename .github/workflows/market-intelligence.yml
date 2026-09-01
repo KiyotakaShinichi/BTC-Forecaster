@@ -112,6 +112,88 @@ jobs:
           assert decision is SignalDecision.INSUFFICIENT_DATA, decision
           print("B4 preregistration and registry OK")
           PY
+      # B4.1.50: forward-collection smoke, entirely offline. Fixture providers
+      # only; no real feed is contacted and no credential is required.
+      - name: B4.1 offline collection, corpus and PIT adversaries
+        run: |
+          python - <<'PY'
+          from datetime import datetime, timedelta, timezone
+          import tempfile, pathlib
+          from market_intelligence.collection.fixtures import (
+              FIXTURE_BASE, OutageProvider, StaticFixtureProvider, primary_and_secondary, late_source,
+          )
+          from market_intelligence.collection.service import ForwardCollector
+          from market_intelligence.configuration import (
+              EntityType, ProviderCategory, ProviderConfig, QueryPlanner, WatchEntity,
+          )
+          from market_intelligence.extractors import RuleBasedExtractor
+          from market_intelligence.models import EventType
+          from market_intelligence.retrieval import MultiProviderRetriever
+          from market_intelligence.storage import IntelligenceStore
+
+          now = FIXTURE_BASE
+          watch = [WatchEntity(canonical_name="SEC", aliases=("Securities and Exchange Commission",),
+                               entity_type=EntityType.REGULATOR, topics=("bitcoin regulation",),
+                               expected_event_types=(EventType.REGULATION,))]
+          queries = QueryPlanner().plan(watch, now)
+          official, coverage = primary_and_secondary(now - timedelta(hours=1))
+          docs = [official.model_copy(update={"query": queries[0].query}),
+                  coverage.model_copy(update={"query": queries[0].query})]
+          providers = {"fixture": StaticFixtureProvider(docs, now=lambda: now, restamp=False),
+                       "outage": OutageProvider()}
+          configs = {p: ProviderConfig(id=p, type="fixture",
+                                       source_category=ProviderCategory.GENERAL_WEB, timeout=5.0)
+                     for p in providers}
+
+          with tempfile.TemporaryDirectory() as tmp:
+              store = IntelligenceStore(pathlib.Path(tmp) / "c.duckdb")
+              extractor = RuleBasedExtractor({"SEC": ("Securities and Exchange Commission",)})
+              collector = ForwardCollector(store, now=lambda: now)
+              first = collector.collect(queries, MultiProviderRetriever(providers, configs),
+                                        extractor, {"w": "ci"})
+              assert first.manifest.documents_new > 0, "fixture collection produced nothing"
+              assert first.manifest.provider_success["outage"] is False, "outage must be recorded"
+              assert first.snapshot is not None, "a corpus snapshot must be registered"
+
+              # Rediscovery must not rewrite availability (B4.1.12).
+              before = {d.document_id: d.available_at for d in store.documents_as_of(now)}
+              collector._now = lambda: now + timedelta(days=3)
+              second = collector.collect(queries, MultiProviderRetriever(providers, configs),
+                                         extractor, {"w": "ci"})
+              after = {d.document_id: d.available_at
+                       for d in store.documents_as_of(now + timedelta(days=3))}
+              assert second.manifest.documents_new == 0, "rediscovery must not add documents"
+              assert after == before, "rediscovery must not move availability"
+
+              # An old article retrieved today is available today (B4.1.39).
+              stale = late_source(now)
+              assert stale.published_at < now - timedelta(days=20) and stale.available_at == now
+              store.close()
+          print("B4.1 offline collection OK")
+          PY
+      - name: B4.1 corpus status, readiness and credential redaction
+        run: |
+          python - <<'PY'
+          import tempfile, pathlib
+          from market_intelligence.cli import _corpus_status, _provider_report
+          from market_intelligence.collection.policy import redact_mapping
+          from market_intelligence.storage import IntelligenceStore
+
+          with tempfile.TemporaryDirectory() as tmp:
+              store = IntelligenceStore(pathlib.Path(tmp) / "empty.duckdb")
+              status = _corpus_status(store, "rules-v1", ["SEC", "Donald Trump"])
+              assert status.readiness.value == "NOT_READY", status.readiness
+              assert all(not f.ready for f in status.families)
+              assert "Donald Trump" in status.missing_entities
+              store.close()
+
+          rows = _provider_report()
+          assert {r["provider_id"] for r in rows} >= {"syndication", "statements", "whales"}
+          assert not any(r["operable"] and r["credentials_env"] and not r["credential_present"]
+                         for r in rows), "a provider without its credential must not be operable"
+          assert redact_mapping({"api_key": "sk-live-1"})["api_key"] == "<redacted>"
+          print("B4.1 corpus status and redaction OK")
+          PY
       - name: B4 bootstrap determinism
         run: |
           python -c "from market_intelligence.b4.stats import BootstrapConfig, block_bootstrap; c=BootstrapConfig(replicates=200,block_length=5,seed=42); v=[(i*7%13)/100.0 for i in range(200)]; a=block_bootstrap(v,c); b=block_bootstrap(v,c); assert (a.lower,a.upper,a.p_value)==(b.lower,b.upper,b.p_value); print('B4 bootstrap deterministic')"
