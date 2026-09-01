@@ -2,15 +2,24 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from .catalog import DatasetCatalog
+from .collection.clustering import EventCluster, cluster_events
+from .collection.corpus import CorpusCatalog
+from .collection.feeds import NEWS_API_DECLARATION, SYNDICATION_DECLARATION
+from .collection.readiness import assess_entities, assess_family, assess_whale_contexts
+from .collection.statements import STATEMENT_DECLARATION
+from .collection.status import CorpusStatus, build_status
+from .collection.whales import WHALE_DECLARATION
 from .configuration import ProviderConfig, ProviderRegistry, QueryPlanner, WatchEntity
 from .cycle import run_intelligence_cycle
 from .extractors import RuleBasedExtractor
 from .historical import HistoricalDatasetService
+from .models import EventType
 from .origins import OriginFrequency, generate_origins
 from .providers import JsonSearchApiProvider, RssSearchProvider
 from .replay_dataset import ReplayDatasetBuilder, ReplayMode
@@ -90,6 +99,24 @@ def build_parser() -> argparse.ArgumentParser:
 
     catalog = sub.add_parser("catalog", help="list registered historical datasets")
     catalog.add_argument("--limit", type=int, default=20)
+
+    corpus_status = sub.add_parser(
+        "corpus-status",
+        help="what the accumulated intelligence corpus holds, and whether B4 can be re-run",
+    )
+    corpus_status.add_argument("--json", action="store_true", help="machine-readable output")
+    corpus_status.add_argument("--output", default=None, help="also write the JSON report here")
+    corpus_status.add_argument("--extractor-version", default="rules-v1")
+    corpus_status.add_argument(
+        "--entities",
+        default="Donald Trump,Elon Musk,Jerome Powell,Michael Saylor,SEC,CFTC",
+        help="comma-separated entities to assess for readiness",
+    )
+
+    corpora = sub.add_parser("corpora", help="list registered corpus snapshots")
+    corpora.add_argument("--limit", type=int, default=20)
+
+    sub.add_parser("providers", help="declared providers and whether they can run")
     demo = sub.add_parser("demo")
     demo.add_argument("--output-dir", default="market-intelligence-demo")
     gold = sub.add_parser("gold-report")
@@ -237,6 +264,19 @@ def main(argv: list[str] | None = None) -> int:
                 )
             )
             return 0
+        if args.command == "corpus-status":
+            status = _corpus_status(store, args.extractor_version, args.entities.split(","))
+            if args.output:
+                status.write(args.output)
+            print(status.model_dump_json(indent=2) if args.json else status.human_readable())
+            return 0
+        if args.command == "corpora":
+            snapshots = CorpusCatalog(store.connection).list_snapshots(limit=args.limit)
+            print(json.dumps([item.model_dump(mode="json") for item in snapshots], indent=2))
+            return 0
+        if args.command == "providers":
+            print(json.dumps(_provider_report(), indent=2))
+            return 0
         if args.command == "catalog":
             entries = DatasetCatalog(store.connection).list_datasets(limit=args.limit)
             print(json.dumps([entry.model_dump(mode="json") for entry in entries], indent=2))
@@ -276,3 +316,71 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+
+def _corpus_status(store: IntelligenceStore, extractor_version: str, entities: list[str]) -> CorpusStatus:
+    """B4.1.34. Assemble the status report from whatever the store actually holds."""
+    horizon = datetime.now(timezone.utc)
+    documents = store.documents_as_of(horizon)
+    events = [event for event in store.signals_as_of(horizon) if event.extractor_version == extractor_version]
+    clusters = cluster_events(events, documents)
+    by_context: dict[str, list[EventCluster]] = {}
+    for cluster in clusters:
+        for event in events:
+            if event.event_id in cluster.event_ids and event.transfer_context is not None:
+                by_context.setdefault(event.transfer_context.value, []).append(cluster)
+                break
+
+    families = [
+        assess_family(f"event_type:{name}", [c for c in clusters if c.event_type == name])
+        for name in sorted({cluster.event_type for cluster in clusters}) or ["REGULATION"]
+    ]
+    families.extend(assess_entities(clusters, [entity.strip() for entity in entities if entity.strip()]))
+    families.extend(assess_whale_contexts(by_context))
+
+    latest = CorpusCatalog(store.connection).latest()
+    return build_status(
+        documents,
+        events,
+        clusters,
+        families,
+        generated_at=horizon,
+        corpus_id=latest.corpus_id if latest else None,
+        expected_event_types=[member.value for member in EventType],
+        expected_entities=[entity.strip() for entity in entities if entity.strip()],
+        providers_enabled=len({document.provider for document in documents}),
+    )
+
+
+def _provider_report() -> list[dict[str, object]]:
+    """B4.1.41. Declared providers, their policy, and why any is unavailable.
+
+    Credential *presence* is reported; the credential itself never is.
+    """
+    declarations = [
+        SYNDICATION_DECLARATION,
+        NEWS_API_DECLARATION,
+        STATEMENT_DECLARATION,
+        WHALE_DECLARATION,
+    ]
+    rows: list[dict[str, object]] = []
+    for declaration in declarations:
+        present = bool(os.environ.get(declaration.credentials_env)) if declaration.credentials_env else True
+        rows.append(
+            {
+                "provider_id": declaration.provider_id,
+                "policy": declaration.policy.value,
+                "operable": declaration.operable(present),
+                "reason": declaration.disabled_reason(present),
+                "credentials_env": declaration.credentials_env,
+                "credential_present": present,
+                "requires_paid_contract": declaration.requires_paid_contract,
+                "minimum_interval_seconds": declaration.minimum_interval_seconds,
+                "raw_retention": declaration.raw_retention.value,
+                "primary_source": declaration.primary_source,
+                "purpose": declaration.purpose,
+                "rate_limit_note": declaration.rate_limit_note,
+                "terms_note": declaration.terms_note,
+            }
+        )
+    return rows

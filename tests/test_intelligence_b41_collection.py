@@ -311,19 +311,19 @@ class TestFeedParsing:
 class TestSyndicationProvider:
     def test_availability_is_retrieval_not_publication(self) -> None:
         """The absolute rule of this track, asserted directly."""
-        documents = provider({"example": RSS_FEED}).search("bitcoin", NOW - timedelta(hours=1), NOW)
+        documents = provider({"example": RSS_FEED}).search("bitcoin", NOW - timedelta(hours=6), NOW)
         assert documents
         for document in documents:
             assert document.available_at == NOW
             assert document.published_at is not None and document.published_at < NOW
 
     def test_atom_feeds_produce_documents(self) -> None:
-        documents = provider({"regulator": ATOM_FEED}).search("bitcoin", NOW - timedelta(hours=1), NOW)
+        documents = provider({"regulator": ATOM_FEED}).search("bitcoin", NOW - timedelta(hours=6), NOW)
         assert len(documents) == 2
 
     def test_primary_and_official_classification_is_recorded(self) -> None:
         """B4.1.3. An announcement and coverage of it are different evidence."""
-        documents = provider({"regulator": ATOM_FEED}).search("bitcoin", NOW - timedelta(hours=1), NOW)
+        documents = provider({"regulator": ATOM_FEED}).search("bitcoin", NOW - timedelta(hours=6), NOW)
         assert all(document.source_metadata.primary_source for document in documents)
         assert all(document.source_metadata.official_source for document in documents)
         assert all(
@@ -331,17 +331,17 @@ class TestSyndicationProvider:
         )
 
     def test_query_terms_filter_entries(self) -> None:
-        documents = provider({"example": RSS_FEED}).search("bitcoin", NOW - timedelta(hours=1), NOW)
+        documents = provider({"example": RSS_FEED}).search("bitcoin", NOW - timedelta(hours=6), NOW)
         assert [document.title for document in documents] == ["Bitcoin ETF decision announced"]
 
     def test_retrieval_provenance_names_the_feed(self) -> None:
-        documents = provider({"regulator": ATOM_FEED}).search("bitcoin", NOW - timedelta(hours=1), NOW)
+        documents = provider({"regulator": ATOM_FEED}).search("bitcoin", NOW - timedelta(hours=6), NOW)
         provenance = documents[0].retrieval_provenance
         assert provenance and provenance[0].provider_document_id == "regulator"
 
     def test_raw_evidence_is_captured_and_hashed(self) -> None:
         engine = provider({"regulator": ATOM_FEED})
-        engine.search("bitcoin", NOW - timedelta(hours=1), NOW)
+        engine.search("bitcoin", NOW - timedelta(hours=6), NOW)
         assert len(engine.last_evidence) == 1
         evidence = engine.last_evidence[0]
         assert evidence.content_hash == hash_payload(ATOM_FEED)
@@ -361,22 +361,44 @@ class TestSyndicationProvider:
             now=lambda: NOW,
             sleep=lambda _seconds: None,
         )
-        documents = engine.search("bitcoin", NOW - timedelta(hours=1), NOW)
+        documents = engine.search("bitcoin", NOW - timedelta(hours=6), NOW)
         assert len(documents) == 2
         assert engine.last_attempts["broken"].failures == (FailureClass.PERMANENT,)
 
-    def test_a_window_that_excludes_now_collects_nothing(self) -> None:
-        stale = provider({"example": RSS_FEED}).search(
-            "bitcoin", NOW - timedelta(days=10), NOW - timedelta(days=9)
-        )
-        assert stale == []
+    def test_the_lookback_window_bounds_publication_not_availability(self) -> None:
+        """The third silent-empty failure, pinned.
+
+        Testing the window against *availability* can never pass in forward
+        collection -- availability is retrieval, which is always after the
+        planning instant the window ends at -- so every entry is discarded and
+        the provider reports a successful, empty collection. The window belongs
+        on publication.
+        """
+        engine = provider({"example": RSS_FEED})
+        # A window ending at the planning instant, as the retriever supplies.
+        current = engine.search("bitcoin", NOW - timedelta(hours=6), NOW)
+        assert current, "entries published inside the lookback must be collected"
+        assert all(document.available_at == NOW for document in current)
+
+        # A lookback whose start is after the entries were published collects
+        # nothing. Only the lower bound is applied: an entry carrying a future
+        # publication stamp -- publishers do embargo -- is real evidence that was
+        # really retrieved, and an upper bound would silently discard it.
+        narrow = engine.search("bitcoin", NOW - timedelta(minutes=5), NOW)
+        assert narrow == []
+
+    def test_an_entry_without_a_publication_date_is_still_collected(self) -> None:
+        """A missing date is not evidence the entry is old, so it is kept."""
+        undated = RSS_FEED.replace("<pubDate>Mon, 04 May 2026 09:30:00 GMT</pubDate>", "")
+        collected = provider({"example": undated}).search("bitcoin", NOW - timedelta(minutes=5), NOW)
+        assert [document.title for document in collected] == ["Bitcoin ETF decision announced"]
 
     def test_entries_without_a_link_or_title_are_skipped(self) -> None:
         partial = """<?xml version="1.0"?><rss version="2.0"><channel>
           <item><title>Bitcoin note</title><description>no link</description></item>
           <item><link>https://example.gov/x</link><description>bitcoin, no title</description></item>
         </channel></rss>"""
-        assert provider({"example": partial}).search("bitcoin", NOW - timedelta(hours=1), NOW) == []
+        assert provider({"example": partial}).search("bitcoin", NOW - timedelta(hours=6), NOW) == []
 
 
 # ------------------------------------------------------------------- policy

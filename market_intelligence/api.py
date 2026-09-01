@@ -15,6 +15,8 @@ from fastapi.responses import HTMLResponse, JSONResponse, Response
 from pydantic import BaseModel, Field, field_validator
 
 from .catalog import DatasetCatalog, DatasetCatalogEntry
+from .collection.corpus import CorpusCatalog, CorpusSnapshot
+from .collection.status import CorpusStatus
 from .context import request_id_context
 from .errors import FeatureContractError, IntelligenceError, ReplayIntegrityError, SnapshotMismatchError, StorageError
 from .feature_matrix import DEFAULT_CHUNK_SIZE
@@ -378,6 +380,38 @@ def create_app(db_path: str | Path | None = None, store: IntelligenceStore | Non
         if entry is None:
             raise HTTPException(status_code=404, detail=f"unknown dataset {dataset_id}")
         return entry
+
+    @app.get("/corpus/status", response_model=CorpusStatus)
+    def corpus_status(
+        extractor_version: str = "rules-v1",
+        entities: str = "Donald Trump,Elon Musk,Jerome Powell,Michael Saylor,SEC,CFTC",
+    ) -> CorpusStatus:
+        """B4.1.35. What the corpus holds and whether B4 can be re-run.
+
+        Counts and readiness only. No raw document text crosses this boundary,
+        so a non-redistributable provider's content cannot leak through it.
+        """
+        from .cli import _corpus_status  # noqa: PLC0415 -- one implementation, shared with the CLI
+
+        return _corpus_status(store, extractor_version, entities.split(","))
+
+    @app.get("/corpora", response_model=list[CorpusSnapshot])
+    def corpora(limit: int = 50) -> list[CorpusSnapshot]:
+        return CorpusCatalog(store.connection).list_snapshots(limit=limit)
+
+    @app.get("/corpora/{corpus_id}", response_model=CorpusSnapshot)
+    def corpus_entry(corpus_id: str) -> CorpusSnapshot:
+        snapshot = CorpusCatalog(store.connection).get(corpus_id)
+        if snapshot is None:
+            raise HTTPException(status_code=404, detail=f"unknown corpus {corpus_id}")
+        return snapshot
+
+    @app.get("/collection/providers")
+    def collection_providers() -> list[dict[str, object]]:
+        """Declared providers and whether each can run. Credentials never appear."""
+        from .cli import _provider_report  # noqa: PLC0415 -- shared with the CLI
+
+        return _provider_report()
 
     @app.get("/quarantine", response_model=Page[QuarantineRecord])
     def quarantine(

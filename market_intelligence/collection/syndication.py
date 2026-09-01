@@ -91,6 +91,19 @@ class FeedEntry:
     author: str | None
 
 
+def query_terms(query: str) -> list[str]:
+    """Split a planned query into terms a feed's text could actually contain.
+
+    The query planner emits quoted phrases -- `"SEC" enforcement` -- and feed
+    titles never contain the quote characters. Splitting on whitespace alone
+    produces terms like `"sec` that match nothing, so the provider reports a
+    successful, empty collection: the same silent-empty failure as the Atom gap,
+    from a different cause.
+    """
+    cleaned = "".join(character if character.isalnum() or character.isspace() else " " for character in query)
+    return [term for term in cleaned.casefold().split() if term]
+
+
 def parse_feed(payload: bytes | str) -> list[FeedEntry]:
     """Parse RSS 2.0 or Atom. Unknown dialects yield nothing rather than raise.
 
@@ -188,7 +201,7 @@ class SyndicationProvider(SearchProvider):
 
     def search(self, query: str, start: datetime, end: datetime) -> list[Document]:
         retrieved = self._now()
-        terms = [term for term in query.casefold().split() if term]
+        terms = query_terms(query)
         documents: list[Document] = []
         self.last_evidence = []
         self.last_attempts = {}
@@ -224,7 +237,7 @@ class SyndicationProvider(SearchProvider):
             except ElementTree.ParseError:
                 continue
 
-            documents.extend(self._documents_for(feed, entries, terms, query, retrieved, start, end))
+            documents.extend(self._documents_for(feed, entries, terms, query, retrieved, start))
 
         return deduplicate_documents(documents)
 
@@ -236,7 +249,6 @@ class SyndicationProvider(SearchProvider):
         query: str,
         retrieved: datetime,
         start: datetime,
-        end: datetime,
     ) -> list[Document]:
         output: list[Document] = []
         for entry in entries:
@@ -250,7 +262,17 @@ class SyndicationProvider(SearchProvider):
             # became usable now, and treating its date as availability would
             # fabricate three weeks of hindsight.
             available = retrieved
-            if not start <= available <= end:
+            # The lookback window bounds what the planner is interested in, and
+            # it is applied to *publication*, not to availability.
+            #
+            # Testing `start <= available <= end` -- as the original RSS
+            # provider did -- can never pass in forward collection: `end` is the
+            # planning instant and retrieval necessarily happens after it, so
+            # every entry is discarded and the provider reports a successful,
+            # empty collection. That is the third silent-empty failure in this
+            # path, and the hardest to see, because nothing is wrong with any
+            # single line of it.
+            if entry.published_at is not None and entry.published_at < start:
                 continue
             text_hash = Document.content_hash(entry.summary or entry.title)
             output.append(
@@ -296,4 +318,5 @@ __all__ = [
     "FeedSource",
     "SyndicationProvider",
     "parse_feed",
+    "query_terms",
 ]

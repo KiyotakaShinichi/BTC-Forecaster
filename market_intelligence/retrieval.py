@@ -8,6 +8,7 @@ from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from pydantic import BaseModel, ConfigDict
 
+from .collection.backoff import RETRYABLE, classify_exception
 from .configuration import ProviderConfig, QuerySpec
 from .models import Document, RetrievalProvenance
 from .providers import SearchProvider
@@ -81,6 +82,13 @@ class MultiProviderRetriever:
                         credential = config.credential()
                         if credential:
                             error = error.replace(credential, "[REDACTED]")
+                        # B4.1.21. Only retry what retrying can fix. This loop
+                        # previously retried everything, so a rejected credential
+                        # was re-sent twice more per query -- which is how a key
+                        # gets suspended, and it could never have succeeded.
+                        failure = classify_exception(exc)
+                        if failure not in RETRYABLE:
+                            break
                         if used <= self.max_retries:
                             self.sleep((2 ** (used - 1)) + self.jitter())
                 success = error is None
