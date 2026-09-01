@@ -190,8 +190,24 @@ class EventSignal(BaseModel):
         return self
 
     @staticmethod
-    def stable_id(source_ids: list[str] | tuple[str, ...], event_type: EventType, event_time: datetime) -> str:
-        raw = "|".join(sorted(source_ids)) + f"|{event_type.value}|{_utc(event_time).isoformat()}"
+    def stable_id(
+        source_ids: list[str] | tuple[str, ...],
+        event_type: EventType,
+        event_time: datetime,
+        extractor_version: str,
+    ) -> str:
+        """Identity includes the extractor version, deliberately.
+
+        Without it, re-extracting a document with an improved extractor produces
+        the same id as the old event, and persistence silently overwrites the
+        original -- rewriting history invisibly, which is exactly what a research
+        corpus must never do. With it, v1 and v2 events coexist and a replay can
+        pin a frozen extractor version.
+        """
+        raw = (
+            "|".join(sorted(source_ids))
+            + f"|{event_type.value}|{_utc(event_time).isoformat()}|{extractor_version}"
+        )
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 

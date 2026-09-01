@@ -111,7 +111,7 @@ class RuleBasedExtractor(EventExtractor):
             context = TransferContext.UNKNOWN if event_type == EventType.WHALE_TRANSFER else None
             output.append(
                 EventSignal(
-                    event_id=EventSignal.stable_id([doc.document_id], event_type, doc.available_at),
+                    event_id=EventSignal.stable_id([doc.document_id], event_type, doc.available_at, self.version),
                     event_time=doc.published_at or doc.available_at,
                     available_time=doc.available_at,
                     source_ids=(doc.document_id,),

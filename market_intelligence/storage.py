@@ -11,6 +11,7 @@ from .errors import FeatureContractError, ReplayIntegrityError, SnapshotMismatch
 from .features import FEATURE_CONTRACT_VERSION
 from .models import Document, EventSignal
 from .operations import (
+    DocumentSighting,
     IntelligenceSnapshot,
     ProviderHealth,
     QualityScoreboard,
@@ -48,6 +49,13 @@ class IntelligenceStore:
             );
             CREATE TABLE IF NOT EXISTS documents (
               document_id VARCHAR PRIMARY KEY, available_at TIMESTAMPTZ NOT NULL, payload JSON NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS document_sightings (
+              document_id VARCHAR PRIMARY KEY,
+              first_seen_at TIMESTAMPTZ NOT NULL,
+              latest_seen_at TIMESTAMPTZ NOT NULL,
+              sighting_count BIGINT NOT NULL,
+              providers VARCHAR NOT NULL
             );
             CREATE TABLE IF NOT EXISTS signals (
               event_id VARCHAR PRIMARY KEY, available_time TIMESTAMPTZ NOT NULL, payload JSON NOT NULL
@@ -105,11 +113,84 @@ class IntelligenceStore:
         return self.schema_version() == SCHEMA_VERSION and row is not None and row[0] == 1
 
     def put_documents(self, documents: list[Document]) -> None:
-        if documents:
-            self.connection.executemany(
-                "INSERT OR REPLACE INTO documents VALUES (?, ?, ?)",
-                [(d.document_id, d.available_at, d.model_dump_json()) for d in documents],
+        """Persist evidence. **The first write wins.**
+
+        `INSERT OR REPLACE` here would be a corpus-destroying bug in forward
+        collection. A document's id is derived from its URL and content, so
+        every cycle that re-reads a feed rediscovers the same items with a fresh
+        `available_at` -- and replacing would rewrite each document's
+        availability to the latest collection time, forever. A replay at any
+        past origin would then see nothing, because nothing would ever have been
+        available before now.
+
+        Rediscovery is real information, so it is not thrown away either: it is
+        recorded as a sighting (B4.1.12), leaving the original availability
+        untouched.
+        """
+        if not documents:
+            return
+        self.connection.executemany(
+            "INSERT OR IGNORE INTO documents VALUES (?, ?, ?)",
+            [(d.document_id, d.available_at, d.model_dump_json()) for d in documents],
+        )
+        self.record_sightings(documents)
+
+    def record_sightings(self, documents: list[Document]) -> None:
+        """Track first and latest sighting without touching stored availability."""
+        if not documents:
+            return
+        for document in documents:
+            row = self.connection.execute(
+                "SELECT first_seen_at, sighting_count, providers FROM document_sightings WHERE document_id = ?",
+                [document.document_id],
+            ).fetchone()
+            if row is None:
+                self.connection.execute(
+                    "INSERT INTO document_sightings VALUES (?, ?, ?, ?, ?)",
+                    [
+                        document.document_id,
+                        document.retrieved_at,
+                        document.retrieved_at,
+                        1,
+                        document.provider,
+                    ],
+                )
+                continue
+            first_seen, count, providers = row
+            merged = sorted({*str(providers).split(","), document.provider})
+            self.connection.execute(
+                """
+                UPDATE document_sightings
+                   SET latest_seen_at = greatest(latest_seen_at, ?),
+                       first_seen_at = least(first_seen_at, ?),
+                       sighting_count = ?,
+                       providers = ?
+                 WHERE document_id = ?
+                """,
+                [
+                    document.retrieved_at,
+                    document.retrieved_at,
+                    int(count) + 1,
+                    ",".join(merged),
+                    document.document_id,
+                ],
             )
+
+    def sighting(self, document_id: str) -> DocumentSighting | None:
+        row = self.connection.execute(
+            "SELECT document_id, first_seen_at, latest_seen_at, sighting_count, providers "
+            "FROM document_sightings WHERE document_id = ?",
+            [document_id],
+        ).fetchone()
+        if row is None:
+            return None
+        return DocumentSighting(
+            document_id=row[0],
+            first_seen_at=row[1],
+            latest_seen_at=row[2],
+            sighting_count=int(row[3]),
+            providers=tuple(str(row[4]).split(",")) if row[4] else (),
+        )
 
     def put_signals(self, signals: list[EventSignal]) -> None:
         if signals:

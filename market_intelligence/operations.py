@@ -3,12 +3,12 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
 class WatermarkStatus(str, Enum):
@@ -24,6 +24,35 @@ class Watermark(BaseModel):
     last_retrieval_time: datetime
     last_document_id: str | None = None
     status: WatermarkStatus
+
+
+class DocumentSighting(BaseModel):
+    """B4.1.12. When a document was first and last seen, and by whom.
+
+    Kept apart from the document itself so that rediscovery is recorded without
+    any path existing to rewrite the original availability. `first_seen_at` is
+    the fact a replay depends on; `latest_seen_at` and `sighting_count` describe
+    how persistently a source keeps re-serving it, which is useful for judging
+    provider behaviour and useless for point-in-time reasoning.
+    """
+
+    model_config = ConfigDict(frozen=True)
+    document_id: str
+    first_seen_at: datetime
+    latest_seen_at: datetime
+    sighting_count: int
+    providers: tuple[str, ...] = ()
+
+    @field_validator("first_seen_at", "latest_seen_at")
+    @classmethod
+    def canonical_utc(cls, value: datetime) -> datetime:
+        """B4.1.10. DuckDB renders TIMESTAMPTZ in the session timezone, so a
+        read-back carries the *machine's* offset even though the instant is
+        right. Normalising here makes the canonical record byte-identical on
+        every machine, which is what a reproducible corpus needs."""
+        if value.tzinfo is None or value.utcoffset() is None:
+            raise ValueError("sighting timestamps must be timezone-aware")
+        return value.astimezone(timezone.utc)
 
 
 class HealthState(str, Enum):
