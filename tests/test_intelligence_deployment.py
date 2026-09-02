@@ -420,14 +420,42 @@ class TestSchedulerEntrypoint:
         assert recorded["exit_code"] == EXIT_OK
         assert recorded["profile"]["feeds"] == ["sec-press"]
 
-    def test_a_bad_profile_fails_before_touching_the_corpus(self, tmp_path: Path) -> None:
+    def test_a_bad_profile_fails_before_touching_the_corpus(
+        self, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        """Exit 2 and one sentence. A traceback escaping to the shell breaks the
+        documented interface twice: it exits 1, which the contract does not
+        mention, and it hands an operator fifteen lines of Python at 3am."""
         from market_intelligence.cli import main
+        from market_intelligence.ops.scheduled import EXIT_FAILED
 
         bad = tmp_path / "bad.json"
         bad.write_text(json.dumps(minimal(feeds=["not-a-feed"])), encoding="utf-8")
-        with pytest.raises(ConfigurationError):
-            main(["collect-scheduled", "--profile", str(bad), "--state-root", str(tmp_path / "s")])
+        code = main(
+            ["collect-scheduled", "--profile", str(bad), "--state-root", str(tmp_path / "s")]
+        )
+        assert code == EXIT_FAILED
+        assert "Traceback" not in capsys.readouterr().err
         assert not (tmp_path / "s" / "logs").exists()
+
+    def test_a_missing_profile_is_a_documented_failure_not_an_undocumented_one(
+        self, tmp_path: Path
+    ) -> None:
+        from market_intelligence.cli import main
+        from market_intelligence.ops.scheduled import EXIT_FAILED
+
+        assert (
+            main(
+                [
+                    "collect-scheduled",
+                    "--profile",
+                    str(tmp_path / "absent.json"),
+                    "--state-root",
+                    str(tmp_path / "s"),
+                ]
+            )
+            == EXIT_FAILED
+        )
 
     def test_the_lock_is_reported_through_the_exit_code(self, tmp_path: Path) -> None:
         from market_intelligence.cli import main

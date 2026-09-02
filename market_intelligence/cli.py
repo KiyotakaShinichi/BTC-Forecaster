@@ -18,6 +18,7 @@ from .collection.status import CorpusStatus, build_status
 from .collection.whales import WHALE_DECLARATION
 from .configuration import ProviderConfig, ProviderRegistry, QueryPlanner, WatchEntity
 from .cycle import run_intelligence_cycle
+from .errors import IntelligenceError
 from .extractors import RuleBasedExtractor
 from .historical import HistoricalDatasetService
 from .models import EventType
@@ -26,7 +27,7 @@ from .ops.backup import restore as restore_backup
 from .ops.integrity import verify as ops_verify
 from .ops.paths import StoragePaths, looks_ephemeral
 from .ops.paths import validate as storage_validate
-from .ops.scheduled import last_run_times
+from .ops.scheduled import EXIT_FAILED, last_run_times
 from .ops.summary import project_storage
 from .ops.watchdog import assess as watchdog_assess
 from .ops.watchdog import from_status
@@ -235,6 +236,23 @@ def _collect_scheduled(args: argparse.Namespace) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Entry point. Operational failures exit 2 with a sentence, not a traceback.
+
+    The exit code is a documented interface -- 0 ran, 2 failed, 3 locked, 4
+    nothing due -- and a stack trace escaping to the shell breaks it twice over:
+    it exits 1, which the contract does not mention, and it hands an operator
+    fifteen lines of Python where one line would do. A programming error still
+    raises, because a traceback is exactly what that needs.
+    """
+    try:
+        return _main(argv)
+    except IntelligenceError as error:
+        # BackupError and ConfigurationError both live under this.
+        print(f"error: {error}", file=sys.stderr)
+        return EXIT_FAILED
+
+
+def _main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.command == "demo":
         from .demo import run_offline_demo
