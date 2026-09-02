@@ -186,11 +186,15 @@ class SyndicationProvider(SearchProvider):
         now: Callable[[], datetime] = lambda: datetime.now(timezone.utc),
         retry: RetryPolicy | None = None,
         sleep: Callable[[float], None] | None = None,
+        user_agent: str | None = None,
     ) -> None:
         self.feeds = list(feeds)
         self.name = name
         self.timeout = timeout
-        self._opener = opener or _default_opener
+        self.user_agent = user_agent or DEFAULT_USER_AGENT
+        self._opener = opener or (
+            lambda url, timeout_seconds: _default_opener(url, timeout_seconds, self.user_agent)
+        )
         self._now = now
         self._retry = retry if retry is not None else RetryPolicy()
         self._sleep = sleep
@@ -302,9 +306,18 @@ class SyndicationProvider(SearchProvider):
         return output
 
 
-def _default_opener(url: str, timeout: float) -> bytes:
+#: Identifies this collector to publishers. Several government sites -- the SEC
+#: most explicitly -- require a User-Agent naming the requester and a contact
+#: address, and answer 403 without one. A single manual fetch usually slips
+#: through; a collector polling twice a day for months is precisely what gets
+#: blocked, so a deployment sets `user_agent` to something a publisher can write
+#: to. This default is honest about what it is and carries no false contact.
+DEFAULT_USER_AGENT = "btc-intel-research/1.0 (research collector; contact not configured)"
+
+
+def _default_opener(url: str, timeout: float, user_agent: str = DEFAULT_USER_AGENT) -> bytes:
     """Fetch a configured feed, classifying HTTP status into a failure class."""
-    request = urllib.request.Request(url, headers={"User-Agent": "btc-intel-research/1.0"})
+    request = urllib.request.Request(url, headers={"User-Agent": user_agent})
     try:
         with urllib.request.urlopen(request, timeout=timeout) as response:  # nosec: operator allowlist
             return bytes(response.read())
@@ -314,6 +327,7 @@ def _default_opener(url: str, timeout: float) -> bytes:
 
 __all__ = [
     "ATOM_NAMESPACE",
+    "DEFAULT_USER_AGENT",
     "FeedEntry",
     "FeedSource",
     "SyndicationProvider",

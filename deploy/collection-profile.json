@@ -1,0 +1,105 @@
+{
+  "name": "official-sources-v1",
+  "_comment": [
+    "The deployed collection profile. Edit through review, not on the host:",
+    "the manifest records this fingerprint, so a later replay can tell",
+    "'this feed was not configured yet' from 'this feed returned nothing'.",
+    "Feeds are ids from market_intelligence/collection/feeds.py -- adding a",
+    "source is a code change, deliberately.",
+    "Set user_agent to something a publisher can write to before deploying;",
+    "the SEC in particular answers 403 to a collector it cannot contact."
+  ],
+  "minimum_interval_seconds": 900,
+  "timeout_seconds": 20.0,
+  "max_attempts": 3,
+  "feeds": [
+    "sec-press",
+    "sec-litigation",
+    "federalreserve-press",
+    "federalreserve-monetary",
+    "cftc-press",
+    "treasury-press",
+    "bls-news"
+  ],
+  "watchlist": [
+    {
+      "canonical_name": "SEC",
+      "aliases": [
+        "Securities and Exchange Commission"
+      ],
+      "entity_type": "REGULATOR",
+      "topics": [
+        "bitcoin regulation",
+        "crypto enforcement",
+        "ETF approval"
+      ],
+      "expected_event_types": [
+        "REGULATION",
+        "ETF_FLOW"
+      ]
+    },
+    {
+      "canonical_name": "Federal Reserve",
+      "aliases": [
+        "Powell",
+        "Jerome Powell",
+        "FOMC"
+      ],
+      "entity_type": "CENTRAL_BANK",
+      "topics": [
+        "monetary policy",
+        "interest rates",
+        "FOMC statement"
+      ],
+      "expected_event_types": [
+        "MONETARY_POLICY",
+        "MACRO_SHOCK"
+      ]
+    },
+    {
+      "canonical_name": "CFTC",
+      "aliases": [
+        "Commodity Futures Trading Commission"
+      ],
+      "entity_type": "REGULATOR",
+      "topics": [
+        "digital asset enforcement",
+        "derivatives"
+      ],
+      "expected_event_types": [
+        "REGULATION"
+      ]
+    },
+    {
+      "canonical_name": "US Treasury",
+      "aliases": [
+        "Department of the Treasury",
+        "OFAC"
+      ],
+      "entity_type": "REGULATOR",
+      "topics": [
+        "sanctions",
+        "digital asset policy"
+      ],
+      "expected_event_types": [
+        "REGULATION",
+        "GEOPOLITICAL_EVENT"
+      ]
+    },
+    {
+      "canonical_name": "Bureau of Labor Statistics",
+      "aliases": [
+        "BLS"
+      ],
+      "entity_type": "INSTITUTION",
+      "topics": [
+        "CPI",
+        "employment situation",
+        "inflation"
+      ],
+      "expected_event_types": [
+        "MACRO_SHOCK"
+      ]
+    }
+  ]
+}

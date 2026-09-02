@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
@@ -150,6 +151,20 @@ def build_parser() -> argparse.ArgumentParser:
     watch.add_argument("--json", action="store_true")
     watch.add_argument("--state-root", default=None)
 
+    scheduled = sub.add_parser(
+        "collect-scheduled",
+        help="one scheduled collection cycle; exit 0 ran, 2 failed, 3 lock held, 4 nothing due",
+    )
+    scheduled.add_argument("--profile", required=True, help="path to a collection profile")
+    scheduled.add_argument("--state-root", default=None)
+    scheduled.add_argument("--json", action="store_true")
+    scheduled.add_argument(
+        "--require-free-mb",
+        type=int,
+        default=64,
+        help="refuse to start below this much free space",
+    )
+
     paths_parser = sub.add_parser(
         "ops-paths", help="resolved persistent paths and whether they are usable"
     )
@@ -180,6 +195,45 @@ def _registry() -> ProviderRegistry:
     return registry
 
 
+def _collect_scheduled(args: argparse.Namespace) -> int:
+    """The one command a scheduler calls.
+
+    Deliberately thin: everything it needs is either in the committed profile or
+    in the environment, so what ran can be reconstructed from the repository and
+    the unit file alone. The exit code is the whole interface -- 3 and 4 are
+    ordinary outcomes, not failures, and a scheduler configured to treat them as
+    errors will page someone every night for nothing.
+    """
+    from .ops.profile import CollectionProfile, collect_once
+
+    profile = CollectionProfile.load(args.profile)
+    paths = StoragePaths.from_environment(args.state_root)
+    outcome = collect_once(
+        paths,
+        profile,
+        require_free_bytes=max(0, args.require_free_mb) * 1024 * 1024,
+        source_sha=os.environ.get("BTC_INTEL_SOURCE_SHA"),
+    )
+
+    payload = outcome.as_dict()
+    payload["profile"] = profile.fingerprint()
+    rendered = json.dumps(payload, indent=2)
+    print(rendered if args.json else outcome.reason)
+
+    # A scheduler keeps only the last few runs of stdout; the corpus keeps the
+    # manifest. Neither is a log of what the collector decided, so write that.
+    try:
+        paths.logs.mkdir(parents=True, exist_ok=True)
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+        (paths.logs / f"collect-{stamp}.json").write_text(rendered, encoding="utf-8")
+    except OSError as error:  # a log we cannot write must not fail the cycle
+        print(f"warning: could not write the run log: {error}", file=sys.stderr)
+
+    for warning in outcome.warnings:
+        print(f"warning: {warning}", file=sys.stderr)
+    return outcome.exit_code
+
+
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.command == "demo":
@@ -187,6 +241,8 @@ def main(argv: list[str] | None = None) -> int:
 
         print(json.dumps(run_offline_demo(args.output_dir), indent=2))
         return 0
+    if args.command == "collect-scheduled":
+        return _collect_scheduled(args)
     if args.command == "gold-report":
         from .gold import write_gold_evaluation
 
