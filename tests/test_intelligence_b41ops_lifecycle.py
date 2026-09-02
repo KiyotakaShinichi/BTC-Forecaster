@@ -334,6 +334,31 @@ class TestCorpusIntegrity:
         finally:
             store.close()
 
+    def test_a_snapshot_dated_after_the_report_window_still_verifies(self, tmp_path: Path) -> None:
+        """Found by an operations rehearsal, not by a unit test.
+
+        Each snapshot must be re-read at *its own* as-of instant. Filtering the
+        report's window instead makes every snapshot dated after it recompute to
+        an empty membership and report corrupt -- which is how a corpus whose
+        fixture clock ran ahead of the wall clock was declared broken.
+        """
+        store = IntelligenceStore(tmp_path / "c.duckdb")
+        try:
+            future = NOW + timedelta(days=30)
+            queries = QueryPlanner().plan(WATCHLIST, future)
+            docs = [
+                document(i, publisher=f"p{i}.example.gov", retrieved=future - timedelta(hours=1), query=queries[0].query)
+                for i in range(2)
+            ]
+            collect_once(store, future, docs)
+            # Verify from *before* the snapshot's as-of, as a wall-clock check would.
+            report = verify(store, as_of=NOW)
+            assert report.documents == 0, "the window genuinely predates the evidence"
+            assert report.snapshots == 1
+            assert report.ok, report.human_readable()
+        finally:
+            store.close()
+
     def test_a_snapshot_that_no_longer_matches_the_store_is_corrupt(self, tmp_path: Path) -> None:
         store = IntelligenceStore(tmp_path / "c.duckdb")
         try:

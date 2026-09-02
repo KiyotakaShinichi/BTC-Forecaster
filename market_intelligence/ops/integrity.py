@@ -117,7 +117,7 @@ def verify(store: IntelligenceStore, *, as_of: datetime, sample_limit: int = 0) 
     _check_extractor_versions(events, report)
     _check_sightings(store, documents, report, sample_limit)
     _check_watermarks(store, report)
-    _check_snapshots(store, documents, events, report)
+    _check_snapshots(store, report)
     return report
 
 
@@ -263,27 +263,28 @@ def _check_watermarks(store: IntelligenceStore, report: IntegrityReport) -> None
         )
 
 
-def _check_snapshots(
-    store: IntelligenceStore,
-    documents: Sequence[Document],
-    events: Sequence[EventSignal],
-    report: IntegrityReport,
-) -> None:
+def _check_snapshots(store: IntelligenceStore, report: IntegrityReport) -> None:
     """Re-derive each snapshot's membership hash from the live corpus.
 
     A snapshot is what a research result cites. If its recorded membership no
     longer matches what the store holds at that instant, the citation is broken
     -- and that is exactly the failure a catalog exists to make detectable.
+
+    Each snapshot is re-read **at its own as-of instant**, not at the report's.
+    Filtering the report's window instead makes every snapshot dated after that
+    window recompute to an empty membership and report as corrupt -- which is
+    wrong, and is exactly what happened the first time an operations rehearsal
+    verified a corpus whose fixture clock ran ahead of the wall clock.
     """
     catalog = CorpusCatalog(store.connection)
     snapshots = catalog.list_snapshots(limit=1000)
     report.snapshots = len(snapshots)
     for snapshot in snapshots:
-        included_documents = [item for item in documents if item.available_at <= snapshot.as_of]
+        included_documents = store.documents_as_of(snapshot.as_of)
         document_ids = {item.document_id for item in included_documents}
         included_events = [
             item
-            for item in events
+            for item in store.signals_as_of(snapshot.as_of)
             if item.available_time <= snapshot.as_of
             and item.extractor_version == snapshot.extractor_version
             and set(item.source_ids) <= document_ids

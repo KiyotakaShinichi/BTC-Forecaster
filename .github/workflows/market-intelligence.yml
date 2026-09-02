@@ -194,6 +194,131 @@ jobs:
           assert redact_mapping({"api_key": "sk-live-1"})["api_key"] == "<redacted>"
           print("B4.1 corpus status and redaction OK")
           PY
+      # O19: operations smoke, entirely offline. Fixture providers, a temp
+      # state root, no credentials and no network.
+      - name: B4.1-Ops lock, storage, crash recovery and integrity
+        run: |
+          python - <<'PY'
+          import pathlib, tempfile
+          from datetime import datetime, timedelta, timezone
+          from market_intelligence.collection.fixtures import (
+              OutageProvider, StaticFixtureProvider, fixture_document,
+          )
+          from market_intelligence.collection.service import ForwardCollector
+          from market_intelligence.configuration import (
+              EntityType, ProviderCategory, ProviderConfig, QueryPlanner, WatchEntity,
+          )
+          from market_intelligence.extractors import RuleBasedExtractor
+          from market_intelligence.models import EventType
+          from market_intelligence.ops.integrity import verify
+          from market_intelligence.ops.paths import StoragePaths, require_usable
+          from market_intelligence.ops.runlock import LockHeld, RunLock
+          from market_intelligence.retrieval import MultiProviderRetriever
+          from market_intelligence.storage import IntelligenceStore
+
+          now = datetime(2026, 9, 2, 9, 0, tzinfo=timezone.utc)
+          watch = [WatchEntity(canonical_name="SEC", aliases=("Securities and Exchange Commission",),
+                               entity_type=EntityType.REGULATOR, topics=("bitcoin regulation",),
+                               expected_event_types=(EventType.REGULATION,))]
+          with tempfile.TemporaryDirectory() as tmp:
+              paths = StoragePaths.from_environment(pathlib.Path(tmp) / "state").ensure()
+              require_usable(paths, require_free_bytes=1)
+
+              # One collector at a time, and a dead one never wedges collection.
+              first = RunLock(paths.lock, now=lambda: now).acquire()
+              try:
+                  RunLock(paths.lock, now=lambda: now).acquire()
+                  raise AssertionError("a second collector must be refused")
+              except LockHeld:
+                  pass
+              first.release()
+              assert not paths.lock.exists()
+
+              queries = QueryPlanner().plan(watch, now)
+              docs = [fixture_document(url=f"https://p{i}.example.gov/r{i}",
+                                       title=f"SEC regulation notice {i} concerning bitcoin",
+                                       retrieved_at=now - timedelta(hours=1),
+                                       publisher=f"p{i}.example.gov", provider="syndication",
+                                       query=queries[0].query, primary_source=True,
+                                       official_source=True, body=f"b{i}") for i in range(3)]
+              providers = {"syndication": StaticFixtureProvider(docs, name="syndication",
+                                                                now=lambda: now, restamp=False),
+                           "outage": OutageProvider()}
+              configs = {n: ProviderConfig(id=n, type="fixture",
+                                           source_category=ProviderCategory.GENERAL_WEB, timeout=5.0)
+                         for n in providers}
+              extractor = RuleBasedExtractor({"SEC": ("Securities and Exchange Commission",)})
+
+              store = IntelligenceStore(paths.database)
+              collector = ForwardCollector(store, now=lambda: now)
+              first_run = collector.collect(queries, MultiProviderRetriever(providers, configs),
+                                            extractor, {}, manifest_path=paths.manifests / "one.json")
+              assert first_run.manifest.documents_new == 3, first_run.manifest.documents_new
+              assert first_run.manifest.provider_success["outage"] is False
+
+              before = {d.document_id: d.available_at for d in store.documents_as_of(now)}
+              later = now + timedelta(days=3)
+              collector._now = lambda: later
+              again = collector.collect(QueryPlanner().plan(watch, later),
+                                        MultiProviderRetriever(providers, configs), extractor, {})
+              after = {d.document_id: d.available_at
+                       for d in store.documents_as_of(later + timedelta(hours=1))}
+              assert again.manifest.documents_new == 0, "rediscovery must not add documents"
+              assert after == before, "rediscovery must not move availability"
+
+              report = verify(store, as_of=later)
+              assert report.ok, report.human_readable()
+              store.close()
+          print("B4.1-Ops runtime OK")
+          PY
+      - name: B4.1-Ops watchdog, summary and readiness gating
+        run: |
+          python - <<'PY'
+          from datetime import date, datetime, timedelta, timezone
+          from market_intelligence.collection.readiness import assess_family
+          from market_intelligence.ops.integrity import IntegrityStatus
+          from market_intelligence.ops.summary import contains_forbidden_statistics
+          from market_intelligence.ops.watchdog import (
+              AlertCode, Severity, WatchdogInput, assess, consecutive_zero_days,
+          )
+
+          now = datetime(2026, 9, 2, 9, 0, tzinfo=timezone.utc)
+
+          def state(**over):
+              base = dict(now=now, last_run_at=now, last_successful_run_at=now,
+                          providers_enabled=2, providers_healthy=2,
+                          provider_last_success={"syndication": now},
+                          documents_last_24h=0, events_last_24h=0, quarantined_last_24h=0,
+                          storage_ok=True, storage_detail="",
+                          integrity_status=IntegrityStatus.OK, integrity_detail="",
+                          last_backup_at=now - timedelta(days=1),
+                          consecutive_zero_days_with_success=1)
+              base.update(over)
+              return WatchdogInput(**base)
+
+          # A quiet day is healthy; an outage is not.
+          quiet = assess(state())
+          assert quiet.healthy and quiet.exit_code == 0
+          assert quiet.alerts[0].detail["quiet_day"] is True
+          outage = assess(state(providers_healthy=0))
+          assert outage.exit_code == 2
+          assert any(a.code is AlertCode.ALL_PROVIDERS_FAILED for a in outage.alerts)
+          assert assess(state(integrity_status=IntegrityStatus.CORRUPT)).worst is Severity.CRITICAL
+          assert any(a.code is AlertCode.IMPLAUSIBLE_ZERO_COLLECTION
+                     for a in assess(state(consecutive_zero_days_with_success=30)).alerts)
+
+          today = date(2026, 9, 2)
+          assert consecutive_zero_days({today: 0}, [today], today) == 1
+
+          # O20: no return statistic may ever reach an operations surface.
+          assert contains_forbidden_statistics({"b4_readiness": {"status": "NOT_READY"}}) == ()
+          assert "forward_return" in contains_forbidden_statistics({"x": {"forward_return_1d": 0.1}})
+
+          # An empty family is NOT_READY with reasons, and the bar is unchanged.
+          empty = assess_family("regulation", [])
+          assert not empty.ready and any("need 30" in r for r in empty.unmet)
+          print("B4.1-Ops watchdog and gating OK")
+          PY
       - name: B4 bootstrap determinism
         run: |
           python -c "from market_intelligence.b4.stats import BootstrapConfig, block_bootstrap; c=BootstrapConfig(replicates=200,block_length=5,seed=42); v=[(i*7%13)/100.0 for i in range(200)]; a=block_bootstrap(v,c); b=block_bootstrap(v,c); assert (a.lower,a.upper,a.p_value)==(b.lower,b.upper,b.p_value); print('B4 bootstrap deterministic')"
