@@ -421,3 +421,170 @@ class TestCrashRecovery:
             assert "outage" not in recorded, "a failed provider must not claim progress"
         finally:
             store.close()
+
+
+# ------------------------------------------------------- O3/O4 scheduled entry
+
+
+class TestScheduledEntrypoint:
+    """The single command a scheduler calls, and the codes it must return."""
+
+    def _arguments(self, tmp_path: Path, moment: datetime):
+        from market_intelligence.collection.fixtures import StaticFixtureProvider
+        from market_intelligence.collection.policy import ProviderDeclaration, ProviderPolicy
+
+        watch = [
+            WatchEntity(
+                canonical_name="SEC",
+                aliases=("Securities and Exchange Commission",),
+                entity_type=EntityType.REGULATOR,
+                topics=("bitcoin regulation",),
+                expected_event_types=(EventType.REGULATION,),
+            )
+        ]
+        queries = QueryPlanner().plan(watch, moment)
+        docs = [
+            document(0, publisher="sec.example.gov", retrieved=moment - timedelta(hours=1)).model_copy(
+                update={"query": queries[0].query}
+            )
+        ]
+
+        def build_retriever(due: object) -> MultiProviderRetriever:
+            provider = StaticFixtureProvider(docs, name="syndication", now=lambda: moment, restamp=False)
+            config = ProviderConfig(
+                id="syndication",
+                type="fixture",
+                source_category=ProviderCategory.GENERAL_WEB,
+                timeout=5.0,
+            )
+            return MultiProviderRetriever({"syndication": provider}, {"syndication": config})
+
+        declaration = ProviderDeclaration(
+            provider_id="syndication",
+            policy=ProviderPolicy.PUBLIC_DOCUMENTED,
+            purpose="test",
+            data_returned="test",
+            minimum_interval_seconds=900,
+        )
+        return {
+            "build_queries": lambda when: QueryPlanner().plan(watch, when),
+            "build_retriever": build_retriever,
+            "extractor": RuleBasedExtractor({"SEC": ("Securities and Exchange Commission",)}),
+            "configuration": {"test": True},
+            "declarations": {"syndication": declaration},
+            "require_free_bytes": 1,
+        }
+
+    def test_a_cycle_runs_and_writes_its_manifest_last(self, tmp_path: Path) -> None:
+        from market_intelligence.ops.scheduled import EXIT_OK, run_scheduled
+
+        paths = StoragePaths.from_environment(tmp_path / "state").ensure()
+        outcome = run_scheduled(paths, now=lambda: NOW, **self._arguments(tmp_path, NOW))
+        assert outcome.exit_code == EXIT_OK
+        assert outcome.ran
+        assert outcome.manifest_path is not None and outcome.manifest_path.exists()
+        assert outcome.result is not None and outcome.result.manifest.documents_new == 1
+        assert not paths.lock.exists(), "the lock is released on the way out"
+
+    def test_a_second_invocation_inside_the_cadence_floor_does_nothing(self, tmp_path: Path) -> None:
+        """O4. Exit 4 is not a failure; treating it as one trains operators to
+        ignore the collector's exit code."""
+        from market_intelligence.ops.scheduled import EXIT_NOTHING_DUE, run_scheduled
+
+        paths = StoragePaths.from_environment(tmp_path / "state").ensure()
+        run_scheduled(paths, now=lambda: NOW, **self._arguments(tmp_path, NOW))
+        again = run_scheduled(
+            paths, now=lambda: NOW + timedelta(minutes=5), **self._arguments(tmp_path, NOW)
+        )
+        assert again.exit_code == EXIT_NOTHING_DUE
+        assert not again.ran
+        assert again.skipped_providers == ("syndication",)
+
+    def test_a_provider_due_again_after_the_floor_runs(self, tmp_path: Path) -> None:
+        from market_intelligence.ops.scheduled import EXIT_OK, run_scheduled
+
+        paths = StoragePaths.from_environment(tmp_path / "state").ensure()
+        run_scheduled(paths, now=lambda: NOW, **self._arguments(tmp_path, NOW))
+        later = NOW + timedelta(hours=1)
+        again = run_scheduled(paths, now=lambda: later, **self._arguments(tmp_path, later))
+        assert again.exit_code == EXIT_OK
+        assert again.due_providers == ("syndication",)
+        assert again.result is not None and again.result.manifest.documents_new == 0
+
+    def test_a_held_lock_is_reported_rather_than_failing(self, tmp_path: Path) -> None:
+        """O2. A scheduler firing during a long cycle is normal."""
+        from market_intelligence.ops.scheduled import EXIT_LOCK_HELD, run_scheduled
+
+        paths = StoragePaths.from_environment(tmp_path / "state").ensure()
+        holder = RunLock(paths.lock, now=lambda: NOW).acquire()
+        try:
+            outcome = run_scheduled(paths, now=lambda: NOW, **self._arguments(tmp_path, NOW))
+            assert outcome.exit_code == EXIT_LOCK_HELD
+            assert not outcome.ran
+            assert "is held by pid" in outcome.reason
+        finally:
+            holder.release()
+
+    def test_a_stale_lock_is_broken_and_reported(self, tmp_path: Path) -> None:
+        from market_intelligence.ops.scheduled import EXIT_OK, run_scheduled
+
+        paths = StoragePaths.from_environment(tmp_path / "state").ensure()
+        RunLock(paths.lock, now=lambda: NOW).acquire()  # deliberately abandoned
+        later = NOW + timedelta(hours=2)
+        outcome = run_scheduled(
+            paths,
+            now=lambda: later,
+            **self._arguments(tmp_path, later),
+        )
+        assert outcome.exit_code in (EXIT_OK,)
+        assert outcome.stale_lock_broken
+
+    def test_unusable_storage_refuses_to_start(self, tmp_path: Path) -> None:
+        from market_intelligence.ops.scheduled import run_scheduled
+
+        paths = StoragePaths.from_environment(tmp_path / "state").ensure()
+        arguments = self._arguments(tmp_path, NOW)
+        arguments["require_free_bytes"] = 1 << 62
+        with pytest.raises(ConfigurationError, match="refusing to start"):
+            run_scheduled(paths, now=lambda: NOW, **arguments)
+
+    def test_an_ephemeral_state_root_is_warned_about_but_still_runs(self, tmp_path: Path) -> None:
+        """A warning, not a refusal: an operator may genuinely be testing."""
+        from market_intelligence.ops.scheduled import run_scheduled
+
+        ephemeral = Path("/tmp") / "btc-intel-ops-test" / tmp_path.name
+        paths = StoragePaths.from_environment(ephemeral).ensure()
+        try:
+            outcome = run_scheduled(paths, now=lambda: NOW, **self._arguments(tmp_path, NOW))
+            assert outcome.ran
+            assert any("ephemeral" in warning for warning in outcome.warnings)
+        finally:
+            import shutil
+
+            shutil.rmtree(ephemeral.parent, ignore_errors=True)
+
+    def test_the_outcome_serialises_for_a_scheduler_log(self, tmp_path: Path) -> None:
+        from market_intelligence.ops.scheduled import run_scheduled
+
+        paths = StoragePaths.from_environment(tmp_path / "state").ensure()
+        payload = run_scheduled(paths, now=lambda: NOW, **self._arguments(tmp_path, NOW)).as_dict()
+        assert payload["ran"] is True
+        assert payload["collection"]["documents_new"] == 1
+        assert "corpus_id" in payload["collection"]
+
+    def test_cadence_is_measured_from_completed_retrievals(self, tmp_path: Path) -> None:
+        """O4. A failed attempt did not consume the provider's quota in any way
+        that matters, so it must not delay the next try."""
+        from market_intelligence.collection.policy import ProviderDeclaration, ProviderPolicy
+        from market_intelligence.ops.scheduled import due_providers
+
+        declaration = ProviderDeclaration(
+            provider_id="p", policy=ProviderPolicy.PUBLIC_DOCUMENTED, purpose="x",
+            data_returned="x", minimum_interval_seconds=900,
+        )
+        never = due_providers({"p": declaration}, {}, NOW)
+        assert never == (["p"], [])
+        recent = due_providers({"p": declaration}, {"p": NOW - timedelta(seconds=60)}, NOW)
+        assert recent == ([], ["p"])
+        old = due_providers({"p": declaration}, {"p": NOW - timedelta(hours=2)}, NOW)
+        assert old == (["p"], [])
