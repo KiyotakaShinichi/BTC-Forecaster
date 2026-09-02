@@ -469,14 +469,19 @@ class TestCorpusCatalog:
 
 class TestReadiness:
     def _clusters(self, count: int, *, publishers: int = 3, span_days: int = 200):
-        documents = [document(index, retrieved=NOW) for index in range(count)]
+        # Real publishers, not a patched count: source diversity is a union of
+        # identities across the family, so faking the number no longer works --
+        # which is the point of the fix that made it a union.
+        documents = [
+            document(index, retrieved=NOW, publisher=f"publisher{index % publishers}.example.gov")
+            for index in range(count)
+        ]
         step = timedelta(days=span_days / max(1, count - 1)) if count > 1 else timedelta()
         events = [
             event(index, available=NOW + step * index, sources=(documents[index].document_id,))
             for index in range(count)
         ]
-        clusters = cluster_events(events, documents, window_hours=1)
-        return [cluster.model_copy(update={"publisher_count": publishers}) for cluster in clusters]
+        return cluster_events(events, documents, window_hours=1)
 
     def test_an_empty_family_is_not_ready(self) -> None:
         result = assess_family("regulation", [])

@@ -3,7 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -20,6 +20,15 @@ from .cycle import run_intelligence_cycle
 from .extractors import RuleBasedExtractor
 from .historical import HistoricalDatasetService
 from .models import EventType
+from .ops.backup import backup_age, create_backup
+from .ops.backup import restore as restore_backup
+from .ops.integrity import verify as ops_verify
+from .ops.paths import StoragePaths, looks_ephemeral
+from .ops.paths import validate as storage_validate
+from .ops.scheduled import last_run_times
+from .ops.summary import project_storage
+from .ops.watchdog import assess as watchdog_assess
+from .ops.watchdog import from_status
 from .origins import OriginFrequency, generate_origins
 from .providers import JsonSearchApiProvider, RssSearchProvider
 from .replay_dataset import ReplayDatasetBuilder, ReplayMode
@@ -117,6 +126,34 @@ def build_parser() -> argparse.ArgumentParser:
     corpora.add_argument("--limit", type=int, default=20)
 
     sub.add_parser("providers", help="declared providers and whether they can run")
+
+    verify_parser = sub.add_parser("corpus-verify", help="check corpus integrity; fails closed")
+    verify_parser.add_argument("--json", action="store_true")
+
+    backup_parser = sub.add_parser("corpus-backup", help="write a verifiable corpus archive")
+    backup_parser.add_argument("--output", required=True)
+    backup_parser.add_argument("--manifest-dir", default=None)
+
+    restore_parser = sub.add_parser(
+        "corpus-restore", help="restore an archive into a NEW location and verify it"
+    )
+    restore_parser.add_argument("--archive", required=True)
+    restore_parser.add_argument("--destination", required=True)
+
+    ops_status = sub.add_parser(
+        "ops-status", help="collection health, storage, backup age and B4 readiness"
+    )
+    ops_status.add_argument("--json", action="store_true")
+    ops_status.add_argument("--state-root", default=None)
+
+    watch = sub.add_parser("ops-watch", help="watchdog assessment; exit 0 ok, 1 warning, 2 critical")
+    watch.add_argument("--json", action="store_true")
+    watch.add_argument("--state-root", default=None)
+
+    paths_parser = sub.add_parser(
+        "ops-paths", help="resolved persistent paths and whether they are usable"
+    )
+    paths_parser.add_argument("--state-root", default=None)
     demo = sub.add_parser("demo")
     demo.add_argument("--output-dir", default="market-intelligence-demo")
     gold = sub.add_parser("gold-report")
@@ -274,6 +311,54 @@ def main(argv: list[str] | None = None) -> int:
             snapshots = CorpusCatalog(store.connection).list_snapshots(limit=args.limit)
             print(json.dumps([item.model_dump(mode="json") for item in snapshots], indent=2))
             return 0
+        if args.command == "corpus-verify":
+            integrity_report = ops_verify(store, as_of=datetime.now(timezone.utc))
+            print(
+                json.dumps(integrity_report.as_dict(), indent=2)
+                if args.json
+                else integrity_report.human_readable()
+            )
+            return 0 if integrity_report.ok else 2
+        if args.command == "corpus-backup":
+            manifest = create_backup(
+                store,
+                Path(args.db),
+                Path(args.output),
+                manifest_dir=Path(args.manifest_dir) if args.manifest_dir else None,
+            )
+            print(json.dumps(manifest.as_dict(), indent=2))
+            return 0
+        if args.command == "corpus-restore":
+            outcome = restore_backup(Path(args.archive), Path(args.destination))
+            print(json.dumps(outcome.as_dict(), indent=2))
+            return 0 if outcome.ok else 2
+        if args.command == "ops-paths":
+            resolved = StoragePaths.from_environment(args.state_root)
+            checked = storage_validate(resolved)
+            payload: dict[str, Any] = {
+                "paths": resolved.as_dict(),
+                "validation": checked.as_dict(),
+            }
+            warning = looks_ephemeral(resolved.root)
+            if warning:
+                payload["warning"] = warning
+            print(json.dumps(payload, indent=2))
+            return 0 if checked.ok else 2
+        if args.command in ("ops-status", "ops-watch"):
+            report_payload = _ops_report(store, Path(args.db), args.state_root)
+            if args.command == "ops-watch":
+                if args.json:
+                    print(json.dumps(report_payload["watchdog"], indent=2))
+                else:
+                    for alert in report_payload["watchdog"]["alerts"]:
+                        print(f"[{alert['severity']}] {alert['code']}: {alert['message']}")
+                return int(report_payload["exit_code"])
+            print(
+                json.dumps(report_payload, indent=2)
+                if args.json
+                else report_payload["human"]
+            )
+            return 0
         if args.command == "providers":
             print(json.dumps(_provider_report(), indent=2))
             return 0
@@ -384,3 +469,83 @@ def _provider_report() -> list[dict[str, object]]:
             }
         )
     return rows
+
+
+def _ops_report(store: IntelligenceStore, database: Path, state_root: str | None) -> dict[str, Any]:
+    """O11. Everything an operator asks, answered from one place.
+
+    Shared by the CLI and the API so the two cannot drift, exactly as the corpus
+    status report is.
+    """
+    moment = datetime.now(timezone.utc)
+    paths = StoragePaths.from_environment(state_root or database.parent)
+    checked = storage_validate(paths)
+    status = _corpus_status(store, "rules-v1", ["Donald Trump", "Elon Musk", "Jerome Powell", "SEC"])
+    integrity = ops_verify(store, as_of=moment)
+    last_run, last_success = last_run_times(store)
+
+    provider_last_success: dict[str, datetime | None] = {}
+    for row in store.connection.execute("SELECT payload FROM watermarks").fetchall():
+        record = json.loads(row[0])
+        provider = str(record.get("provider_id", ""))
+        retrieval = record.get("last_retrieval_time")
+        if provider and retrieval:
+            provider_last_success[provider] = datetime.fromisoformat(retrieval).astimezone(timezone.utc)
+
+    found = backup_age(paths.backups, moment) if paths.backups.exists() else None
+    watchdog = watchdog_assess(
+        from_status(
+            status,
+            now=moment,
+            last_run_at=last_run,
+            last_successful_run_at=last_success,
+            provider_last_success=provider_last_success,
+            storage_ok=checked.ok,
+            storage_detail="; ".join(f"{c.name}: {c.reason}" for c in checked.failures()),
+            integrity_status=integrity.status,
+            integrity_detail=integrity.human_readable().splitlines()[0],
+            last_backup_at=found[1] if found else None,
+        )
+    )
+    storage = project_storage(status)
+    recent = [row for row in status.daily_coverage if row.day >= (moment - timedelta(hours=24)).date()]
+    backup_age_seconds = int((moment - found[1]).total_seconds()) if found else None
+
+    human = "\n".join(
+        [
+            f"last collection        {last_run.isoformat() if last_run else '(never)'}",
+            f"last successful        {last_success.isoformat() if last_success else '(never)'}",
+            f"providers              {len(provider_last_success)} seen, "
+            f"{sum(1 for value in provider_last_success.values() if value)} healthy",
+            f"documents last 24h     {sum(row.documents for row in recent)}",
+            f"events last 24h        {sum(row.events for row in recent)}",
+            f"coverage gap days      {status.collection_gap_days}",
+            f"latest corpus          {status.corpus_id or '(none registered)'}",
+            f"backup age             {backup_age_seconds if backup_age_seconds is not None else '(no backup)'}",
+            f"corpus integrity       {integrity.status.value}",
+            f"storage                {storage.total_bytes:,} B, ~{storage.projected_365d_bytes:,} B at 365d",
+            f"B4 readiness           {status.readiness.value}",
+            f"health                 {watchdog.worst.value}",
+        ]
+    )
+
+    return {
+        "generated_at": moment.isoformat(),
+        "paths": paths.as_dict(),
+        "storage_ok": checked.ok,
+        "last_collection": last_run.isoformat() if last_run else None,
+        "last_successful_collection": last_success.isoformat() if last_success else None,
+        "providers_seen": len(provider_last_success),
+        "providers_healthy": sum(1 for value in provider_last_success.values() if value),
+        "documents_last_24h": sum(row.documents for row in recent),
+        "events_last_24h": sum(row.events for row in recent),
+        "coverage_gap_days": status.collection_gap_days,
+        "latest_corpus_id": status.corpus_id,
+        "backup_age_seconds": backup_age_seconds,
+        "corpus_integrity": integrity.status.value,
+        "storage": storage.as_dict(),
+        "b4_readiness": status.readiness.value,
+        "watchdog": watchdog.as_dict(),
+        "exit_code": watchdog.exit_code,
+        "human": human,
+    }

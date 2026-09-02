@@ -53,6 +53,12 @@ class EventCluster(BaseModel):
     event_ids: tuple[str, ...] = Field(min_length=1)
     document_ids: tuple[str, ...] = ()
     document_count: int = 0
+    #: Publisher and provider *identities*, not just counts. A count answers
+    #: "was this one event corroborated by several publishers"; source diversity
+    #: (B4.31) asks how many distinct publishers a whole family draws on, and
+    #: that can only be computed from a union of names.
+    publishers: tuple[str, ...] = ()
+    providers: tuple[str, ...] = ()
     publisher_count: int = 0
     provider_count: int = 0
     #: B4.1.7. Whether the party the news is about is among the sources.
@@ -114,6 +120,8 @@ def cluster_events(
                 event_ids=tuple(event.event_id for event in group),
                 document_ids=tuple(document_ids),
                 document_count=len(document_ids),
+                publishers=tuple(sorted({document.publisher for document in members})),
+                providers=tuple(sorted({document.provider for document in members})),
                 publisher_count=len({document.publisher for document in members}),
                 provider_count=len({document.provider for document in members}),
                 primary_source_present=bool(primary),

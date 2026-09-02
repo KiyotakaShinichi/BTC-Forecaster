@@ -95,8 +95,14 @@ def assess_family(
     """Judge one family. Reports every unmet clause, not just the first."""
     events = len(clusters)
     effective = effective_non_overlapping(clusters, policy.horizon_hours)
-    publishers = max((cluster.publisher_count for cluster in clusters), default=0)
-    providers = max((cluster.provider_count for cluster in clusters), default=0)
+    # Source diversity is a property of the *family*, not of its best-covered
+    # event. Taking `max(cluster.publisher_count)` measured per-event
+    # corroboration instead, and under continuous collection of official feeds
+    # each announcement has exactly one primary publisher -- so that number
+    # stays at 1 forever and the publisher clause could never be satisfied no
+    # matter how long collection ran. The union is what the threshold means.
+    publishers = len({publisher for cluster in clusters for publisher in cluster.publishers})
+    providers = len({provider for cluster in clusters for provider in cluster.providers})
 
     span_days = 0
     if clusters:
