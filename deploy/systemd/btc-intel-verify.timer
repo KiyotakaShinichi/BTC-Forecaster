@@ -1,0 +1,10 @@
+[Unit]
+Description=BTC intelligence: verify the corpus daily
+
+[Timer]
+OnCalendar=*-*-* 05:20:00
+RandomizedDelaySec=600
+Persistent=true
+
+[Install]
+WantedBy=timers.target

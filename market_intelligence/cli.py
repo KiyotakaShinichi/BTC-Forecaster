@@ -561,6 +561,9 @@ def _ops_report(store: IntelligenceStore, database: Path, state_root: str | None
             integrity_status=integrity.status,
             integrity_detail=integrity.human_readable().splitlines()[0],
             last_backup_at=found[1] if found else None,
+            # Previously left at its default of zero, which meant the watchdog's
+            # quarantine check could never fire however bad things got.
+            quarantined_last_24h=store.quarantine_count(since=moment - timedelta(hours=24)),
         )
     )
     storage = project_storage(status)

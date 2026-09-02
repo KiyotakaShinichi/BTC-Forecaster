@@ -448,3 +448,221 @@ class TestSchedulerEntrypoint:
             assert code == EXIT_LOCK_HELD
         finally:
             holder.release()
+
+
+# ------------------------------------------------------------- the unit files
+
+
+DEPLOY = Path(__file__).resolve().parents[1] / "deploy"
+UNITS = DEPLOY / "systemd"
+
+
+class TestUnitFilesMatchTheCode:
+    """Unit files rot silently: nothing recompiles them, and a wrong one fails
+    at 03:07 on a host nobody is watching."""
+
+    def _unit(self, name: str) -> str:
+        return (UNITS / name).read_text(encoding="utf-8")
+
+    def test_the_collector_unit_invokes_a_command_that_exists(self) -> None:
+        from market_intelligence.cli import build_parser
+
+        unit = self._unit("btc-intel-collect.service")
+        assert "collect-scheduled" in unit
+        # argparse raises SystemExit on an unknown subcommand, so this is a
+        # genuine check that the unit names a real command with real flags.
+        parsed = build_parser().parse_args(
+            ["collect-scheduled", "--profile", "p.json", "--json"]
+        )
+        assert parsed.command == "collect-scheduled"
+
+    def test_the_unit_accepts_exactly_the_non_failure_exit_codes(self) -> None:
+        """3 is 'another cycle is running' and 4 is 'nothing due'. If either
+        counted as a failure the operator would be paged nightly, and would stop
+        looking at the one that mattered."""
+        unit = self._unit("btc-intel-collect.service")
+        declared = [
+            line.split("=", 1)[1].split()
+            for line in unit.splitlines()
+            if line.startswith("SuccessExitStatus=")
+        ]
+        assert declared, "the unit does not tolerate the collector's normal exit codes"
+        assert set(declared[0]) == {str(EXIT_LOCK_HELD), str(EXIT_NOTHING_DUE)}
+
+    def test_failure_is_still_failure(self) -> None:
+        from market_intelligence.ops.scheduled import EXIT_FAILED
+
+        declared = next(
+            line
+            for line in self._unit("btc-intel-collect.service").splitlines()
+            if line.startswith("SuccessExitStatus=")
+        )
+        assert str(EXIT_FAILED) not in declared.split("=", 1)[1].split()
+
+    def test_every_timer_survives_a_host_being_off(self) -> None:
+        """Without Persistent, a reboot at the wrong minute silently drops a
+        collection, and the corpus records a gap that reads as a quiet day."""
+        for timer in UNITS.glob("*.timer"):
+            assert "Persistent=true" in timer.read_text(encoding="utf-8"), timer.name
+
+    def test_the_collection_cadence_respects_the_declared_floor(self) -> None:
+        unit = self._unit("btc-intel-collect.timer")
+        calendar = next(
+            line for line in unit.splitlines() if line.startswith("OnCalendar=")
+        )
+        hours = int(calendar.split("00/")[1].split(":")[0])
+        assert hours * 3600 >= SYNDICATION_DECLARATION.minimum_interval_seconds
+
+    def test_units_point_at_the_committed_profile(self) -> None:
+        assert "collection-profile.json" in self._unit("btc-intel-collect.service")
+        assert (DEPLOY / "collection-profile.json").exists()
+
+    def test_no_unit_or_example_carries_a_credential(self) -> None:
+        """The deployment needs no secret at all, and that is worth keeping:
+        a collector with no credential cannot leak one."""
+        for path in list(UNITS.iterdir()) + [DEPLOY / "collector.env.example"]:
+            text = path.read_text(encoding="utf-8")
+            for line in text.splitlines():
+                bare = line.strip()
+                if bare.startswith("#") or "=" not in bare:
+                    continue
+                key, _, value = bare.partition("=")
+                if any(word in key.upper() for word in ("KEY", "TOKEN", "SECRET", "PASSWORD")):
+                    assert not value.strip(), f"{path.name} ships a value for {key}"
+
+    def test_the_installer_never_deletes_at_the_destination(self) -> None:
+        """An rsync --delete into a prefix an operator has put state inside is
+        how a deployment eats its own corpus."""
+        installer = (DEPLOY / "install.sh").read_text(encoding="utf-8")
+        invocations = [line for line in installer.splitlines() if line.strip().startswith("rsync")]
+        assert invocations, "the installer no longer copies code the way this test assumes"
+        assert not any("--delete" in line for line in invocations)
+
+    def test_the_installer_does_not_overwrite_an_existing_env_file(self) -> None:
+        installer = (DEPLOY / "install.sh").read_text(encoding="utf-8")
+        assert "left alone" in installer
+
+    def test_the_state_root_is_not_ephemeral(self) -> None:
+        """systemd's StateDirectory lands under /var/lib and survives reboots
+        and package updates; /tmp does not."""
+        from market_intelligence.ops.paths import looks_ephemeral
+
+        unit = self._unit("btc-intel-collect.service")
+        assert "StateDirectory=btc-intel" in unit
+        assert looks_ephemeral(Path("/var/lib/btc-intel")) is None
+
+
+# ------------------------------------------- what the operator is told happened
+
+
+class TestTheCycleReportsWhatActuallyHappened:
+    """A live run reported twelve quarantined records against an empty
+    quarantine table. The number was the deduplication count, which is the
+    normal shape of a cycle: the same SEC release matches several queries. An
+    operator who reads that either investigates a non-problem or learns the
+    field is noise, and the second is how a real quarantine goes unnoticed."""
+
+    @pytest.fixture(autouse=True)
+    def offline(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(
+            syndication, "_default_opener", lambda url, timeout, agent=None: FEED_PAYLOAD
+        )
+
+    def test_duplicates_are_reported_as_duplicates(self, tmp_path: Path) -> None:
+        """Several watch entities against one feed: the same item arrives more
+        than once, and none of it is a fault."""
+        paths = StoragePaths.from_environment(tmp_path / "state").ensure()
+        # Two topics that both match the one item, which is what a real
+        # watchlist does constantly: one release answers several queries.
+        watchlist = [
+            dict(  # type: ignore[index]
+                minimal()["watchlist"][0],
+                topics=["bitcoin regulation", "regulation decision"],
+            )
+        ]
+        profile = CollectionProfile.from_mapping(minimal(watchlist=watchlist))
+        outcome = collect_once(paths, profile, now=lambda: NOW, require_free_bytes=1)
+
+        assert outcome.result is not None
+        manifest = outcome.result.manifest
+        assert manifest.documents_deduplicated >= 1, "this feed did not duplicate; test is vacuous"
+        assert manifest.quarantined == 0, "deduplication is not quarantine"
+
+    def test_a_failing_provider_is_reported_as_quarantine(self, tmp_path: Path) -> None:
+        from market_intelligence.collection.syndication import ProviderFailure
+
+        def broken(url: str, timeout: float, agent: object = None) -> bytes:
+            raise ProviderFailure("PERMANENT", f"HTTP 403 for {url}")
+
+        paths = StoragePaths.from_environment(tmp_path / "state").ensure()
+        profile = CollectionProfile.from_mapping(minimal())
+        with pytest.MonkeyPatch.context() as patch:
+            patch.setattr(syndication, "_default_opener", broken)
+            outcome = collect_once(paths, profile, now=lambda: NOW, require_free_bytes=1)
+
+        assert outcome.result is not None
+        assert outcome.result.manifest.quarantined >= 1
+        assert outcome.result.manifest.documents_deduplicated == 0
+
+    def test_the_watchdog_is_given_the_real_quarantine_count(self, tmp_path: Path) -> None:
+        """It defaulted to zero on the deployed path, so the quarantine alert
+        could never fire however bad collection got."""
+        from market_intelligence.cli import _ops_report
+
+        paths = StoragePaths.from_environment(tmp_path / "state").ensure()
+        collect_once(
+            paths, CollectionProfile.from_mapping(minimal()), now=lambda: NOW, require_free_bytes=1
+        )
+
+        store = IntelligenceStore(paths.database)
+        try:
+            from market_intelligence.operations import QuarantineRecord
+
+            store.put_quarantine(
+                [
+                    QuarantineRecord.from_raw(
+                        f"failure {index}",
+                        "syndication",
+                        datetime.now(timezone.utc),
+                        "boom",
+                        "PROVIDER_FAILURE",
+                    )
+                    for index in range(40)
+                ]
+            )
+            report = _ops_report(store, paths.database, str(paths.root))
+        finally:
+            store.close()
+
+        spikes = [
+            alert
+            for alert in report["watchdog"]["alerts"]
+            if alert["code"] == "QUARANTINE_SPIKE"
+        ]
+        assert spikes, "the quarantine alert still cannot fire"
+        assert spikes[0]["detail"]["quarantined"] == 40
+
+    def test_an_old_quarantine_backlog_does_not_latch_the_alert_on(
+        self, tmp_path: Path
+    ) -> None:
+        """A spike is about a window. A historical total would keep the alert
+        raised forever and make it worthless."""
+        from market_intelligence.operations import QuarantineRecord
+
+        paths = StoragePaths.from_environment(tmp_path / "state").ensure()
+        collect_once(
+            paths, CollectionProfile.from_mapping(minimal()), now=lambda: NOW, require_free_bytes=1
+        )
+        store = IntelligenceStore(paths.database)
+        try:
+            ancient = datetime.now(timezone.utc) - timedelta(days=30)
+            store.put_quarantine(
+                [
+                    QuarantineRecord.from_raw(f"old {i}", "syndication", ancient, "boom", "PROVIDER_FAILURE")
+                    for i in range(40)
+                ]
+            )
+            assert store.quarantine_count() == 40
+            assert store.quarantine_count(since=datetime.now(timezone.utc) - timedelta(hours=24)) == 0
+        finally:
+            store.close()

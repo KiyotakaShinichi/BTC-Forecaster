@@ -1,0 +1,24 @@
+[Unit]
+Description=BTC intelligence: back up the accumulated corpus
+Documentation=file:///opt/btc-intel/deploy/DEPLOYMENT.md
+
+[Service]
+Type=oneshot
+User=btc-intel
+Group=btc-intel
+StateDirectory=btc-intel
+Environment=BTC_INTEL_STATE_ROOT=%S/btc-intel
+Environment=PYTHONPATH=/opt/btc-intel
+WorkingDirectory=/opt/btc-intel
+
+# The corpus is the one thing here that cannot be rebuilt. Code can be cloned
+# again and a host reinstalled; a document that was available at 09:00 on a
+# Tuesday in March can never be re-collected with that availability, because
+# `available_at` is when we retrieved it and we cannot retrieve it then again.
+ExecStart=/bin/sh -c '/opt/btc-intel/.venv/bin/python /opt/btc-intel/btc-intel.py --db %S/btc-intel/intelligence.duckdb corpus-backup --output %S/btc-intel/backups/corpus-$(date -u +%%Y%%m%%dT%%H%%M%%SZ).tar.gz'
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+RestrictAddressFamilies=AF_UNIX

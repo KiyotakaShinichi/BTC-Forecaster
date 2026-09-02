@@ -249,8 +249,18 @@ class IntelligenceStore:
                 [(r.record_id, r.retrieval_timestamp, r.model_dump_json()) for r in records],
             )
 
-    def quarantine_count(self) -> int:
-        row = self.connection.execute("SELECT COUNT(*) FROM quarantine").fetchone()
+    def quarantine_count(self, since: datetime | None = None) -> int:
+        """How many records are set aside, optionally only recent ones.
+
+        The watchdog asks about a window: a spike matters, a slowly accumulating
+        historical total does not and would latch the alert on forever.
+        """
+        if since is None:
+            row = self.connection.execute("SELECT COUNT(*) FROM quarantine").fetchone()
+        else:
+            row = self.connection.execute(
+                "SELECT COUNT(*) FROM quarantine WHERE retrieval_timestamp >= ?", [since]
+            ).fetchone()
         return cast(int, row[0]) if row else 0
 
     def put_snapshot(self, snapshot: IntelligenceSnapshot) -> None:

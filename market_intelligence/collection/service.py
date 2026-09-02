@@ -36,7 +36,7 @@ from .corpus import CorpusCatalog, CorpusSnapshot, build_snapshot
 from .evidence import EvidenceStore, RawEvidence
 from .policy import redact_mapping
 
-COLLECTION_MANIFEST_VERSION = "b41-collection-manifest-v1"
+COLLECTION_MANIFEST_VERSION = "b41-collection-manifest-v2"
 
 
 class CollectionManifest(BaseModel):
@@ -66,7 +66,16 @@ class CollectionManifest(BaseModel):
     raw_evidence_ids_stored: int = 0
     raw_evidence_bytes: int
     watermarks_advanced: int
+    #: Records set aside for a human: a provider that failed, or an extractor
+    #: that raised. Emphatically *not* deduplication -- see below.
     quarantined: int
+    #: The same item arriving under several queries, which is the normal shape
+    #: of a cycle rather than a fault. It was previously counted as quarantine,
+    #: so a healthy run reported twelve quarantined records and an empty
+    #: quarantine table. An operator reading that either investigates a
+    #: non-problem or learns to distrust the number; both are worse than not
+    #: reporting it.
+    documents_deduplicated: int = 0
     errors: tuple[str, ...] = ()
     quality_flags: tuple[str, ...] = ()
     corpus_id: str | None = None
@@ -224,7 +233,14 @@ class ForwardCollector:
             raw_evidence_ids_stored=newly_stored_evidence,
             raw_evidence_bytes=sum(record.content_bytes for record in collected),
             watermarks_advanced=report.manifest.watermark_changes,
-            quarantined=report.manifest.documents_rejected + report.manifest.events_rejected,
+            # `documents_rejected` is computed as len(retrieved) - len(deduplicated),
+            # which is the duplicate count and nothing else. Only failed attempts
+            # and a raising extractor actually reach the quarantine table.
+            quarantined=(
+                sum(1 for attempt in report.attempts if not attempt.success)
+                + report.manifest.events_rejected
+            ),
+            documents_deduplicated=report.manifest.documents_rejected,
             errors=tuple(
                 sorted(
                     f"{attempt.provider_id}: {attempt.error}"

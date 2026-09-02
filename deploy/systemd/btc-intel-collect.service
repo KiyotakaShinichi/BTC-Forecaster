@@ -1,0 +1,57 @@
+[Unit]
+Description=BTC intelligence: one point-in-time collection cycle
+Documentation=file:///opt/btc-intel/deploy/DEPLOYMENT.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=btc-intel
+Group=btc-intel
+
+# systemd creates and owns this, and it survives package updates and reboots.
+# The collector refuses to start on a path it cannot prove is writable, so a
+# mistake here fails immediately rather than collecting into nowhere.
+StateDirectory=btc-intel
+Environment=BTC_INTEL_STATE_ROOT=%S/btc-intel
+Environment=PYTHONPATH=/opt/btc-intel
+
+# Optional. Absent is fine -- the leading dash means "do not fail if missing" --
+# and the only reason to have one is a licensed provider's credential.
+EnvironmentFile=-/etc/btc-intel/collector.env
+
+WorkingDirectory=/opt/btc-intel
+ExecStart=/opt/btc-intel/.venv/bin/python /opt/btc-intel/btc-intel.py collect-scheduled --profile /opt/btc-intel/deploy/collection-profile.json --json
+
+# 3 is "another cycle holds the lock", 4 is "nothing is due yet". Both are the
+# collector working correctly. A unit that calls them failures will mail an
+# operator every night until they stop reading the mail, and the one night it
+# matters they will not read that either.
+SuccessExitStatus=3 4
+
+# A stuck feed must not wedge the timer. The lock is released on the way out,
+# and a killed cycle leaves a stale lock the next run breaks and reports.
+TimeoutStartSec=900
+Restart=no
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources
+# Outbound HTTPS to configured feeds only; nothing here listens.
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+[Install]
+WantedBy=multi-user.target

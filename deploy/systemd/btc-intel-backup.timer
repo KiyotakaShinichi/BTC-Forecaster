@@ -1,0 +1,11 @@
+[Unit]
+Description=BTC intelligence: back up the corpus daily
+
+[Timer]
+# After the verify, so a backup is not taken of a corpus already known bad.
+OnCalendar=*-*-* 05:40:00
+RandomizedDelaySec=600
+Persistent=true
+
+[Install]
+WantedBy=timers.target

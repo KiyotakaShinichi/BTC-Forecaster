@@ -1,0 +1,25 @@
+[Unit]
+Description=BTC intelligence: corpus integrity check
+Documentation=file:///opt/btc-intel/deploy/DEPLOYMENT.md
+
+[Service]
+Type=oneshot
+User=btc-intel
+Group=btc-intel
+StateDirectory=btc-intel
+Environment=BTC_INTEL_STATE_ROOT=%S/btc-intel
+Environment=PYTHONPATH=/opt/btc-intel
+WorkingDirectory=/opt/btc-intel
+
+# Fails closed: exit 2 on a corpus that no longer satisfies its own invariants.
+# The one that matters is event availability -- an event visible before the
+# document it was extracted from would silently invalidate every replay built
+# on this corpus, and it is worth finding on the day it happens rather than in
+# the results of a study months later.
+ExecStart=/opt/btc-intel/.venv/bin/python /opt/btc-intel/btc-intel.py --db %S/btc-intel/intelligence.duckdb corpus-verify --json
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+ProtectSystem=strict
+ProtectHome=yes
+RestrictAddressFamilies=AF_UNIX
