@@ -109,6 +109,10 @@ def run_intelligence_cycle(
     logger.emit("run_started", run_id=run_id, queries_attempted=len(queries))
     retrieval = retriever.retrieve(queries)
     documents = deduplicate_across_providers(retrieval.documents)
+    # Before anything is derived from these, let the store settle what is
+    # already known. A rediscovered document keeps the availability it was first
+    # seen with, so the events extracted from it are the same events.
+    documents = store.canonical_availability(documents)
     cache_hits, cache_misses = 0, 0
     if cache is not None:
         key = hashlib.sha256(
@@ -151,11 +155,25 @@ def run_intelligence_cycle(
         planned_query = query_by_id[attempt.query_id].query
         related = [d for d in documents if d.provider == attempt.provider_id and d.query == planned_query]
         latest = max(related, key=lambda d: d.available_at) if related else None
+        # A watermark records how far collection has got, and it must never go
+        # backwards. Since documents now carry the availability they were first
+        # seen with, a cycle that only rediscovers old items has a *lower* max
+        # availability than the last one -- and would try to rewind the mark.
+        # Rediscovering nothing new does not un-collect what came before, so the
+        # correct advancement is none at all.
+        previous = store.get_watermark(attempt.provider_id, attempt.query_id)
+        reached = latest.available_at if latest and attempt.success else None
+        if previous is not None and previous.last_successful_available_time is not None:
+            reached = (
+                max(reached, previous.last_successful_available_time)
+                if reached is not None
+                else previous.last_successful_available_time
+            )
         watermarks.append(
             Watermark(
                 provider_id=attempt.provider_id,
                 query_id=attempt.query_id,
-                last_successful_available_time=latest.available_at if latest and attempt.success else None,
+                last_successful_available_time=reached,
                 last_retrieval_time=now(),
                 last_document_id=latest.document_id if latest else None,
                 status=WatermarkStatus.SUCCESS if attempt.success else WatermarkStatus.FAILED,

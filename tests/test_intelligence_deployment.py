@@ -694,3 +694,137 @@ class TestTheCycleReportsWhatActuallyHappened:
             assert store.quarantine_count(since=datetime.now(timezone.utc) - timedelta(hours=24)) == 0
         finally:
             store.close()
+
+
+# ----------------------------------------------- events under repeated cycles
+
+
+class TestRediscoveryDoesNotManufactureEvents:
+    """The document layer had first-write-wins from B4.1. The event layer did
+    not read it: extraction ran on the freshly retrieved objects, whose
+    `available_at` is this cycle's retrieval time, so an unchanged document
+    produced a new event every cycle.
+
+    At the deployed three-hour cadence a press release that sits in a feed for a
+    week becomes fifty-six events. B4's readiness gate counts events, so it
+    would have opened on duplicates of a handful of announcements -- reporting a
+    corpus ready for study when it held almost nothing. The mirror image of the
+    publisher-count defect, and the more dangerous direction of the two."""
+
+    @pytest.fixture(autouse=True)
+    def offline(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(
+            syndication, "_default_opener", lambda url, timeout, agent=None: FEED_PAYLOAD
+        )
+
+    def _events(self, paths: StoragePaths, when: datetime) -> list[object]:
+        store = IntelligenceStore(paths.database)
+        try:
+            return list(store.signals_as_of(when))
+        finally:
+            store.close()
+
+    def test_an_unchanged_document_yields_the_same_event(self, tmp_path: Path) -> None:
+        paths = StoragePaths.from_environment(tmp_path / "state").ensure()
+        profile = CollectionProfile.from_mapping(minimal())
+
+        collect_once(paths, profile, now=lambda: NOW, require_free_bytes=1)
+        first = self._events(paths, NOW + timedelta(minutes=1))
+        assert first, "nothing was extracted, so nothing is being proven"
+
+        later = NOW + timedelta(hours=4)
+        collect_once(paths, profile, now=lambda: later, require_free_bytes=1)
+        second = self._events(paths, later + timedelta(minutes=1))
+
+        assert len(second) == len(first), "rediscovery manufactured events"
+        assert {e.event_id for e in second} == {e.event_id for e in first}  # type: ignore[attr-defined]
+
+    def test_event_availability_does_not_drift_forward(self, tmp_path: Path) -> None:
+        """An event whose availability moves with the last time we happened to
+        look is not point-in-time evidence about anything."""
+        paths = StoragePaths.from_environment(tmp_path / "state").ensure()
+        profile = CollectionProfile.from_mapping(minimal())
+
+        collect_once(paths, profile, now=lambda: NOW, require_free_bytes=1)
+        before = {
+            e.event_id: e.available_time  # type: ignore[attr-defined]
+            for e in self._events(paths, NOW + timedelta(minutes=1))
+        }
+
+        later = NOW + timedelta(days=3)
+        collect_once(paths, profile, now=lambda: later, require_free_bytes=1)
+        after = {
+            e.event_id: e.available_time  # type: ignore[attr-defined]
+            for e in self._events(paths, later + timedelta(minutes=1))
+        }
+        assert after == before
+
+    def test_many_cycles_do_not_inflate_the_corpus(self, tmp_path: Path) -> None:
+        """Eight cycles is one day at the deployed cadence."""
+        paths = StoragePaths.from_environment(tmp_path / "state").ensure()
+        profile = CollectionProfile.from_mapping(minimal())
+
+        for cycle in range(8):
+            collect_once(
+                paths, profile, now=lambda c=cycle: NOW + timedelta(hours=3 * c), require_free_bytes=1
+            )
+
+        horizon = NOW + timedelta(days=2)
+        store = IntelligenceStore(paths.database)
+        try:
+            documents = store.documents_as_of(horizon)
+            events = store.signals_as_of(horizon)
+        finally:
+            store.close()
+
+        assert len(documents) == 1, "the fixture feed serves one item"
+        assert len(events) <= len(documents), f"{len(events)} events from {len(documents)} documents"
+
+    def test_the_readiness_gate_is_not_opened_by_repetition(self, tmp_path: Path) -> None:
+        """The consequence that actually matters: 30 events is the bar, and one
+        announcement collected for four days used to clear it."""
+        from market_intelligence.collection.readiness import assess_family
+
+        paths = StoragePaths.from_environment(tmp_path / "state").ensure()
+        profile = CollectionProfile.from_mapping(minimal())
+        for cycle in range(32):
+            collect_once(
+                paths, profile, now=lambda c=cycle: NOW + timedelta(hours=3 * c), require_free_bytes=1
+            )
+
+        store = IntelligenceStore(paths.database)
+        try:
+            events = store.signals_as_of(NOW + timedelta(days=10))
+            documents = store.documents_as_of(NOW + timedelta(days=10))
+        finally:
+            store.close()
+
+        from market_intelligence.collection.clustering import cluster_events
+
+        clusters = cluster_events(list(events), list(documents), window_hours=24)
+        assert not assess_family("regulation", clusters).ready
+
+    def test_a_genuinely_new_document_still_produces_an_event(self, tmp_path: Path) -> None:
+        """The fix must not be 'stop extracting'."""
+        paths = StoragePaths.from_environment(tmp_path / "state").ensure()
+        profile = CollectionProfile.from_mapping(minimal())
+        collect_once(paths, profile, now=lambda: NOW, require_free_bytes=1)
+
+        second_item = FEED_PAYLOAD.replace(
+            b"https://sec.example.gov/news/2026/decision",
+            b"https://sec.example.gov/news/2026/second",
+        ).replace(b"announces bitcoin regulation decision", b"issues bitcoin regulation guidance")
+
+        later = NOW + timedelta(hours=4)
+        with pytest.MonkeyPatch.context() as patch:
+            patch.setattr(
+                syndication, "_default_opener", lambda url, timeout, agent=None: second_item
+            )
+            collect_once(paths, profile, now=lambda: later, require_free_bytes=1)
+
+        store = IntelligenceStore(paths.database)
+        try:
+            assert len(store.documents_as_of(later + timedelta(minutes=1))) == 2
+            assert len(store.signals_as_of(later + timedelta(minutes=1))) == 2
+        finally:
+            store.close()

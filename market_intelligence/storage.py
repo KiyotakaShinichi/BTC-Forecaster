@@ -112,6 +112,42 @@ class IntelligenceStore:
         row = self.connection.execute("SELECT 1").fetchone()
         return self.schema_version() == SCHEMA_VERSION and row is not None and row[0] == 1
 
+    def canonical_availability(self, documents: list[Document]) -> list[Document]:
+        """Restamp rediscovered documents with the availability they already had.
+
+        `put_documents` keeps the first write, so the store is the authority on
+        when a document became available. Everything derived from a document
+        downstream -- an event's identity, its availability, which cluster it
+        lands in -- has to read that same authority, or the two disagree.
+
+        They did. Extraction ran on the freshly retrieved objects, whose
+        `available_at` is *this* cycle's retrieval time, so re-reading an
+        unchanged feed produced a brand-new event for a document that had not
+        changed and whose stored availability had not moved. One press release
+        sitting in a feed for a week became one event per cycle -- at a
+        three-hour cadence, fifty-six of them -- each with a later availability
+        than the last.
+
+        That is worse than noise. B4's readiness gate counts events, so the gate
+        would have opened on duplicates of a handful of announcements and
+        reported a corpus ready for study when it held almost nothing.
+        """
+        if not documents:
+            return documents
+        known = dict(
+            self.connection.execute(
+                "SELECT document_id, available_at FROM documents WHERE document_id IN "
+                f"({','.join('?' * len(documents))})",
+                [d.document_id for d in documents],
+            ).fetchall()
+        )
+        return [
+            document.model_copy(update={"available_at": known[document.document_id]})
+            if document.document_id in known
+            else document
+            for document in documents
+        ]
+
     def put_documents(self, documents: list[Document]) -> None:
         """Persist evidence. **The first write wins.**
 
