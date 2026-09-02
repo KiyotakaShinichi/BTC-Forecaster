@@ -19,3 +19,7 @@ research/market_intelligence/b4/cache/
 research/market_intelligence/b4/runs/*/targets.json
 # Generated DuckDB store for the B4.39 feature-matrix demonstration.
 research/market_intelligence/b4/feature_matrix/*.duckdb
+
+# Local collector state and stray CLI databases
+/btc-intelligence.duckdb
+/btc-intel-state/
