@@ -24,7 +24,7 @@ descriptions; turning any of them on is a deliberate configuration step.
 
 from __future__ import annotations
 
-from ..models import SourceType
+from ..models import DisclosureStream, SourceType
 from .policy import ProviderDeclaration, ProviderPolicy, RawRetention
 from .syndication import FeedSource
 
@@ -33,7 +33,27 @@ from .syndication import FeedSource
 OFFICIAL_FEEDS: tuple[FeedSource, ...] = (
     FeedSource(
         feed_id="sec-press",
+        disclosure_stream=DisclosureStream.REGULATORY_ANNOUNCEMENT,
         url="https://www.sec.gov/news/pressreleases.rss",
+        publisher="U.S. Securities and Exchange Commission",
+        source_type=SourceType.PRIMARY_OFFICIAL,
+        primary_source=True,
+        official_source=True,
+        retention=RawRetention.FULL,
+        timestamp_quality=0.9,
+    ),
+    FeedSource(
+        # The SEC's administrative proceedings: actions it decides in-house,
+        # before its own law judges. Deliberately a *separate identity* from
+        # sec-litigation, which carried civil suits filed in federal court, and
+        # from sec-press, which carries the newsroom. The three are different
+        # instruments with different legal weight, and a study that cannot tell
+        # them apart is measuring "the SEC did something" rather than anything
+        # specific. Added 2026-09-03 after sec-litigation was confirmed dead;
+        # it is not a repair of that feed and does not inherit its meaning.
+        feed_id="sec-admin-proceedings",
+        disclosure_stream=DisclosureStream.ADMINISTRATIVE_PROCEEDINGS,
+        url="https://www.sec.gov/rss/litigation/admin.xml",
         publisher="U.S. Securities and Exchange Commission",
         source_type=SourceType.PRIMARY_OFFICIAL,
         primary_source=True,
@@ -50,6 +70,7 @@ OFFICIAL_FEEDS: tuple[FeedSource, ...] = (
         # was measuring. Enabling it is a decision, not a repair.
         # The entry stays so a manifest naming this feed can still be read.
         feed_id="sec-litigation",
+        disclosure_stream=DisclosureStream.CIVIL_LITIGATION,
         url="https://www.sec.gov/rss/litigation/litreleases.xml",
         publisher="U.S. Securities and Exchange Commission",
         source_type=SourceType.PRIMARY_OFFICIAL,
@@ -60,6 +81,7 @@ OFFICIAL_FEEDS: tuple[FeedSource, ...] = (
     ),
     FeedSource(
         feed_id="federalreserve-press",
+        disclosure_stream=DisclosureStream.REGULATORY_ANNOUNCEMENT,
         url="https://www.federalreserve.gov/feeds/press_all.xml",
         publisher="Board of Governors of the Federal Reserve System",
         source_type=SourceType.PRIMARY_OFFICIAL,
@@ -70,6 +92,7 @@ OFFICIAL_FEEDS: tuple[FeedSource, ...] = (
     ),
     FeedSource(
         feed_id="federalreserve-monetary",
+        disclosure_stream=DisclosureStream.MONETARY_POLICY,
         url="https://www.federalreserve.gov/feeds/press_monetary.xml",
         publisher="Board of Governors of the Federal Reserve System",
         source_type=SourceType.PRIMARY_OFFICIAL,
@@ -80,6 +103,7 @@ OFFICIAL_FEEDS: tuple[FeedSource, ...] = (
     ),
     FeedSource(
         feed_id="cftc-press",
+        disclosure_stream=DisclosureStream.REGULATORY_ANNOUNCEMENT,
         url="https://www.cftc.gov/RSS/RSSGP/rssgp.xml",
         publisher="U.S. Commodity Futures Trading Commission",
         source_type=SourceType.PRIMARY_OFFICIAL,
@@ -93,6 +117,7 @@ OFFICIAL_FEEDS: tuple[FeedSource, ...] = (
         # 20s client reads it as a timeout. Treasury moved its newsroom and no
         # replacement feed responded within a sane bound.
         feed_id="treasury-press",
+        disclosure_stream=DisclosureStream.REGULATORY_ANNOUNCEMENT,
         url="https://home.treasury.gov/rss/press.xml",
         publisher="U.S. Department of the Treasury",
         source_type=SourceType.PRIMARY_OFFICIAL,
@@ -103,6 +128,7 @@ OFFICIAL_FEEDS: tuple[FeedSource, ...] = (
     ),
     FeedSource(
         feed_id="bls-news",
+        disclosure_stream=DisclosureStream.ECONOMIC_STATISTICS,
         url="https://www.bls.gov/feed/bls_latest.rss",
         publisher="U.S. Bureau of Labor Statistics",
         source_type=SourceType.PRIMARY_OFFICIAL,

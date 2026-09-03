@@ -58,6 +58,38 @@ class ExtractionMethod(str, Enum):
     FIXTURE = "FIXTURE"
 
 
+class DisclosureStream(str, Enum):
+    """Which official stream a document came out of.
+
+    `publisher` says *who* published; `source_type` says how much to trust the
+    publisher. Neither says *what kind of disclosure this is*, and for a
+    regulator that distinction is the whole point: the SEC issues
+    administrative proceedings, civil litigation releases and general press
+    announcements through separate feeds, and they are different instruments
+    with different legal weight and different market meaning.
+
+    Collapsing them would inflate any event count that treats "an SEC action" as
+    one thing, which is precisely the direction a readiness gate must not be
+    pushed. Recorded on every document so a study can separate them years later
+    without having to know which feed URL was configured at the time.
+    """
+
+    #: A regulator's formal administrative action, decided in-house.
+    ADMINISTRATIVE_PROCEEDINGS = "ADMINISTRATIVE_PROCEEDINGS"
+    #: A regulator suing in a court.
+    CIVIL_LITIGATION = "CIVIL_LITIGATION"
+    #: Rules, approvals, guidance, and the newsroom generally.
+    REGULATORY_ANNOUNCEMENT = "REGULATORY_ANNOUNCEMENT"
+    #: Rate decisions, statements, minutes.
+    MONETARY_POLICY = "MONETARY_POLICY"
+    #: Scheduled statistical releases.
+    ECONOMIC_STATISTICS = "ECONOMIC_STATISTICS"
+    #: The honest default. Documents collected before this field existed carry
+    #: it, and must keep carrying it -- relabelling them now would be asserting
+    #: a classification nobody made at the time.
+    UNCLASSIFIED = "UNCLASSIFIED"
+
+
 class SourceType(str, Enum):
     PRIMARY_OFFICIAL = "PRIMARY_OFFICIAL"
     PRIMARY_CORPORATE = "PRIMARY_CORPORATE"
@@ -93,6 +125,9 @@ class SourceMetadata(BaseModel):
     known_publisher: bool = False
     timestamp_quality: UnitScore = 0.5
     content_completeness: UnitScore = 0.5
+    #: Defaults to UNCLASSIFIED so documents persisted before this existed read
+    #: back exactly as they were written. No backdating.
+    disclosure_stream: DisclosureStream = DisclosureStream.UNCLASSIFIED
 
 
 class Document(BaseModel):

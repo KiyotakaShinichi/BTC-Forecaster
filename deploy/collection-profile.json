@@ -11,7 +11,10 @@
     "collector it cannot contact, and a repository is the wrong place to",
     "publish somebody's email.",
     "sec-litigation and treasury-press were removed on 2026-09-03: both 404.",
-    "See RETIRED_FEED_IDS in feeds.py."
+    "See RETIRED_FEED_IDS in feeds.py.",
+    "sec-admin-proceedings added 2026-09-03 as its own identity, NOT as a",
+    "replacement for the retired sec-litigation: administrative proceedings and",
+    "civil litigation releases are different instruments."
   ],
   "user_agent": "BTC-Forecaster Research <${BTC_INTEL_CONTACT}>",
   "minimum_interval_seconds": 900,
@@ -19,6 +22,7 @@
   "max_attempts": 3,
   "feeds": [
     "sec-press",
+    "sec-admin-proceedings",
     "federalreserve-press",
     "federalreserve-monetary",
     "cftc-press",

@@ -125,9 +125,26 @@ def deduplicate_across_providers(documents: Iterable[Document]) -> list[Document
         for group in groups:
             representative = group[0]
             exact = canonical_url(str(document.url)) == canonical_url(str(representative.url))
-            same_hash = document.text_hash == representative.text_hash
+            # Same publisher, same disclosure stream. Every SEC feed carries the
+            # identical publisher string, so the corroboration clause below --
+            # same title, same publisher, published within five minutes -- would
+            # merge an administrative proceeding with the press release
+            # announcing it. They are different instruments, issued through
+            # different channels, and one of the two classifications would be
+            # silently lost in whichever document happened to survive.
+            #
+            # An identical URL is still identity and still merges: that is the
+            # same document however it was reached. Identical text and identical
+            # titles are only *evidence* of identity, and that evidence is
+            # overridden when the two came out of different official streams.
+            same_stream = (
+                document.source_metadata.disclosure_stream
+                == representative.source_metadata.disclosure_stream
+            )
+            same_hash = document.text_hash == representative.text_hash and same_stream
             corroborated = (
-                _normalized_title(document.title) == _normalized_title(representative.title)
+                same_stream
+                and _normalized_title(document.title) == _normalized_title(representative.title)
                 and document.publisher.casefold() == representative.publisher.casefold()
                 and document.published_at is not None
                 and representative.published_at is not None

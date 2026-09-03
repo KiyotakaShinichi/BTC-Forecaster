@@ -31,6 +31,7 @@ system first saw a minute ago became usable a minute ago.
 
 from __future__ import annotations
 
+import re
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ElementTree
@@ -39,9 +40,9 @@ from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from typing import Callable, Iterable, Sequence
 
-from ..models import Document, RetrievalProvenance, SourceMetadata, SourceType
+from ..models import DisclosureStream, Document, RetrievalProvenance, SourceMetadata, SourceType
 from ..providers import SearchProvider, deduplicate_documents
-from .backoff import AttemptLog, ProviderFailure, RetryPolicy, call_with_retry, classify_http_status
+from .backoff import AttemptLog, FailureClass, ProviderFailure, RetryPolicy, call_with_retry, classify_http_status
 from .evidence import RawEvidence, capture
 from .policy import RawRetention
 
@@ -61,6 +62,11 @@ class FeedSource:
     #: A government, regulator, central bank or exchange operating officially.
     official_source: bool = False
     known_publisher: bool = True
+    #: Which official stream this feed carries. The operator's assertion, not
+    #: something derived from the URL, and recorded on every document the feed
+    #: produces so a study can separate an administrative proceeding from a
+    #: press release about one.
+    disclosure_stream: DisclosureStream = DisclosureStream.UNCLASSIFIED
     retention: RawRetention = RawRetention.NON_REDISTRIBUTABLE_RAW_SOURCE
     #: Feed timestamps vary wildly in trustworthiness. This never affects
     #: availability -- only how much a downstream consumer should trust
@@ -74,6 +80,7 @@ class FeedSource:
             primary_source=self.primary_source,
             known_publisher=self.known_publisher,
             timestamp_quality=self.timestamp_quality,
+            disclosure_stream=self.disclosure_stream,
             # A feed gives a title and a summary, not an article. Saying so
             # keeps a downstream extractor from treating a teaser as full text.
             content_completeness=0.4,
@@ -104,6 +111,39 @@ def query_terms(query: str) -> list[str]:
     return [term for term in cleaned.casefold().split() if term]
 
 
+#: An ampersand that is not already the start of a character or entity
+#: reference. XML requires these escaped; publishers routinely do not.
+_BARE_AMPERSAND = re.compile(r"&(?!(?:[A-Za-z][A-Za-z0-9]*|#[0-9]+|#[xX][0-9A-Fa-f]+);)")
+
+
+def repair_xml(text: str) -> tuple[str, tuple[str, ...]]:
+    """Fix escaping errors a publisher made, and say which ones were fixed.
+
+    The SEC's administrative-proceedings feed emits company names verbatim, so a
+    respondent called "TIAA-CREF Individual & Institutional Services" produces a
+    bare ampersand and the whole document stops being XML. The same feed escapes
+    the same name correctly two lines later, so this is inconsistency at the
+    source rather than a dialect this parser does not know.
+
+    Refusing the feed would be defensible if it were rare. It is not: an
+    ampersand in a company name is ordinary, so this would drop an unpredictable
+    subset of enforcement actions -- the ones against firms whose names contain
+    "&" -- and nothing downstream would look wrong. That is a selection effect,
+    not a gap, and it is far more dangerous than a repaired character.
+
+    Deliberately narrow. It escapes ampersands that cannot begin a reference and
+    changes nothing else; it does not close tags, guess encodings, or strip
+    content. Every repair is returned so the caller can record that the feed
+    needed one -- a publisher whose feed is degrading should become visible, not
+    be quietly compensated for forever.
+    """
+    repairs: list[str] = []
+    fixed, count = _BARE_AMPERSAND.subn("&amp;", text)
+    if count:
+        repairs.append(f"escaped {count} bare ampersand{'s' if count > 1 else ''}")
+    return fixed, tuple(repairs)
+
+
 def parse_feed(payload: bytes | str) -> list[FeedEntry]:
     """Parse RSS 2.0 or Atom. Unknown dialects yield nothing rather than raise.
 
@@ -111,7 +151,26 @@ def parse_feed(payload: bytes | str) -> list[FeedEntry]:
     is a content problem for one source, and it should not abort a cycle that is
     collecting from a dozen others. The caller records it as a CONTENT failure.
     """
-    root = ElementTree.fromstring(payload if isinstance(payload, str) else payload.decode("utf-8", "replace"))
+    return parse_feed_with_repairs(payload)[0]
+
+
+def parse_feed_with_repairs(payload: bytes | str) -> tuple[list[FeedEntry], tuple[str, ...]]:
+    """`parse_feed`, plus what had to be repaired to get there."""
+    text = payload if isinstance(payload, str) else payload.decode("utf-8", "replace")
+    repairs: tuple[str, ...] = ()
+    try:
+        root = ElementTree.fromstring(text)
+    except ElementTree.ParseError:
+        # Only now, and only after a strict parse has actually failed: a feed
+        # that is already valid is never rewritten.
+        repaired, repairs = repair_xml(text)
+        if not repairs:
+            raise
+        root = ElementTree.fromstring(repaired)
+    return _entries(root), repairs
+
+
+def _entries(root: ElementTree.Element) -> list[FeedEntry]:
     entries = [_rss_entry(item) for item in root.findall(".//item")]
     if entries:
         return entries
@@ -202,6 +261,8 @@ class SyndicationProvider(SearchProvider):
         #: the provider needing a store handle.
         self.last_evidence: list[RawEvidence] = []
         self.last_attempts: dict[str, AttemptLog] = {}
+        #: Which feeds needed their XML repaired, and how, on the last search.
+        self.last_repairs: dict[str, tuple[str, ...]] = {}
 
     def search(self, query: str, start: datetime, end: datetime) -> list[Document]:
         retrieved = self._now()
@@ -209,6 +270,7 @@ class SyndicationProvider(SearchProvider):
         documents: list[Document] = []
         self.last_evidence = []
         self.last_attempts = {}
+        self.last_repairs = {}
 
         for feed in self.feeds:
             log = AttemptLog()
@@ -237,9 +299,20 @@ class SyndicationProvider(SearchProvider):
             )
 
             try:
-                entries = parse_feed(payload)
+                entries, repairs = parse_feed_with_repairs(payload)
             except ElementTree.ParseError:
+                # Previously a bare `continue`. A feed that fails to parse would
+                # then be fetched every cycle forever, contribute nothing, and
+                # report success -- the silent-empty failure again, and the
+                # docstring's promise that the caller records it was simply not
+                # kept.
+                log.record(FailureClass.SCHEMA)
                 continue
+            if repairs:
+                # Recorded, not hidden. A publisher whose feed is degrading
+                # should be visible in provider health rather than compensated
+                # for indefinitely.
+                self.last_repairs[feed.feed_id] = repairs
 
             documents.extend(self._documents_for(feed, entries, terms, query, retrieved, start))
 
@@ -328,6 +401,8 @@ def _default_opener(url: str, timeout: float, user_agent: str = DEFAULT_USER_AGE
 __all__ = [
     "ATOM_NAMESPACE",
     "DEFAULT_USER_AGENT",
+    "parse_feed_with_repairs",
+    "repair_xml",
     "FeedEntry",
     "FeedSource",
     "SyndicationProvider",
