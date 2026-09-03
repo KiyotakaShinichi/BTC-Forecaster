@@ -278,7 +278,7 @@ class ReplayService:
         self, forecast_origin: datetime, provider_versions: dict[str, str], config_fingerprint: str
     ) -> IntelligenceSnapshot:
         documents = self.store.documents_as_of(forecast_origin)
-        events = self.store.signals_as_of(forecast_origin)
+        events = self.store.eligible_signals_as_of(forecast_origin)
         eligible_ids = {d.document_id for d in documents}
         events = [e for e in events if set(e.source_ids) <= eligible_ids]
         snapshot = IntelligenceSnapshot.create(

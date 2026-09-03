@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, Any, Sequence, cast
 
 import duckdb
 
+from .corrections import EligibilityMode, EventCorrection, ineligible_ids
 from .errors import FeatureContractError, ReplayIntegrityError, SnapshotMismatchError, StorageError
 from .features import FEATURE_CONTRACT_VERSION
 from .models import Document, EventSignal
@@ -62,6 +63,20 @@ class IntelligenceStore:
             );
             CREATE TABLE IF NOT EXISTS watermarks (
               provider_id VARCHAR, query_id VARCHAR, payload JSON NOT NULL, PRIMARY KEY(provider_id, query_id)
+            );
+            -- Append-only. Nothing here updates or deletes an observation; a
+            -- correction is a new row stating what is now known about one, and
+            -- the observation itself stays exactly as it was written.
+            CREATE TABLE IF NOT EXISTS event_corrections (
+              correction_id VARCHAR PRIMARY KEY,
+              event_id VARCHAR NOT NULL,
+              status VARCHAR NOT NULL,
+              reason VARCHAR NOT NULL,
+              invalidated_at TIMESTAMPTZ NOT NULL,
+              invalidated_by_version VARCHAR NOT NULL,
+              source_bug VARCHAR NOT NULL,
+              notes VARCHAR NOT NULL,
+              payload JSON NOT NULL
             );
             CREATE TABLE IF NOT EXISTS quarantine (
               record_id VARCHAR PRIMARY KEY, retrieval_timestamp TIMESTAMPTZ NOT NULL, payload JSON NOT NULL
@@ -766,6 +781,85 @@ class IntelligenceStore:
             "SELECT payload FROM signals WHERE available_time <= ? ORDER BY available_time", [forecast_origin]
         ).fetchall()
         return [EventSignal.model_validate(json.loads(row[0])) for row in rows]
+
+    # ------------------------------------------------------------- corrections
+
+    def put_corrections(self, corrections: Sequence[EventCorrection]) -> int:
+        """Record corrections. Append-only, and idempotent by construction.
+
+        `INSERT OR IGNORE` on a content-addressed id: recording the same
+        correction twice writes one row, and no correction can ever overwrite
+        another. Returns how many were genuinely new, so a caller re-running a
+        correction script can tell "already applied" from "just applied".
+        """
+        if not corrections:
+            return 0
+        before = self.correction_count()
+        self.connection.executemany(
+            "INSERT OR IGNORE INTO event_corrections VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            [
+                (
+                    correction.correction_id,
+                    correction.event_id,
+                    correction.status.value,
+                    correction.reason,
+                    correction.invalidated_at,
+                    correction.invalidated_by_version,
+                    correction.source_bug,
+                    correction.notes,
+                    correction.model_dump_json(),
+                )
+                for correction in corrections
+            ],
+        )
+        return self.correction_count() - before
+
+    def correction_count(self) -> int:
+        row = self.connection.execute("SELECT COUNT(*) FROM event_corrections").fetchone()
+        return cast(int, row[0]) if row else 0
+
+    def corrections(self, event_ids: Sequence[str] | None = None) -> list[EventCorrection]:
+        """Every correction on record, newest last. Never filtered by status."""
+        if event_ids is None:
+            rows = self.connection.execute(
+                "SELECT payload FROM event_corrections ORDER BY invalidated_at, correction_id"
+            ).fetchall()
+        elif not event_ids:
+            return []
+        else:
+            placeholders = ",".join("?" * len(event_ids))
+            rows = self.connection.execute(
+                f"SELECT payload FROM event_corrections WHERE event_id IN ({placeholders}) "
+                "ORDER BY invalidated_at, correction_id",
+                list(event_ids),
+            ).fetchall()
+        return [EventCorrection.model_validate(json.loads(row[0])) for row in rows]
+
+    def ineligible_event_ids(
+        self,
+        *,
+        as_of: datetime | None = None,
+        mode: EligibilityMode = EligibilityMode.CORRECTED,
+    ) -> frozenset[str]:
+        return ineligible_ids(self.corrections(), as_of=as_of, mode=mode)
+
+    def eligible_signals_as_of(
+        self,
+        forecast_origin: datetime,
+        *,
+        mode: EligibilityMode = EligibilityMode.CORRECTED,
+    ) -> list[EventSignal]:
+        """The research view of the corpus at an origin.
+
+        `signals_as_of` stays raw on purpose -- audit, provenance and the
+        integrity checks all need to see an invalidated observation exactly
+        where it has always been. Everything that *counts* events reads this
+        instead, so an artefact of a defect is present in the record and absent
+        from the result.
+        """
+        events = self.signals_as_of(forecast_origin)
+        excluded = self.ineligible_event_ids(as_of=forecast_origin, mode=mode)
+        return [event for event in events if event.event_id not in excluded]
 
     def export_parquet(self, directory: str | Path) -> None:
         target = Path(directory)

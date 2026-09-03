@@ -54,6 +54,52 @@ from .scheduled import ScheduledOutcome, run_scheduled
 SYNDICATION = "syndication"
 
 
+#: Substituted into `user_agent` so a contact address never has to be committed.
+#: The address identifies a person, and a repository is the wrong place to
+#: publish one; the host supplies it and only the shape lives in the profile.
+CONTACT_PLACEHOLDER = "${BTC_INTEL_CONTACT}"
+
+
+def _resolve_user_agent(
+    template: str | None, origin: str, environment: Mapping[str, str] | None
+) -> str | None:
+    """Expand the contact placeholder, and refuse anything a publisher cannot use.
+
+    Three ways this goes wrong, all of them caught here rather than weeks into a
+    deployment when a feed starts answering 403:
+
+    * The placeholder is left unexpanded, and every request advertises a literal
+      `${BTC_INTEL_CONTACT}` -- worse than no contact, because it looks like one.
+    * A bare product string with no contact at all, which gives a publisher who
+      wants to complain nowhere to complain to.
+    * The variable is set to something empty, which silently collapses to the
+      second case.
+    """
+    if template is None:
+        return None
+    env = os.environ if environment is None else environment
+
+    if CONTACT_PLACEHOLDER in template:
+        contact = (env.get("BTC_INTEL_CONTACT") or "").strip()
+        if not contact:
+            raise ConfigurationError(
+                f"collection profile {origin} asks for a contact address via "
+                "BTC_INTEL_CONTACT, which is not set. Set it to an address a publisher "
+                "can write to, or remove the user_agent field and accept the default. "
+                "Do not leave the placeholder unexpanded: a request advertising a "
+                "literal ${BTC_INTEL_CONTACT} is worse than one advertising nothing."
+            )
+        template = template.replace(CONTACT_PLACEHOLDER, contact)
+
+    if "@" not in template and "http" not in template:
+        raise ConfigurationError(
+            f"collection profile {origin} sets a user_agent with no contact address. "
+            "Publishers that block a collector need somewhere to write first; give an "
+            "email or a URL, or leave the field out and accept the default."
+        )
+    return template
+
+
 @dataclass(frozen=True)
 class ProviderAvailability:
     """Whether a provider can genuinely run, and what is missing if it cannot."""
@@ -85,7 +131,9 @@ class CollectionProfile:
     max_attempts: int = 3
 
     @classmethod
-    def load(cls, path: str | Path) -> "CollectionProfile":
+    def load(
+        cls, path: str | Path, *, environment: Mapping[str, str] | None = None
+    ) -> "CollectionProfile":
         """Read a profile, failing loudly on anything ambiguous."""
         source = Path(path)
         try:
@@ -96,10 +144,16 @@ class CollectionProfile:
             raise ConfigurationError(f"collection profile {source} is not valid JSON: {error}") from error
         if not isinstance(raw, dict):
             raise ConfigurationError(f"collection profile {source} must be a JSON object")
-        return cls.from_mapping(raw, origin=str(source))
+        return cls.from_mapping(raw, origin=str(source), environment=environment)
 
     @classmethod
-    def from_mapping(cls, raw: Mapping[str, Any], *, origin: str = "<mapping>") -> "CollectionProfile":
+    def from_mapping(
+        cls,
+        raw: Mapping[str, Any],
+        *,
+        origin: str = "<mapping>",
+        environment: Mapping[str, str] | None = None,
+    ) -> "CollectionProfile":
         missing = [key for key in ("name", "watchlist", "feeds") if key not in raw]
         if missing:
             raise ConfigurationError(f"collection profile {origin} is missing: {', '.join(missing)}")
@@ -130,13 +184,7 @@ class CollectionProfile:
                 "argue for it, rather than overriding it here."
             )
 
-        user_agent = raw.get("user_agent") or None
-        if user_agent is not None and "@" not in user_agent and "http" not in user_agent:
-            raise ConfigurationError(
-                f"collection profile {origin} sets a user_agent with no contact address. "
-                "Publishers that block a collector need somewhere to write first; give an "
-                "email or a URL, or leave the field out and accept the default."
-            )
+        user_agent = _resolve_user_agent(raw.get("user_agent") or None, origin, environment)
 
         return cls(
             name=str(raw["name"]),

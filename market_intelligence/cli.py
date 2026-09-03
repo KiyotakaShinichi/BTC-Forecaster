@@ -18,7 +18,7 @@ from .collection.status import CorpusStatus, build_status
 from .collection.whales import WHALE_DECLARATION
 from .configuration import ProviderConfig, ProviderRegistry, QueryPlanner, WatchEntity
 from .cycle import run_intelligence_cycle
-from .errors import IntelligenceError
+from .errors import ConfigurationError, IntelligenceError
 from .extractors import RuleBasedExtractor
 from .historical import HistoricalDatasetService
 from .models import EventType
@@ -141,6 +141,21 @@ def build_parser() -> argparse.ArgumentParser:
     )
     restore_parser.add_argument("--archive", required=True)
     restore_parser.add_argument("--destination", required=True)
+
+    correct = sub.add_parser(
+        "corpus-correct",
+        help="record an append-only correction; never edits or deletes an observation",
+    )
+    correct.add_argument("--file", required=True, help="a committed correction file")
+    correct.add_argument(
+        "--dry-run", action="store_true", help="report what would be recorded, write nothing"
+    )
+
+    corrections_parser = sub.add_parser(
+        "corpus-corrections",
+        help="every correction on record, and what each one excludes from research",
+    )
+    corrections_parser.add_argument("--json", action="store_true")
 
     ops_status = sub.add_parser(
         "ops-status", help="collection health, storage, backup age and B4 readiness"
@@ -385,6 +400,10 @@ def _main(argv: list[str] | None = None) -> int:
             snapshots = CorpusCatalog(store.connection).list_snapshots(limit=args.limit)
             print(json.dumps([item.model_dump(mode="json") for item in snapshots], indent=2))
             return 0
+        if args.command == "corpus-correct":
+            return _apply_corrections(store, args)
+        if args.command == "corpus-corrections":
+            return _report_corrections(store, args)
         if args.command == "corpus-verify":
             integrity_report = ops_verify(store, as_of=datetime.now(timezone.utc))
             print(
@@ -477,11 +496,104 @@ if __name__ == "__main__":
     raise SystemExit(main())
 
 
+def _apply_corrections(store: IntelligenceStore, args: argparse.Namespace) -> int:
+    """Record a correction file. Additive, idempotent, and it checks its aim.
+
+    A correction naming an event the corpus does not hold is refused rather than
+    recorded. The value of a ledger keyed on event ids is that every row points
+    at something; a row pointing at nothing is indistinguishable from a typo,
+    and it would sit there looking authoritative.
+    """
+    from .corrections import load_corrections
+
+    source = Path(args.file)
+    try:
+        raw = json.loads(source.read_text(encoding="utf-8"))
+    except FileNotFoundError as error:
+        raise ConfigurationError(f"correction file not found: {source}") from error
+    except json.JSONDecodeError as error:
+        raise ConfigurationError(f"correction file {source} is not valid JSON: {error}") from error
+
+    try:
+        corrections = load_corrections(raw)
+    except ValueError as error:
+        raise ConfigurationError(f"correction file {source}: {error}") from error
+
+    known = {event.event_id for event in store.signals_as_of(datetime.now(timezone.utc))}
+    missing = sorted({item.event_id for item in corrections} - known)
+    if missing:
+        raise ConfigurationError(
+            f"correction file {source} names {len(missing)} event(s) this corpus does not "
+            f"hold, starting with {missing[0]}. A correction must point at something."
+        )
+
+    already = {item.correction_id for item in store.corrections()}
+    fresh = [item for item in corrections if item.correction_id not in already]
+    payload: dict[str, Any] = {
+        "file": str(source),
+        "reason": raw.get("reason"),
+        "corrections_in_file": len(corrections),
+        "already_recorded": len(corrections) - len(fresh),
+        "newly_recorded": 0,
+        "dry_run": bool(args.dry_run),
+        "events": sorted(item.event_id for item in corrections),
+    }
+    if not args.dry_run:
+        payload["newly_recorded"] = store.put_corrections(corrections)
+    print(json.dumps(payload, indent=2))
+    return 0
+
+
+def _report_corrections(store: IntelligenceStore, args: argparse.Namespace) -> int:
+    """The audit surface. An invalidated observation is hidden from research and
+    deliberately not hidden from anybody who goes looking for it."""
+    from .corrections import ELIGIBILITY_CONTRACT_VERSION, resolve
+
+    horizon = datetime.now(timezone.utc)
+    corrections = store.corrections()
+    standing = resolve(corrections)
+    excluded = store.ineligible_event_ids()
+    raw_events = store.signals_as_of(horizon)
+    hidden = [event for event in raw_events if event.event_id in excluded]
+
+    payload: dict[str, Any] = {
+        "eligibility_contract": ELIGIBILITY_CONTRACT_VERSION,
+        "corrections_recorded": len(corrections),
+        "events_raw": len(raw_events),
+        "events_eligible": len(raw_events) - len(hidden),
+        "events_excluded": len(hidden),
+        "corrections": [correction.as_dict() for correction in corrections],
+    }
+    if args.json:
+        print(json.dumps(payload, indent=2))
+        return 0
+
+    print(f"eligibility contract   {payload['eligibility_contract']}")
+    print(f"corrections recorded   {payload['corrections_recorded']}")
+    print(f"events raw             {payload['events_raw']}  (physically present, always)")
+    print(f"events eligible        {payload['events_eligible']}  (research may count these)")
+    print(f"events excluded        {payload['events_excluded']}")
+    for event_id, correction in sorted(standing.items()):
+        print(f"  {event_id[:16]}  {correction.status.value}  {correction.reason}")
+        print(
+            f"      recorded {correction.invalidated_at.isoformat()} "
+            f"by {correction.invalidated_by_version[:12]}"
+        )
+    return 0
+
+
 def _corpus_status(store: IntelligenceStore, extractor_version: str, entities: list[str]) -> CorpusStatus:
     """B4.1.34. Assemble the status report from whatever the store actually holds."""
     horizon = datetime.now(timezone.utc)
     documents = store.documents_as_of(horizon)
-    events = [event for event in store.signals_as_of(horizon) if event.extractor_version == extractor_version]
+    # The research view. An observation invalidated by a correction is still in
+    # the store, still auditable and still counted by `corpus-corrections`; it
+    # is simply not something a readiness gate or a study may count.
+    events = [
+        event
+        for event in store.eligible_signals_as_of(horizon)
+        if event.extractor_version == extractor_version
+    ]
     clusters = cluster_events(events, documents)
     by_context: dict[str, list[EventCluster]] = {}
     for cluster in clusters:

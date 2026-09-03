@@ -1,0 +1,27 @@
+{
+  "_readme": [
+    "An append-only correction. Applying it records rows in the",
+    "event_corrections ledger; it never edits or deletes an observation.",
+    "The affected ids are written out literally and not recomputed from a",
+    "rule: a correction that can match new events on its own is not a",
+    "correction, it is a filter, and it would keep excluding things forever.",
+    "Applying this file twice is a no-op -- correction ids are content-",
+    "addressed, so the second run writes nothing."
+  ],
+  "reason": "REDISCOVERY_DUPLICATE_PRE_FIX",
+  "invalidated_at": "2026-09-03T00:00:00Z",
+  "invalidated_by_version": "ec4d1c85980174f005deeed91b07257d600c5a95",
+  "source_bug": "Event identity was derived from the freshly retrieved document's available_at rather than the availability the store already held for it, so re-reading an unchanged feed produced a new event on every cycle. Fixed by IntelligenceStore.canonical_availability in ec4d1c8.",
+  "notes": "One duplicate per source document, all three written by the 09:01Z cycle on 2026-09-02. The 08:39Z cycle produced the genuine observations and the 09:18Z cycle, first to run with the fix, produced none. The set is therefore closed.",
+  "corrections": [
+    {
+      "event_id": "230b1e47079af960067e6ca5b23e7905468cd9abcb790a2f850c87208b4fc50f"
+    },
+    {
+      "event_id": "5ca33cfeebea156fecb1a8683a32edc07b26e5573591454ec02b23b4f2eef3cd"
+    },
+    {
+      "event_id": "cdc4e1728b1cc5375810610e236363bee788ab8896020421c0423767ed61e7c7"
+    }
+  ]
+}

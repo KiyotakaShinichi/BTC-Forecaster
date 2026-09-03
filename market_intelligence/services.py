@@ -30,7 +30,9 @@ class IntelligenceReadService:
     def aggregate(self, forecast_origin: datetime) -> dict[str, float]:
         from .aggregation import FeatureAggregator
 
-        return FeatureAggregator().aggregate(self.store.signals_as_of(forecast_origin), forecast_origin)
+        return FeatureAggregator().aggregate(
+            self.store.eligible_signals_as_of(forecast_origin), forecast_origin
+        )
 
 
 class SnapshotService:
@@ -72,7 +74,7 @@ class SnapshotService:
             len(forecast_origins),
         )
         documents = self.store.documents_as_of(max(forecast_origins))
-        events = self.store.signals_as_of(max(forecast_origins))
+        events = self.store.eligible_signals_as_of(max(forecast_origins))
         snapshots = []
         for origin in forecast_origins:
             eligible_documents = [document for document in documents if document.available_at <= origin]
@@ -116,7 +118,9 @@ class SnapshotService:
             len(forecast_origins),
         )
         horizon = max(forecast_origins)
-        engine = BulkReplayEngine(self.store.documents_as_of(horizon), self.store.signals_as_of(horizon))
+        engine = BulkReplayEngine(
+            self.store.documents_as_of(horizon), self.store.eligible_signals_as_of(horizon)
+        )
 
         snapshots = []
         cached_prefix = -1

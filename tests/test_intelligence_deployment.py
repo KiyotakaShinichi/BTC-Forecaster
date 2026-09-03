@@ -72,31 +72,57 @@ def minimal(**overrides: object) -> dict[str, object]:
 class TestTheCommittedProfile:
     """`deploy/collection-profile.json` is deployable, or this is red."""
 
+    #: The deployed profile asks the host for a contact address, so loading it
+    #: needs one. A literal stands in here: the real address is the operator's
+    #: and belongs in the host environment, never in the repository.
+    ENVIRONMENT = {"BTC_INTEL_CONTACT": "tests@example.org"}
+
+    def deployed(self) -> CollectionProfile:
+        return CollectionProfile.load(DEPLOYED_PROFILE, environment=self.ENVIRONMENT)
+
+    def test_the_deployed_profile_demands_a_contact_address(self) -> None:
+        """A collector polling government feeds for months without one gets
+        blocked, weeks in, as a PERMANENT failure nobody expected."""
+        with pytest.raises(ConfigurationError, match="BTC_INTEL_CONTACT"):
+            CollectionProfile.load(DEPLOYED_PROFILE, environment={})
+
+    def test_the_deployed_profile_carries_no_address_of_its_own(self) -> None:
+        """The shape is committed; the address is not. A repository is the wrong
+        place to publish somebody's email."""
+        raw = DEPLOYED_PROFILE.read_text(encoding="utf-8")
+        assert "${BTC_INTEL_CONTACT}" in raw
+        assert "@" not in json.loads(raw)["user_agent"].replace("${BTC_INTEL_CONTACT}", "")
+
+    def test_the_contact_address_reaches_the_request_but_not_the_manifest(self) -> None:
+        profile = self.deployed()
+        assert profile.user_agent == "BTC-Forecaster Research <tests@example.org>"
+        assert "tests@example.org" not in json.dumps(profile.fingerprint())
+
     def test_the_deployed_profile_loads(self) -> None:
-        profile = CollectionProfile.load(DEPLOYED_PROFILE)
+        profile = self.deployed()
         assert profile.name
         assert profile.feeds, "a profile with no feeds collects nothing"
         assert profile.entities
 
     def test_every_deployed_feed_is_in_the_committed_catalogue(self) -> None:
         """A feed id is resolved against `feeds.py`, so this cannot drift."""
-        profile = CollectionProfile.load(DEPLOYED_PROFILE)
+        profile = self.deployed()
         assert {feed.feed_id for feed in profile.feeds} == set(profile.fingerprint()["feeds"])
 
     def test_the_deployed_profile_watches_official_primary_sources(self) -> None:
         """B4's hypotheses are about what the regulator did, not who reported it."""
-        profile = CollectionProfile.load(DEPLOYED_PROFILE)
+        profile = self.deployed()
         assert all(feed.official_source for feed in profile.feeds)
         assert sum(feed.primary_source for feed in profile.feeds) >= 1
 
     def test_the_deployed_profile_respects_the_declared_poll_floor(self) -> None:
-        profile = CollectionProfile.load(DEPLOYED_PROFILE)
+        profile = self.deployed()
         assert profile.minimum_interval_seconds >= SYNDICATION_DECLARATION.minimum_interval_seconds
 
     def test_the_deployed_profile_spans_several_publishers(self) -> None:
         """O21: the readiness gate counts distinct publishers, so one feed family
         collecting forever can never open it however long it runs."""
-        profile = CollectionProfile.load(DEPLOYED_PROFILE)
+        profile = self.deployed()
         assert len({feed.publisher for feed in profile.feeds}) >= 3
 
 

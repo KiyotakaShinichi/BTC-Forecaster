@@ -23,7 +23,7 @@ from datetime import datetime
 from enum import Enum
 from typing import Any, Sequence
 
-from ..collection.corpus import CorpusCatalog, membership_hash
+from ..collection.corpus import RAW_ELIGIBILITY_CONTRACT, CorpusCatalog, membership_hash
 from ..models import Document, EventSignal
 from ..storage import IntelligenceStore
 
@@ -282,9 +282,19 @@ def _check_snapshots(store: IntelligenceStore, report: IntegrityReport) -> None:
     for snapshot in snapshots:
         included_documents = store.documents_as_of(snapshot.as_of)
         document_ids = {item.document_id for item in included_documents}
+        # Recomputed under the contract *this snapshot* declares, not under
+        # today's. A snapshot frozen before the correction ledger existed was
+        # built from every event in the store, and checking it against a
+        # corrected view would report a corpus as damaged for having been
+        # corrected -- which would train an operator to distrust the one check
+        # that fails closed.
+        if snapshot.eligibility_contract == RAW_ELIGIBILITY_CONTRACT:
+            candidates = store.signals_as_of(snapshot.as_of)
+        else:
+            candidates = store.eligible_signals_as_of(snapshot.as_of)
         included_events = [
             item
-            for item in store.signals_as_of(snapshot.as_of)
+            for item in candidates
             if item.available_time <= snapshot.as_of
             and item.extractor_version == snapshot.extractor_version
             and set(item.source_ids) <= document_ids

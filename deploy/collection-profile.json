@@ -6,9 +6,12 @@
     "'this feed was not configured yet' from 'this feed returned nothing'.",
     "Feeds are ids from market_intelligence/collection/feeds.py -- adding a",
     "source is a code change, deliberately.",
-    "Set user_agent to something a publisher can write to before deploying;",
-    "the SEC in particular answers 403 to a collector it cannot contact."
+    "user_agent carries the shape, never the address: set BTC_INTEL_CONTACT on",
+    "the host to an address a publisher can write to. The SEC answers 403 to a",
+    "collector it cannot contact, and a repository is the wrong place to",
+    "publish somebody's email."
   ],
+  "user_agent": "BTC-Forecaster Research <${BTC_INTEL_CONTACT}>",
   "minimum_interval_seconds": 900,
   "timeout_seconds": 20.0,
   "max_attempts": 3,

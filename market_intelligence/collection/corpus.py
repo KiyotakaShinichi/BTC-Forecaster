@@ -29,6 +29,12 @@ from ..errors import ReplayIntegrityError
 from ..models import Document, EventSignal
 from .clustering import cluster_events
 
+#: Membership is every event in the store, corrections ignored. This is what
+#: every snapshot frozen before the correction ledger existed was built under,
+#: so it is the default and must stay the default: changing it would silently
+#: restate what those snapshots meant.
+RAW_ELIGIBILITY_CONTRACT = "raw-v0"
+
 
 class CorpusSnapshot(BaseModel):
     """B4.1.27. A deterministic, read-only view of the corpus."""
@@ -55,6 +61,13 @@ class CorpusSnapshot(BaseModel):
     #: Content fingerprint over the member ids, so a moved corpus is detectable.
     membership_hash: str
     created_at: datetime
+    #: Which eligibility rule decided membership. Snapshots registered before
+    #: corrections existed carry the default and are read back exactly as they
+    #: were written -- an old snapshot is never reinterpreted under a rule that
+    #: did not exist when it was frozen. A snapshot built with corrections
+    #: applied says so, and is a distinct artefact from the raw one at the same
+    #: instant rather than a silent replacement of it.
+    eligibility_contract: str = RAW_ELIGIBILITY_CONTRACT
 
     @field_validator("as_of", "created_at")
     @classmethod
@@ -101,6 +114,7 @@ def build_snapshot(
     extractor_version: str,
     created_at: datetime,
     cluster_window_hours: int = 24,
+    eligibility_contract: str = RAW_ELIGIBILITY_CONTRACT,
 ) -> CorpusSnapshot:
     """Freeze the corpus as of an instant, for one extractor version.
 
@@ -136,6 +150,7 @@ def build_snapshot(
             {
                 "as_of": as_of.astimezone(timezone.utc).isoformat(),
                 "extractor_version": extractor_version,
+                "eligibility_contract": eligibility_contract,
                 "membership": membership_hash(
                     [document.document_id for document in included_documents],
                     [event.event_id for event in included_events],
@@ -149,6 +164,7 @@ def build_snapshot(
         corpus_id=f"corpus-{corpus_id}",
         as_of=as_of,
         extractor_version=extractor_version,
+        eligibility_contract=eligibility_contract,
         span_start=included_documents[0].available_at if included_documents else None,
         span_end=included_documents[-1].available_at if included_documents else None,
         document_count=len(included_documents),
@@ -248,6 +264,7 @@ class CorpusCatalog:
 
 
 __all__ = [
+    "RAW_ELIGIBILITY_CONTRACT",
     "CorpusCatalog",
     "CorpusSnapshot",
     "build_snapshot",

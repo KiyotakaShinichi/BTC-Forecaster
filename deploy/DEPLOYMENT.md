@@ -43,12 +43,19 @@ exactly like a collector that ran and found nothing.
 
 ### Set a contact address first
 
-Edit `deploy/collection-profile.json` and set `user_agent` to something a
-publisher can reply to:
+Set `BTC_INTEL_CONTACT` in `/etc/btc-intel/collector.env` to a dedicated project
+address a publisher can reply to:
 
-```json
-"user_agent": "btc-intel/1.0 (research; you@example.org)"
+```sh
+BTC_INTEL_CONTACT=btc-forecaster@example.org
 ```
+
+Every feed request then identifies itself as
+`BTC-Forecaster Research <btc-forecaster@example.org>`. The address lives on the
+host and never in the repository — the profile carries only the shape. The
+collector refuses to start if the profile asks for a contact and the variable is
+unset, rather than advertising an unexpanded `${BTC_INTEL_CONTACT}`, which looks
+like a contact and is not one.
 
 This is not decoration. The SEC's access policy asks automated clients to
 identify themselves with a contact, and answers `403` to those that do not. A
@@ -57,6 +64,16 @@ for months is precisely what gets blocked — and it would arrive weeks in, as a
 `PERMANENT` failure class on a feed everybody assumed was working. The profile
 refuses a `user_agent` with no contact in it rather than letting you deploy a
 string that cannot be answered.
+
+### Corrections
+
+If an observation turns out to be an artefact of a defect rather than a fact
+about the world, it is invalidated, never deleted. See
+[`corrections/README.md`](../corrections/README.md).
+
+```sh
+btc-intel --db <corpus> corpus-corrections     # what is excluded, and why
+```
 
 ## Verify it is actually running
 

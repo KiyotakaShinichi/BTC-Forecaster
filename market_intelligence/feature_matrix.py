@@ -113,9 +113,14 @@ def source_fingerprint(store: IntelligenceStore, horizon: datetime) -> str:
     Derived from document and event identity rather than content, because the
     content hashes are already inside the snapshots. Its job is to detect a
     source history that changed underneath an incremental extension.
+
+    Eligibility is part of that history. A correction recorded after a matrix
+    was built changes which events belong in it, so the fingerprint has to move
+    -- otherwise an incremental extension quietly keeps rows research is no
+    longer allowed to count.
     """
     documents = store.documents_as_of(horizon)
-    events = store.signals_as_of(horizon)
+    events = store.eligible_signals_as_of(horizon)
     digest = hashlib.sha256()
     digest.update(f"documents:{len(documents)}\n".encode())
     for document in documents:

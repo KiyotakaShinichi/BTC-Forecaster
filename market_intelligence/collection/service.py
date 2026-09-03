@@ -27,6 +27,7 @@ from typing import Any, Callable, Sequence
 from pydantic import BaseModel, ConfigDict
 
 from ..configuration import QuerySpec
+from ..corrections import ELIGIBILITY_CONTRACT_VERSION
 from ..cycle import IntelligenceRunReport, run_intelligence_cycle
 from ..extractors import EventExtractor
 from ..retrieval import MultiProviderRetriever
@@ -181,7 +182,12 @@ class ForwardCollector:
         # evidence it was meant to record.
         observed_at = self._now()
         documents = self.store.documents_as_of(observed_at)
-        events = self.store.signals_as_of(observed_at)
+        # Clusters and any new snapshot are research artefacts, so they are
+        # built from the corrected view. The raw events stay exactly where they
+        # are; what changes is only what a new snapshot claims to contain, and
+        # the snapshot records which rule it was built under so an old one is
+        # never reinterpreted.
+        events = self.store.eligible_signals_as_of(observed_at)
         clusters = cluster_events(events, documents, window_hours=self.cluster_window_hours)
         self.clusters.replace_all(clusters)
 
@@ -194,6 +200,7 @@ class ForwardCollector:
                 extractor_version=extractor.version,
                 created_at=observed_at,
                 cluster_window_hours=self.cluster_window_hours,
+                eligibility_contract=ELIGIBILITY_CONTRACT_VERSION,
             )
             # Register only when the corpus actually changed. A snapshot id
             # includes its as-of instant, so an hourly cycle would otherwise
