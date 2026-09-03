@@ -50,6 +50,10 @@ jobs:
           echo '```' >> "$GITHUB_STEP_SUMMARY"
           tail -n 120 pytest.log >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
+          # Also as an annotation: job logs and step summaries both need
+          # elevated permissions to read through the API, annotations do not.
+          detail=$(grep -E "^(FAILED|ERROR|E  )" pytest.log | head -n 30 | sed "s/%/%25/g" | awk '{printf "%s%%0A", $0}')
+          echo "::error title=pytest::${detail:-see step summary}"
       - run: python -m compileall -q market_intelligence scripts tests btc-intel.py btc-intel-api.py
       - run: python btc-intel.py demo --output-dir .ci-intelligence-demo
       - run: python btc-intel.py gold-report --output .ci-gold-report.json
