@@ -1,4 +1,11 @@
 pydantic>=2.8,<3
 duckdb>=1.0,<2
+# duckdb needs pytz to hand a TIMESTAMPTZ column back as a Python datetime,
+# and does not declare it. Every timestamp in this corpus is TIMESTAMPTZ, so
+# without it the collector raises on its first read. It reached developer
+# machines transitively through yfinance -- a quant-track dependency with no
+# relation to collection -- which is why a clean install was the only place
+# this could be seen.
+pytz>=2024.1
 fastapi>=0.115,<1
 uvicorn[standard]>=0.30,<1
