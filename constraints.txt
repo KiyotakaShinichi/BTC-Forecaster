@@ -44,4 +44,8 @@ boto3==1.43.82
 
 # --- dev ---
 pytest==8.4.1
+coverage==7.15.4
+pytest-cov==6.2.1
+ruff==0.12.11
+mypy==1.17.1
 httpx==0.28.1

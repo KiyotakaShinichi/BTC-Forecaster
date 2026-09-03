@@ -35,5 +35,9 @@ btc-forecast risk-status
 btc-forecast journal PATH
 ```
 
+Canonical project-wide coverage verification is `bash scripts/coverage.sh`.
+It enables branch coverage, reports the complete `btc_forecaster` package and
+the C0 subset, and fails if no coverage data or zero measured files are found.
+
 `opportunity` deliberately reports only the current A2 permission state. It
 does not fabricate a forecast or market price.
