@@ -58,6 +58,13 @@ class ExtractionMethod(str, Enum):
     FIXTURE = "FIXTURE"
 
 
+#: Bumped when the *meaning* of a stream changes or a member is added, so a
+#: corpus can say which vocabulary classified it. Adding a member is a contract
+#: change: documents already carrying UNCLASSIFIED were never offered the new
+#: option, and relabelling them later would assert a judgement nobody made.
+DISCLOSURE_STREAM_SCHEMA_VERSION = "disclosure-stream-v1"
+
+
 class DisclosureStream(str, Enum):
     """Which official stream a document came out of.
 

@@ -10,6 +10,11 @@ from __future__ import annotations
 import re
 from collections.abc import Sequence
 
+#: Bumped when candidate matching changes what it admits. A corpus collected
+#: under one rule and extended under another has a discontinuity in it that no
+#: downstream count can see, so the version is recorded rather than inferred.
+MATCHING_CONTRACT_VERSION = "matching-v1-word-start"
+
 
 def term_pattern(terms: Sequence[str]) -> re.Pattern[str] | None:
     """Match terms at a word start, allowing suffixes. `None` when unfiltered.
@@ -37,4 +42,4 @@ def term_pattern(terms: Sequence[str]) -> re.Pattern[str] | None:
     return re.compile(r"\b(?:" + alternation + ")")
 
 
-__all__ = ["term_pattern"]
+__all__ = ["MATCHING_CONTRACT_VERSION", "term_pattern"]
