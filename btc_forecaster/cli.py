@@ -264,6 +264,37 @@ def cmd_models(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_risk_status(args: argparse.Namespace) -> int:
+    from .paper.a2 import current_live_permission
+
+    print(json.dumps(current_live_permission(Path(args.promotion_file)), indent=2))
+    return 0
+
+
+def cmd_journal(args: argparse.Namespace) -> int:
+    from .paper.journal import AppendOnlyJournal
+
+    print(json.dumps(AppendOnlyJournal(Path(args.path)).read_verified(), indent=2))
+    return 0
+
+
+def cmd_opportunity(args: argparse.Namespace) -> int:
+    """Report the current evidence-backed permission without inventing a forecast."""
+    from .paper.a2 import current_live_permission
+
+    status = current_live_permission(Path(args.promotion_file))
+    promoted = status["promoted_models"]
+    if not isinstance(promoted, tuple):
+        raise TypeError("promotion evidence returned an invalid model collection")
+    print("BTC PAPER OPPORTUNITY")
+    print("PAPER RESEARCH — NOT LIVE EXECUTION\n")
+    print("Decision: NO_TRADE")
+    print("Allowed live leverage: 0.00x")
+    print("Why: MODEL_NOT_PROMOTED")
+    print(f"Promoted A2 models: {len(promoted)}")
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="btc-forecast",
@@ -308,6 +339,18 @@ def build_parser() -> argparse.ArgumentParser:
     models = subparsers.add_parser("models", help="list registered models and availability")
     models.add_argument("--json", action="store_true")
     models.set_defaults(func=cmd_models)
+
+    opportunity = subparsers.add_parser("opportunity", help="current fail-closed paper opportunity")
+    opportunity.add_argument("--promotion-file", default="research/runs/2026-08-29-a2-benchmark/promotion.csv")
+    opportunity.set_defaults(func=cmd_opportunity)
+
+    risk_status_parser = subparsers.add_parser("risk-status", help="A2 live-permission risk status")
+    risk_status_parser.add_argument("--promotion-file", default="research/runs/2026-08-29-a2-benchmark/promotion.csv")
+    risk_status_parser.set_defaults(func=cmd_risk_status)
+
+    journal_parser = subparsers.add_parser("journal", help="verify and print an append-only paper journal")
+    journal_parser.add_argument("path")
+    journal_parser.set_defaults(func=cmd_journal)
 
     return parser
 
