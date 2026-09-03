@@ -44,6 +44,7 @@ from ..models import DisclosureStream, Document, RetrievalProvenance, SourceMeta
 from ..providers import SearchProvider, deduplicate_documents
 from .backoff import AttemptLog, FailureClass, ProviderFailure, RetryPolicy, call_with_retry, classify_http_status
 from .evidence import RawEvidence, capture
+from .matching import term_pattern
 from .policy import RawRetention
 
 ATOM_NAMESPACE = "{http://www.w3.org/2005/Atom}"
@@ -96,6 +97,97 @@ class FeedEntry:
     summary: str
     published_at: datetime | None
     author: str | None
+
+
+@dataclass(frozen=True)
+class StreamMatchPolicy:
+    """Which entry fields topical candidate matching is allowed to read.
+
+    This was implicit -- every stream matched against title plus description --
+    and implicit was the problem. Auditing the SEC's administrative-proceedings
+    feed for a richer field to match on turned up the opposite result, and it is
+    worth stating in the type system rather than rediscovering:
+
+        title        Comscore, Inc., Serge Matta
+        description  Comscore, Inc.; Serge Matta
+        link         .../admin/2026/34-106258.pdf
+        dc:creator   34-106258
+
+    The description is the respondent name again -- byte-identical to the title
+    in 23 of 25 entries, differing only in punctuation in the other two. There
+    is no field in this feed that says what a proceeding is *about*. Subject
+    matter lives in the linked PDF, which is a different retention and
+    lawfulness question and is not fetched.
+
+    So `subject_bearing` is the honest part of this record. Where it is False, a
+    zero match count is a property of the source, not evidence of a quiet week,
+    and reading it as the latter is how a collector gets "fixed" by loosening a
+    filter until unrelated documents come through.
+    """
+
+    #: Entry attributes consulted, in order. Never the link, never metadata the
+    #: publisher did not intend as content.
+    match_fields: tuple[str, ...] = ("title", "summary")
+    #: Whether those fields can express what the item is about at all.
+    subject_bearing: bool = True
+    note: str = ""
+
+    def haystack(self, entry: "FeedEntry") -> str:
+        return " ".join(str(getattr(entry, field, "") or "") for field in self.match_fields).casefold()
+
+
+#: Matching is title+description everywhere. The SEC's administrative feed is
+#: recorded as non-subject-bearing, which changes no filter and prevents a
+#: misreading: nothing here widens what any stream admits.
+STREAM_MATCH_POLICIES: dict[DisclosureStream, StreamMatchPolicy] = {
+    DisclosureStream.ADMINISTRATIVE_PROCEEDINGS: StreamMatchPolicy(
+        match_fields=("title", "summary"),
+        subject_bearing=False,
+        note=(
+            "Title and description are both the respondent's name; the SEC puts "
+            "the subject matter only in the linked order PDF. Topical terms will "
+            "match a proceeding only when the respondent is itself a watched "
+            "entity, so zero is the expected result for a topical query and is "
+            "not a collection fault."
+        ),
+    ),
+}
+
+DEFAULT_MATCH_POLICY = StreamMatchPolicy()
+
+
+def match_policy(stream: DisclosureStream) -> StreamMatchPolicy:
+    return STREAM_MATCH_POLICIES.get(stream, DEFAULT_MATCH_POLICY)
+
+
+@dataclass(frozen=True)
+class FeedYield:
+    """What one feed produced in one search, before anything downstream.
+
+    A matched document is a *candidate*, not an event: it still has to survive
+    normalisation, extraction, schema validation, relevance scoring, dedup and
+    clustering. Keeping the counts separate is what makes it possible to say
+    which of those stages a stream is actually losing entries at.
+    """
+
+    entries: int = 0
+    #: Passed the topical candidate filter.
+    matched: int = 0
+    #: ...and then also fell inside the planner's publication lookback. The two
+    #: are separate because they fail for opposite reasons: `matched` low means
+    #: the query does not describe this source, while `matched` high and
+    #: `admitted` low means the source is simply older than the window, and
+    #: widening the query would fix nothing.
+    admitted: int = 0
+    subject_bearing: bool = True
+
+    def as_dict(self) -> dict[str, object]:
+        return {
+            "entries": self.entries,
+            "matched": self.matched,
+            "admitted": self.admitted,
+            "subject_bearing": self.subject_bearing,
+        }
 
 
 def query_terms(query: str) -> list[str]:
@@ -263,6 +355,8 @@ class SyndicationProvider(SearchProvider):
         self.last_attempts: dict[str, AttemptLog] = {}
         #: Which feeds needed their XML repaired, and how, on the last search.
         self.last_repairs: dict[str, tuple[str, ...]] = {}
+        #: Entries seen versus entries admitted, per feed, on the last search.
+        self.last_yield: dict[str, FeedYield] = {}
 
     def search(self, query: str, start: datetime, end: datetime) -> list[Document]:
         retrieved = self._now()
@@ -271,6 +365,7 @@ class SyndicationProvider(SearchProvider):
         self.last_evidence = []
         self.last_attempts = {}
         self.last_repairs = {}
+        self.last_yield = {}
 
         for feed in self.feeds:
             log = AttemptLog()
@@ -328,12 +423,16 @@ class SyndicationProvider(SearchProvider):
         start: datetime,
     ) -> list[Document]:
         output: list[Document] = []
+        policy = match_policy(feed.disclosure_stream)
+        pattern = term_pattern(terms)
+        seen = matched = admitted = 0
         for entry in entries:
             if not entry.link or not entry.title:
                 continue
-            haystack = f"{entry.title} {entry.summary}".casefold()
-            if terms and not any(term in haystack for term in terms):
+            seen += 1
+            if pattern is not None and not pattern.search(policy.haystack(entry)):
                 continue
+            matched += 1
             # Availability is retrieval, always. `published_at` is recorded and
             # never promoted: a three-week-old press release first seen now
             # became usable now, and treating its date as availability would
@@ -351,6 +450,7 @@ class SyndicationProvider(SearchProvider):
             # single line of it.
             if entry.published_at is not None and entry.published_at < start:
                 continue
+            admitted += 1
             text_hash = Document.content_hash(entry.summary or entry.title)
             output.append(
                 Document(
@@ -376,6 +476,12 @@ class SyndicationProvider(SearchProvider):
                     source_metadata=feed.metadata(),
                 )
             )
+        self.last_yield[feed.feed_id] = FeedYield(
+            entries=seen,
+            matched=matched,
+            admitted=admitted,
+            subject_bearing=policy.subject_bearing,
+        )
         return output
 
 
@@ -400,7 +506,13 @@ def _default_opener(url: str, timeout: float, user_agent: str = DEFAULT_USER_AGE
 
 __all__ = [
     "ATOM_NAMESPACE",
+    "DEFAULT_MATCH_POLICY",
     "DEFAULT_USER_AGENT",
+    "STREAM_MATCH_POLICIES",
+    "FeedYield",
+    "StreamMatchPolicy",
+    "match_policy",
+    "term_pattern",
     "parse_feed_with_repairs",
     "repair_xml",
     "FeedEntry",
