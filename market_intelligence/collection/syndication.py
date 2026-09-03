@@ -46,6 +46,7 @@ from .backoff import AttemptLog, FailureClass, ProviderFailure, RetryPolicy, cal
 from .evidence import RawEvidence, capture
 from .matching import term_pattern
 from .policy import RawRetention
+from .telemetry import FeedDiagnosis, diagnose
 
 ATOM_NAMESPACE = "{http://www.w3.org/2005/Atom}"
 
@@ -358,6 +359,26 @@ class SyndicationProvider(SearchProvider):
         #: Entries seen versus entries admitted, per feed, on the last search.
         self.last_yield: dict[str, FeedYield] = {}
 
+    def diagnostics(self) -> list[FeedDiagnosis]:
+        """What each feed did on the last search, classified.
+
+        Operations reads this rather than the bare counts: "0 documents" is the
+        same number for a dead endpoint, an empty feed, a query that no longer
+        describes the source, and a week with no news, and those need four
+        different responses.
+        """
+        # Iterating the configured feeds rather than the counters: a feed that
+        # failed to fetch never reaches the counting loop, and that is exactly
+        # the feed an operator most needs a diagnosis for.
+        return [
+            diagnose(
+                feed.feed_id,
+                self.last_yield.get(feed.feed_id, FeedYield()),
+                failed=bool(self.last_attempts.get(feed.feed_id, AttemptLog()).failures),
+            )
+            for feed in sorted(self.feeds, key=lambda item: item.feed_id)
+        ]
+
     def search(self, query: str, start: datetime, end: datetime) -> list[Document]:
         retrieved = self._now()
         terms = query_terms(query)
@@ -511,6 +532,7 @@ __all__ = [
     "STREAM_MATCH_POLICIES",
     "FeedYield",
     "StreamMatchPolicy",
+    "diagnose",
     "match_policy",
     "term_pattern",
     "parse_feed_with_repairs",
