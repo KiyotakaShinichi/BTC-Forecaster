@@ -9,7 +9,9 @@
     "user_agent carries the shape, never the address: set BTC_INTEL_CONTACT on",
     "the host to an address a publisher can write to. The SEC answers 403 to a",
     "collector it cannot contact, and a repository is the wrong place to",
-    "publish somebody's email."
+    "publish somebody's email.",
+    "sec-litigation and treasury-press were removed on 2026-09-03: both 404.",
+    "See RETIRED_FEED_IDS in feeds.py."
   ],
   "user_agent": "BTC-Forecaster Research <${BTC_INTEL_CONTACT}>",
   "minimum_interval_seconds": 900,
@@ -17,11 +19,9 @@
   "max_attempts": 3,
   "feeds": [
     "sec-press",
-    "sec-litigation",
     "federalreserve-press",
     "federalreserve-monetary",
     "cftc-press",
-    "treasury-press",
     "bls-news"
   ],
   "watchlist": [

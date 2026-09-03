@@ -42,6 +42,13 @@ OFFICIAL_FEEDS: tuple[FeedSource, ...] = (
         timestamp_quality=0.9,
     ),
     FeedSource(
+        # DEAD as of 2026-09-03: HTTP 404. The SEC retired this path. Its
+        # administrative-proceedings feed at /rss/litigation/admin.xml is alive
+        # and is *not* a drop-in replacement -- administrative proceedings and
+        # civil litigation releases are different things, and quietly swapping
+        # one for the other would change what every study built on this feed
+        # was measuring. Enabling it is a decision, not a repair.
+        # The entry stays so a manifest naming this feed can still be read.
         feed_id="sec-litigation",
         url="https://www.sec.gov/rss/litigation/litreleases.xml",
         publisher="U.S. Securities and Exchange Commission",
@@ -82,6 +89,9 @@ OFFICIAL_FEEDS: tuple[FeedSource, ...] = (
         timestamp_quality=0.9,
     ),
     FeedSource(
+        # DEAD as of 2026-09-03: HTTP 404, served slowly enough (35.7s) that a
+        # 20s client reads it as a timeout. Treasury moved its newsroom and no
+        # replacement feed responded within a sane bound.
         feed_id="treasury-press",
         url="https://home.treasury.gov/rss/press.xml",
         publisher="U.S. Department of the Treasury",
@@ -102,6 +112,14 @@ OFFICIAL_FEEDS: tuple[FeedSource, ...] = (
         timestamp_quality=0.9,
     ),
 )
+
+
+#: Confirmed 404 by live probe on 2026-09-03. Kept in the catalogue so an old
+#: manifest naming one is still resolvable, and kept out of the deployed profile
+#: so the collector does not spend every cycle failing at them -- a PERMANENT
+#: failure that recurs forever is noise, and noise is how a real failure gets
+#: ignored.
+RETIRED_FEED_IDS: frozenset[str] = frozenset({"sec-litigation", "treasury-press"})
 
 
 def default_feed_catalogue() -> tuple[FeedSource, ...]:
@@ -165,6 +183,7 @@ NEWS_API_DECLARATION = ProviderDeclaration(
 
 __all__ = [
     "NEWS_API_DECLARATION",
+    "RETIRED_FEED_IDS",
     "OFFICIAL_FEEDS",
     "SYNDICATION_DECLARATION",
     "default_feed_catalogue",

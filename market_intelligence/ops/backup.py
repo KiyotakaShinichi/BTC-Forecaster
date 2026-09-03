@@ -95,7 +95,13 @@ class BackupManifest:
 
 #: Never copied into a backup, whatever directory they are found in.
 EXCLUDED_NAMES = (".env", "credentials.json", "collector.lock")
-EXCLUDED_SUFFIXES = (".tmp", ".hb", ".wal", ".lock")
+#: `.env` is a suffix as well as a name. The documented deployment keeps its
+#: environment file outside the state root, but an operator who puts
+#: `collector.env` beside the database would otherwise have it copied into every
+#: archive -- and an archive is the one artefact that gets moved to another
+#: machine. Excluding by suffix makes that safe by construction rather than by
+#: where somebody happened to put the file.
+EXCLUDED_SUFFIXES = (".tmp", ".hb", ".wal", ".lock", ".env")
 
 
 def _hash_file(path: Path) -> str:

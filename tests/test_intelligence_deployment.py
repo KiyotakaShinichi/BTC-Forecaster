@@ -119,6 +119,24 @@ class TestTheCommittedProfile:
         profile = self.deployed()
         assert profile.minimum_interval_seconds >= SYNDICATION_DECLARATION.minimum_interval_seconds
 
+    def test_the_deployed_profile_enables_no_retired_feed(self) -> None:
+        """Two committed endpoints were confirmed 404 by live probe on
+        2026-09-03. A dead feed left enabled fails every cycle forever, and a
+        PERMANENT failure that recurs forever is how a real one gets ignored.
+        Asserted against the catalogue rather than the network, so the suite
+        stays offline."""
+        from market_intelligence.collection.feeds import RETIRED_FEED_IDS
+
+        enabled = {feed.feed_id for feed in self.deployed().feeds}
+        assert not (enabled & RETIRED_FEED_IDS), sorted(enabled & RETIRED_FEED_IDS)
+
+    def test_a_retired_feed_can_still_be_resolved_by_id(self) -> None:
+        """Kept in the catalogue deliberately: a manifest from before the
+        endpoint died still names it, and must stay readable."""
+        from market_intelligence.collection.feeds import RETIRED_FEED_IDS, feeds_by_id
+
+        assert len(feeds_by_id(*sorted(RETIRED_FEED_IDS))) == len(RETIRED_FEED_IDS)
+
     def test_the_deployed_profile_spans_several_publishers(self) -> None:
         """O21: the readiness gate counts distinct publishers, so one feed family
         collecting forever can never open it however long it runs."""
@@ -854,3 +872,63 @@ class TestRediscoveryDoesNotManufactureEvents:
             assert len(store.signals_as_of(later + timedelta(minutes=1))) == 2
         finally:
             store.close()
+
+
+# ------------------------------------------------------- secrets and archives
+
+
+class TestTheContactAddressStaysOnTheHost:
+    """The address identifies a person. It belongs in the host environment and
+    in no artifact that moves anywhere else."""
+
+    def test_an_env_file_is_never_archived(self, tmp_path: Path) -> None:
+        """`.env` was excluded by name only, so a file named `collector.env`
+        beside the database would have been copied into every archive -- and an
+        archive is the one artefact that gets moved to another machine."""
+        from market_intelligence.ops.backup import _excluded
+
+        for name in ("collector.env", ".env", "production.env"):
+            assert _excluded(tmp_path / name), name
+
+    def test_ordinary_state_files_are_still_archived(self, tmp_path: Path) -> None:
+        """The exclusion must not quietly widen into dropping the corpus."""
+        from market_intelligence.ops.backup import _excluded
+
+        for name in ("intelligence.duckdb", "collect-20260903T000000Z.json", "manifest.json"):
+            assert not _excluded(tmp_path / name), name
+
+    def test_the_expanded_address_never_reaches_the_manifest(self) -> None:
+        """The fingerprint is written into the corpus and read by whoever
+        inherits it. It records that a contact was configured, never which."""
+        profile = CollectionProfile.from_mapping(
+            minimal(user_agent="BTC-Forecaster Research <${BTC_INTEL_CONTACT}>"),
+            environment={"BTC_INTEL_CONTACT": "someone@example.org"},
+        )
+        assert profile.user_agent == "BTC-Forecaster Research <someone@example.org>"
+        rendered = json.dumps(profile.fingerprint())
+        assert "someone@example.org" not in rendered
+        assert "example.org" not in rendered
+        assert json.loads(rendered)["contact_user_agent_configured"] is True
+
+    def test_an_unexpanded_placeholder_never_reaches_a_request(self) -> None:
+        """Advertising a literal ${BTC_INTEL_CONTACT} looks like a contact and
+        is not one, which is worse than advertising nothing."""
+        with pytest.raises(ConfigurationError, match="BTC_INTEL_CONTACT"):
+            CollectionProfile.from_mapping(
+                minimal(user_agent="BTC-Forecaster Research <${BTC_INTEL_CONTACT}>"),
+                environment={},
+            )
+
+    def test_a_blank_contact_is_refused_like_a_missing_one(self) -> None:
+        with pytest.raises(ConfigurationError, match="BTC_INTEL_CONTACT"):
+            CollectionProfile.from_mapping(
+                minimal(user_agent="BTC-Forecaster Research <${BTC_INTEL_CONTACT}>"),
+                environment={"BTC_INTEL_CONTACT": "   "},
+            )
+
+    def test_the_committed_env_example_ships_no_address(self) -> None:
+        example = (DEPLOY / "collector.env.example").read_text(encoding="utf-8")
+        contact = [
+            line for line in example.splitlines() if line.startswith("BTC_INTEL_CONTACT=")
+        ]
+        assert contact == ["BTC_INTEL_CONTACT="], contact
