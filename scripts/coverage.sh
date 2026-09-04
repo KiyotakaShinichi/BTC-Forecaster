@@ -19,3 +19,4 @@ if not report.get("files"):
 print(f"coverage measured {len(report['files'])} source files")
 PY
 "$PY" -m coverage report --include='btc_forecaster/paper/*'
+"$PY" -m coverage report --include='btc_forecaster/shadow/*'

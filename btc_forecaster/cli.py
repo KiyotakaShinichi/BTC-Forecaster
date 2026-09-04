@@ -295,6 +295,76 @@ def cmd_opportunity(args: argparse.Namespace) -> int:
     return 0
 
 
+def _shadow_snapshot(args: argparse.Namespace):
+    from .data.providers import YFinanceProvider
+    from .data.snapshot import MarketSnapshot
+
+    if args.snapshot:
+        return MarketSnapshot.load(Path(args.snapshot))
+    if not getattr(args, "live", False):
+        raise ValueError("--snapshot is required unless --live is explicitly selected")
+    return YFinanceProvider().snapshot("BTC-USD", start="2017-01-01")
+
+
+def cmd_shadow_run(args: argparse.Namespace) -> int:
+    from .shadow.ledger import EvidenceLedger, LockHeldError
+    from .shadow.service import issue_run
+
+    try:
+        result = issue_run(
+            _shadow_snapshot(args),
+            EvidenceLedger(Path(args.ledger)),
+            dry_run=args.dry_run,
+        )
+    except LockHeldError as exc:
+        print(str(exc), file=sys.stderr)
+        return 3
+    print(json.dumps(result, indent=2))
+    return 0 if result.get("forecasts") else 4
+
+
+def cmd_shadow_score(args: argparse.Namespace) -> int:
+    from .shadow.ledger import EvidenceLedger
+    from .shadow.service import score_pending
+
+    result = score_pending(_shadow_snapshot(args), EvidenceLedger(Path(args.ledger)))
+    print(json.dumps(result, indent=2))
+    return 0
+
+
+def cmd_shadow_status(args: argparse.Namespace) -> int:
+    from .shadow.ledger import EvidenceLedger
+    from .shadow.reporting import status
+
+    print(json.dumps(status(EvidenceLedger(Path(args.ledger))), indent=2))
+    return 0
+
+
+def cmd_shadow_audit(args: argparse.Namespace) -> int:
+    from .shadow.ledger import EvidenceLedger
+    from .shadow.reporting import audit_forecast
+
+    print(json.dumps(audit_forecast(EvidenceLedger(Path(args.ledger)), args.forecast_id), indent=2))
+    return 0
+
+
+def cmd_shadow_verify(args: argparse.Namespace) -> int:
+    from .shadow.ledger import EvidenceLedger
+    from .shadow.reporting import verify
+
+    print(json.dumps(verify(EvidenceLedger(Path(args.ledger))), indent=2))
+    return 0
+
+
+def cmd_shadow_export(args: argparse.Namespace) -> int:
+    from .shadow.ledger import EvidenceLedger
+    from .shadow.reporting import export
+
+    destination = export(EvidenceLedger(Path(args.ledger)), Path(args.output))
+    print(destination.resolve())
+    return 0
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="btc-forecast",
@@ -351,6 +421,39 @@ def build_parser() -> argparse.ArgumentParser:
     journal_parser = subparsers.add_parser("journal", help="verify and print an append-only paper journal")
     journal_parser.add_argument("path")
     journal_parser.set_defaults(func=cmd_journal)
+
+    def add_shadow_storage(command: argparse.ArgumentParser, *, needs_snapshot: bool = False) -> None:
+        command.add_argument("--ledger", default="out/shadow-ledger")
+        if needs_snapshot:
+            command.add_argument("--snapshot", default=None, help="hash-verified MarketSnapshot directory")
+            command.add_argument("--live", action="store_true", help="explicitly fetch BTC-USD from yfinance")
+
+    shadow_run = subparsers.add_parser("shadow-run", help="issue pre-committed A3 shadow forecasts")
+    add_shadow_storage(shadow_run, needs_snapshot=True)
+    shadow_run.add_argument("--dry-run", action="store_true", help="calculate but create no official evidence")
+    shadow_run.set_defaults(func=cmd_shadow_run)
+
+    shadow_score = subparsers.add_parser("shadow-score", help="score matured A3 forecasts")
+    add_shadow_storage(shadow_score, needs_snapshot=True)
+    shadow_score.set_defaults(func=cmd_shadow_score)
+
+    shadow_status = subparsers.add_parser("shadow-status", help="report forward evidence without advice")
+    add_shadow_storage(shadow_status)
+    shadow_status.set_defaults(func=cmd_shadow_status)
+
+    shadow_audit = subparsers.add_parser("shadow-audit", help="inspect one immutable forecast")
+    add_shadow_storage(shadow_audit)
+    shadow_audit.add_argument("forecast_id")
+    shadow_audit.set_defaults(func=cmd_shadow_audit)
+
+    shadow_verify = subparsers.add_parser("shadow-verify", help="verify A3 evidence; never repairs")
+    add_shadow_storage(shadow_verify)
+    shadow_verify.set_defaults(func=cmd_shadow_verify)
+
+    shadow_export = subparsers.add_parser("shadow-export", help="deterministic A3 research export")
+    add_shadow_storage(shadow_export)
+    shadow_export.add_argument("--output", required=True)
+    shadow_export.set_defaults(func=cmd_shadow_export)
 
     return parser
 
