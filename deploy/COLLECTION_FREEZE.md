@@ -1,6 +1,8 @@
 # Collection semantics are frozen
 
-**Frozen at deployment candidate `4948a98e8fd8db7905c73f15d687f90a9a399ebb`.**
+**Frozen at deployment candidate `8203dc382ee575108ddf13d53aa2a9d694f8bd05`** -- the
+first commit on this branch to pass remote CI
+([run 34039803369](https://github.com/KiyotakaShinichi/BTC-Forecaster/actions/runs/34039803369)).
 Recorded in [`DEPLOYMENT_CANDIDATE.json`](DEPLOYMENT_CANDIDATE.json).
 
 This document exists because of a specific risk. The corpus this collector
@@ -95,6 +97,20 @@ Documents collected before this field existed read back `UNCLASSIFIED` and are
 not relabelled. That classification is one nobody made.
 
 Adding a stream member is a contract change, not a tidy-up.
+
+### 6b. Read order
+
+Point-in-time reads -- `documents_as_of` and `signals_as_of` -- return a **total
+order**: availability first, id as the tiebreaker. Not merely repeatable, but
+the same order on every machine.
+
+This is load-bearing rather than tidy. `sum()` is not associative, so records
+sharing an instant returning in arbitrary order moved every float derived from
+them. A feature matrix built at one chunk size disagreed with the same matrix at
+another in the last ULP, which made `dataset_id` -- whose entire job is to say
+two datasets are identical -- depend on an implementation detail, and let a
+corpus restored from a backup produce a different id than the corpus it came
+from.
 
 ### 7. Deduplication
 

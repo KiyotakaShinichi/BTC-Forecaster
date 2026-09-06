@@ -1,7 +1,7 @@
 {
   "candidate_id": "FORWARD_COLLECTION_DEPLOYMENT_CANDIDATE",
-  "source_sha": "4948a98e8fd8db7905c73f15d687f90a9a399ebb",
-  "created_at": "2026-09-03T10:54:28.314806+00:00",
+  "source_sha": "8203dc382ee575108ddf13d53aa2a9d694f8bd05",
+  "created_at": "2026-09-06T14:42:44.443682+00:00",
   "note": "A collection deployment candidate. It certifies that forward point-in-time intelligence collection is correct and operable. It certifies nothing about forecasting, and authorises no trading.",
   "contracts": {
     "collection_manifest_version": "b41-collection-manifest-v2",
@@ -174,6 +174,19 @@
     "profile_interval_seconds": 900,
     "rationale": "available_at is retrieval time, so cadence sets a floor under how sharply any future study can place an announcement. At 12h the mean lag is 6h, a quarter of a 24h horizon; at 3h it is 1.5h, 6.2%."
   },
+  "dependencies": {
+    "authority": "requirements-market-intelligence.txt",
+    "declared": [
+      "pydantic>=2.8,<3",
+      "duckdb>=1.0,<2",
+      "pytz>=2024.1",
+      "fastapi>=0.115,<1",
+      "uvicorn[standard]>=0.30,<1"
+    ],
+    "verified_from_a_clean_environment": true,
+    "python": "3.11 (matches the CI job and the deployment contract)",
+    "notes": "pytz is declared because duckdb needs it to return a TIMESTAMPTZ and does not declare it; it previously arrived only transitively through yfinance, a quant dependency absent from a clean collection install. numpy is deliberately NOT a collection dependency -- it is used only by a B4 research helper, and mypy is configured accordingly."
+  },
   "storage": {
     "state_root_env": "BTC_INTEL_STATE_ROOT",
     "systemd_state_directory": "btc-intel",
@@ -182,13 +195,15 @@
     "secrets_in_repository": false
   },
   "verification": {
+    "environment": "clean Python 3.11 venv built only from requirements-market-intelligence-dev.txt",
     "tests": {
-      "passed": 723,
+      "passed": 717,
+      "skipped": 1,
       "failed": 0,
-      "suite": "full market-intelligence pytest"
+      "note": "1 skipped and 11 not collected are B4 Granger/plotting tests needing research dependencies a collection job does not install"
     },
     "coverage": {
-      "percent": 89.68,
+      "percent": 88.23,
       "branch": true,
       "floor": 75
     },
@@ -201,14 +216,15 @@
       "documents": 6,
       "events_raw": 7,
       "events_eligible": 4,
+      "corrections": 3,
       "findings": 0
     },
     "backup": {
-      "archive_members": [
+      "members": [
         "backup_manifest.json",
         "intelligence.duckdb"
       ],
-      "secrets_excluded": true
+      "env_lock_tmp_excluded": true
     },
     "restore": {
       "destination": "new directory",
@@ -223,8 +239,24 @@
       "result": "passed"
     },
     "silent_empty_suite": {
-      "classes_covered": 14,
+      "classes_covered": 15,
       "result": "passed"
+    },
+    "determinism": {
+      "chunk_sizes": [
+        2,
+        100
+      ],
+      "identical_rows": true,
+      "identical_dataset_id": true,
+      "insertion_order_independent": true,
+      "reference_equals_optimized": true
+    },
+    "dependency_reproducibility": {
+      "imports": "ok",
+      "duckdb_timestamptz": "ok",
+      "collection_and_replay": "ok",
+      "undeclared_dependencies_required": 0
     },
     "live_feed_probe": {
       "feeds": 6,
@@ -234,6 +266,12 @@
         "sec-admin-proceedings": "escaped 1 bare ampersand"
       }
     },
-    "b4_readiness": "NOT_READY (expected; the bottleneck is elapsed calendar time)"
+    "remote_ci": {
+      "run_id": 34039803369,
+      "url": "https://github.com/KiyotakaShinichi/BTC-Forecaster/actions/runs/34039803369",
+      "conclusion": "success",
+      "steps_non_success": 0
+    },
+    "b4_readiness": "NOT_READY (expected; the remaining bottleneck is elapsed calendar time)"
   }
 }
