@@ -34,7 +34,13 @@ from market_intelligence.origins import (
 )
 from market_intelligence.replay_dataset import ReplayMode
 from market_intelligence.storage import IntelligenceStore
-from tests.test_intelligence_replay_engine import CONFIG, PROVIDERS, golden_fixture
+from tests.test_intelligence_replay_engine import (
+    CONFIG,
+    PROVIDERS,
+    golden_fixture,
+    make_document,
+    make_event,
+)
 
 BASE = datetime(2025, 6, 1, 12, 0, 0, tzinfo=timezone.utc)
 
@@ -749,3 +755,165 @@ class TestApiAndCliShareOneService:
         store.close()
         client = TestClient(create_app(database))
         assert client.get(f"/datasets/{'0' * 64}").status_code == 404
+
+
+class TestTiedTimestampDeterminism:
+    """The ordering defect, pinned where it actually bit.
+
+    `documents_as_of` and `signals_as_of` ordered by timestamp alone, so records
+    sharing an instant came back in whatever order the engine chose. `sum()` is
+    not associative, so the floats moved -- and because the chunked builder
+    reloads evidence per batch, the chunk size decided which order was seen. A
+    matrix built at chunk_size=2 disagreed with the same matrix at
+    chunk_size=100 in the last ULP, which meant `dataset_id`, whose entire job
+    is to say two datasets are identical, depended on an implementation detail.
+
+    Nothing looked wrong. Same counts, same columns, plausible values, and the
+    difference in the sixteenth decimal place.
+
+    The fixture below exists to make ties unavoidable: every record lands on one
+    of three instants, so any order-sensitive arithmetic has somewhere to go
+    wrong.
+    """
+
+    #: Enough records per instant that an arbitrary permutation is very unlikely
+    #: to reproduce the sorted one by chance.
+    PER_INSTANT = 8
+
+    def _tied(self, path: Path, *, reverse: bool = False) -> IntelligenceStore:
+        documents = []
+        events = []
+        index = 0
+        for instant_offset in (2, 30, 50):
+            moment = BASE - timedelta(hours=instant_offset)
+            for slot in range(self.PER_INSTANT):
+                index += 1
+                document = make_document(index, moment)
+                documents.append(document)
+                events.append(
+                    make_event(
+                        index,
+                        moment,
+                        source_ids=(document.document_id,),
+                        # Chosen so the weighted means genuinely depend on
+                        # summation order rather than cancelling to something
+                        # order-insensitive.
+                        sentiment=(-1) ** slot * (0.07 * slot + 0.013),
+                        btc_relevance=0.5 + slot / 97,
+                        novelty=0.5 + slot / 89,
+                        confidence=0.5 + slot / 83,
+                    )
+                )
+        if reverse:
+            documents = list(reversed(documents))
+            events = list(reversed(events))
+
+        store = IntelligenceStore(path)
+        store.put_documents(documents)
+        store.put_signals(events)
+        return store
+
+    def test_ties_are_returned_in_a_total_order(self, tmp_path: Path) -> None:
+        store = self._tied(tmp_path / "order.duckdb")
+        try:
+            horizon = BASE
+            document_reads = [
+                tuple(d.document_id for d in store.documents_as_of(horizon)) for _ in range(5)
+            ]
+            event_reads = [
+                tuple(e.event_id for e in store.signals_as_of(horizon)) for _ in range(5)
+            ]
+            assert len(set(document_reads)) == 1, "documents sharing an instant come back in flux"
+            assert len(set(event_reads)) == 1, "events sharing an instant come back in flux"
+            # Repeatable is not enough. The order must be the declared one --
+            # availability first, id as the tiebreaker -- so two machines agree
+            # without having to compare notes.
+            documents = store.documents_as_of(horizon)
+            assert [d.document_id for d in documents] == [
+                d.document_id for d in sorted(documents, key=lambda d: (d.available_at, d.document_id))
+            ]
+            events = store.signals_as_of(horizon)
+            assert [e.event_id for e in events] == [
+                e.event_id for e in sorted(events, key=lambda e: (e.available_time, e.event_id))
+            ]
+            # And the ties really are ties, or this proves nothing.
+            assert len({d.available_at for d in documents}) < len(documents)
+        finally:
+            store.close()
+
+    def test_chunk_size_does_not_change_the_rows(self, tmp_path: Path) -> None:
+        """chunk_size is an implementation detail. It must not reach the data."""
+        store = self._tied(tmp_path / "rows.duckdb")
+        try:
+            origins = hourly(24)
+            small, small_ids, _ = HistoricalFeatureMatrixBuilder(store, chunk_size=2).build_chunks(
+                origins, tmp_path / "small", PROVIDERS, CONFIG
+            )
+            large, large_ids, _ = HistoricalFeatureMatrixBuilder(
+                store, chunk_size=100
+            ).build_chunks(origins, tmp_path / "large", PROVIDERS, CONFIG)
+            assert small == large, "the feature matrix depends on the chunk size"
+            assert small_ids == large_ids
+        finally:
+            store.close()
+
+    def test_chunk_size_does_not_change_the_dataset_id(self, tmp_path: Path) -> None:
+        """The identity claim itself: two builds of the same evidence are the
+        same dataset, byte for byte."""
+        import hashlib
+
+        store = self._tied(tmp_path / "identity.duckdb")
+        try:
+            origins = hourly(24)
+            small = HistoricalDatasetService(store, chunk_size=2).build(
+                origins, tmp_path / "s.parquet", tmp_path / "s.json", PROVIDERS, CONFIG, git_sha="x"
+            )
+            large = HistoricalDatasetService(store, chunk_size=100).build(
+                origins, tmp_path / "l.parquet", tmp_path / "l.json", PROVIDERS, CONFIG, git_sha="x"
+            )
+            assert small.manifest.dataset_id == large.manifest.dataset_id
+            assert small.manifest.file_hash == large.manifest.file_hash
+            assert (
+                hashlib.sha256(small.output_path.read_bytes()).hexdigest()
+                == hashlib.sha256(large.output_path.read_bytes()).hexdigest()
+            ), "the written parquet differs between chunk sizes"
+        finally:
+            store.close()
+
+    def test_insertion_order_does_not_change_the_dataset(self, tmp_path: Path) -> None:
+        """Two corpora holding the same evidence, written in opposite orders,
+        are the same dataset. Otherwise a corpus rebuilt from a backup would not
+        match the one it was restored from."""
+        forward = self._tied(tmp_path / "forward.duckdb")
+        backward = self._tied(tmp_path / "backward.duckdb", reverse=True)
+        try:
+            origins = hourly(24)
+            first = HistoricalDatasetService(forward, chunk_size=7).build(
+                origins, tmp_path / "f.parquet", tmp_path / "f.json", PROVIDERS, CONFIG, git_sha="x"
+            )
+            second = HistoricalDatasetService(backward, chunk_size=7).build(
+                origins, tmp_path / "b.parquet", tmp_path / "b.json", PROVIDERS, CONFIG, git_sha="x"
+            )
+            assert first.manifest.dataset_id == second.manifest.dataset_id
+            assert first.manifest.file_hash == second.manifest.file_hash
+        finally:
+            forward.close()
+            backward.close()
+
+    def test_reference_and_optimized_agree_on_tied_timestamps(self, tmp_path: Path) -> None:
+        """The bit-for-bit equivalence the bulk engine promises, on the input
+        shape that breaks it if the promise is only approximately kept."""
+        store = self._tied(tmp_path / "modes.duckdb")
+        try:
+            origins = hourly(24)
+            builder = HistoricalFeatureMatrixBuilder(store, chunk_size=7)
+            reference, reference_ids, _ = builder.build_chunks(
+                origins, tmp_path / "ref", PROVIDERS, CONFIG, mode=ReplayMode.REFERENCE
+            )
+            optimized, optimized_ids, _ = builder.build_chunks(
+                origins, tmp_path / "opt", PROVIDERS, CONFIG, mode=ReplayMode.OPTIMIZED
+            )
+            assert reference == optimized
+            assert reference_ids == optimized_ids
+        finally:
+            store.close()

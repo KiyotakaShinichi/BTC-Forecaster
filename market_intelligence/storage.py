@@ -771,14 +771,29 @@ class IntelligenceStore:
         }
 
     def documents_as_of(self, forecast_origin: datetime) -> list[Document]:
+        """Evidence available at an origin, in a total order.
+
+        The id is a tiebreaker, not decoration. Ordering by timestamp alone
+        leaves records that share an instant in whatever order the engine
+        happens to return, and every float sum downstream is order-dependent:
+        `sum()` is not associative. The result was a feature matrix whose values
+        changed with the chunk size used to build it -- so `dataset_id`, which
+        exists to say two datasets are the same, depended on an implementation
+        detail. The paginated readers already sorted this way; these two, which
+        the whole replay and eligibility path goes through, did not.
+        """
         rows = self.connection.execute(
-            "SELECT payload FROM documents WHERE available_at <= ? ORDER BY available_at", [forecast_origin]
+            "SELECT payload FROM documents WHERE available_at <= ? "
+            "ORDER BY available_at, document_id",
+            [forecast_origin],
         ).fetchall()
         return [Document.model_validate(json.loads(row[0])) for row in rows]
 
     def signals_as_of(self, forecast_origin: datetime) -> list[EventSignal]:
         rows = self.connection.execute(
-            "SELECT payload FROM signals WHERE available_time <= ? ORDER BY available_time", [forecast_origin]
+            "SELECT payload FROM signals WHERE available_time <= ? "
+            "ORDER BY available_time, event_id",
+            [forecast_origin],
         ).fetchall()
         return [EventSignal.model_validate(json.loads(row[0])) for row in rows]
 
