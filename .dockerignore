@@ -2,9 +2,18 @@ __pycache__/
 *.pyc
 *.pyo
 *.pyd
-*.png
-*.csv
 .git/
 .venv/
 venv/
 .env
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Runtime output and local snapshots are regenerated inside the container.
+out/
+data/snapshots/
+
+# Superseded implementations and frozen evidence are not needed at runtime.
+research/
+tests/

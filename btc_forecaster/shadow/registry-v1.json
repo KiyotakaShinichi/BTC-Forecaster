@@ -1,0 +1,34 @@
+{
+  "created_before_forward_outcomes": true,
+  "feature_contract_version": "a2-market-ohlcv-v1",
+  "horizon_bars": 30,
+  "instrument": "BTC-USD",
+  "models": [
+    {
+      "baseline": true,
+      "config": {"interval_level": 0.95},
+      "data_requirements": ["close"],
+      "feature_version": "a2-log-price-log-return-v1",
+      "model_id": "random_walk",
+      "model_version": "a2-ca7b018",
+      "training_rule": "expanding_all_completed_daily_bars"
+    },
+    {
+      "baseline": false,
+      "config": {"interval_level": 0.95, "order": [1, 1, 1]},
+      "data_requirements": ["close"],
+      "feature_version": "a2-log-price-v1",
+      "model_id": "arima",
+      "model_version": "a2-ca7b018",
+      "training_rule": "expanding_all_completed_daily_bars"
+    }
+  ],
+  "registry_version": "a3-shadow-v1",
+  "schedule": {
+    "bar_availability": "daily UTC bar labeled by period start; available only after next UTC midnight",
+    "cadence": "daily",
+    "max_lateness_seconds": 21600,
+    "scheduled_issue_offset_seconds": 1800
+  },
+  "target_definition_version": "close-to-close-30-daily-bars-v1"
+}

@@ -1,26 +1,23 @@
 FROM python:3.11-slim
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1     PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    build-essential \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends     build-essential     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt ./
-RUN pip install --no-cache-dir -r requirements.txt
+COPY pyproject.toml constraints.txt README.md ./
+COPY btc_forecaster ./btc_forecaster
+RUN pip install --no-cache-dir -e ".[models,data,plots,api,cloud]" -c constraints.txt
 
-COPY bayesianCutoff.py ./
 COPY api_server.py ./
+# The previous Dockerfile.api never copied frontend/, so StaticFiles raised at
+# import time and the container could not serve the dashboard it advertised.
+COPY frontend ./frontend
 
-ENV OUTPUT_DIR=/app/out \
-    PLOT_SHOW=0
+ENV OUTPUT_DIR=/app/out     SNAPSHOT_DIR=/app/data/snapshots     PLOT_SHOW=0     APP_PORT=8010     APP_AUTO_OPEN=0
 
-RUN mkdir -p /app/out
-
-ENV APP_PORT=8010
+RUN mkdir -p /app/out /app/data/snapshots
 
 EXPOSE 8010
 CMD ["python", "api_server.py"]

@@ -1,13 +1,54 @@
 # Must stay UTF-8. Git reads this file as bytes, so a UTF-16 save makes every
 # rule below silently inert -- it looks correct in an editor and ignores nothing.
 # Verify changes with `git check-ignore -v <path>`, not by reading it.
+
+# --- Python bytecode / build ---
 __pycache__/
-*.pyc
-*.png
-# Generated datasets. `btc-intel replay-dataset --format csv` writes here too:
-# build outputs are reproducible from the manifest and do not belong in git.
-*.csv
+*.py[cod]
+*.so
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# --- Environments ---
+.venv/
+venv/
+env/
+.env
+
+# --- Tooling caches ---
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
 .coverage
+htmlcov/
+
+# --- Runtime forecast output (see ARTIFACTS.md) ---
+# `out/` is the default OUTPUT_DIR. Everything in it is regenerable by a run
+# and is therefore never committed. Promote a run to research/runs/<date>/
+# deliberately when it is evidence worth keeping.
+out/*
+!out/.gitkeep
+
+# --- Local data snapshots (see ARTIFACTS.md) ---
+# Raw market pulls are large and reproducible from their manifest.
+data/snapshots/*
+!data/snapshots/.gitkeep
+
+# --- Stray artifacts at repo root ---
+# Scoped to the root deliberately. A global `*.csv`/`*.png` would also ignore
+# research/runs/, which is where evidence is meant to be promoted to -- the rule
+# protecting the root would quietly block the thing it protects the root for.
+/*.png
+/*.csv
+/*.log
+
+# --- Market-intelligence collector state ---
+/btc-intelligence.duckdb
+/btc-intel-state/
+
+# --- Third-party market data that may not be redistributed ---
 # B4 market-data cache. 28MB of raw third-party quotes: Yahoo's terms do not
 # grant redistribution, and the cache is rebuildable from the run manifest's
 # series fingerprints. Only derived statistics are committed.
@@ -19,7 +60,3 @@ research/market_intelligence/b4/cache/
 research/market_intelligence/b4/runs/*/targets.json
 # Generated DuckDB store for the B4.39 feature-matrix demonstration.
 research/market_intelligence/b4/feature_matrix/*.duckdb
-
-# Local collector state and stray CLI databases
-/btc-intelligence.duckdb
-/btc-intel-state/

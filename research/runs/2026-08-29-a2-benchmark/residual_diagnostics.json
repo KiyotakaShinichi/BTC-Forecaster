@@ -1,0 +1,458 @@
+{
+  "random_walk": {
+    "diagnostics": {
+      "model": "random_walk",
+      "n": 36,
+      "step": 31,
+      "mean_residual": 0.03984991672050844,
+      "mean_residual_t": 1.4589732604226777,
+      "biased": false,
+      "ljung_box": {
+        "name": "ljung_box",
+        "statistic": 2.997330049981205,
+        "p_value": 0.885249113949427,
+        "null_hypothesis": "no autocorrelation up to lag 7",
+        "reject_means": "serial correlation is present",
+        "alpha": 0.05,
+        "rejects_null": false,
+        "lags": 7
+      },
+      "arch_lm": {
+        "name": "arch_lm",
+        "statistic": 3.9933976323497036,
+        "p_value": 0.7805375594102097,
+        "null_hypothesis": "no ARCH effects up to lag 7 (homoskedastic)",
+        "reject_means": "volatility clusters -- a conditional variance model is justified",
+        "alpha": 0.05,
+        "rejects_null": false,
+        "lags": 7,
+        "f_statistic": 0.4790811930751233,
+        "f_p_value": 0.8388944953795572
+      },
+      "jarque_bera": {
+        "name": "jarque_bera",
+        "statistic": 2.855862765346151,
+        "p_value": 0.2398044732027331,
+        "null_hypothesis": "the series is normally distributed",
+        "reject_means": "non-normal: skewed and/or fat-tailed",
+        "alpha": 0.05,
+        "rejects_null": false,
+        "skew": 0.6206967237257294,
+        "kurtosis": 3.602370997687762,
+        "excess_kurtosis": 0.6023709976877618
+      },
+      "interpretation": "no remaining serial correlation in the mean model"
+    },
+    "failure_concentration": {
+      "model": "random_walk",
+      "n_predictions": 1080,
+      "quantile": 0.95,
+      "error_threshold": 22916.00761714002,
+      "n_in_tail": 54,
+      "tail_mean_error": 25732.874963812967,
+      "overall_mean_error": 7450.858067475329,
+      "share_of_total_error": 0.17268396962319515,
+      "tail_directional_accuracy": 0.2962962962962963,
+      "overall_directional_accuracy": 0.35462962962962963
+    }
+  },
+  "random_walk_drift": {
+    "diagnostics": {
+      "model": "random_walk_drift",
+      "n": 36,
+      "step": 31,
+      "mean_residual": -0.014807210782272786,
+      "mean_residual_t": -0.5349333538352812,
+      "biased": false,
+      "ljung_box": {
+        "name": "ljung_box",
+        "statistic": 2.552764172724587,
+        "p_value": 0.9230717398788675,
+        "null_hypothesis": "no autocorrelation up to lag 7",
+        "reject_means": "serial correlation is present",
+        "alpha": 0.05,
+        "rejects_null": false,
+        "lags": 7
+      },
+      "arch_lm": {
+        "name": "arch_lm",
+        "statistic": 3.1243748581211337,
+        "p_value": 0.8732630269666525,
+        "null_hypothesis": "no ARCH effects up to lag 7 (homoskedastic)",
+        "reject_means": "volatility clusters -- a conditional variance model is justified",
+        "alpha": 0.05,
+        "rejects_null": false,
+        "lags": 7,
+        "f_statistic": 0.36223760867494187,
+        "f_p_value": 0.914003187448968
+      },
+      "jarque_bera": {
+        "name": "jarque_bera",
+        "statistic": 1.9773154458761322,
+        "p_value": 0.3720757847772685,
+        "null_hypothesis": "the series is normally distributed",
+        "reject_means": "non-normal: skewed and/or fat-tailed",
+        "alpha": 0.05,
+        "rejects_null": false,
+        "skew": 0.5114998353106379,
+        "kurtosis": 3.521231207008479,
+        "excess_kurtosis": 0.521231207008479
+      },
+      "interpretation": "no remaining serial correlation in the mean model"
+    },
+    "failure_concentration": {
+      "model": "random_walk_drift",
+      "n_predictions": 1080,
+      "quantile": 0.95,
+      "error_threshold": 24042.313714579723,
+      "n_in_tail": 54,
+      "tail_mean_error": 28038.10810746292,
+      "overall_mean_error": 7421.372110338267,
+      "share_of_total_error": 0.18890110676706748,
+      "tail_directional_accuracy": 0.12962962962962962,
+      "overall_directional_accuracy": 0.6175925925925926
+    }
+  },
+  "historical_mean_return": {
+    "diagnostics": {
+      "model": "historical_mean_return",
+      "n": 36,
+      "step": 31,
+      "mean_residual": -0.010844303670780046,
+      "mean_residual_t": -0.38512515149543036,
+      "biased": false,
+      "ljung_box": {
+        "name": "ljung_box",
+        "statistic": 1.8365935789089545,
+        "p_value": 0.9683284222455154,
+        "null_hypothesis": "no autocorrelation up to lag 7",
+        "reject_means": "serial correlation is present",
+        "alpha": 0.05,
+        "rejects_null": false,
+        "lags": 7
+      },
+      "arch_lm": {
+        "name": "arch_lm",
+        "statistic": 0.887287114472517,
+        "p_value": 0.996447805749577,
+        "null_hypothesis": "no ARCH effects up to lag 7 (homoskedastic)",
+        "reject_means": "volatility clusters -- a conditional variance model is justified",
+        "alpha": 0.05,
+        "rejects_null": false,
+        "lags": 7,
+        "f_statistic": 0.09468532454539048,
+        "f_p_value": 0.9981150018454759
+      },
+      "jarque_bera": {
+        "name": "jarque_bera",
+        "statistic": 0.07730738298578822,
+        "p_value": 0.9620838292764975,
+        "null_hypothesis": "the series is normally distributed",
+        "reject_means": "non-normal: skewed and/or fat-tailed",
+        "alpha": 0.05,
+        "rejects_null": false,
+        "skew": 0.08760159587807742,
+        "kurtosis": 3.1443679220682865,
+        "excess_kurtosis": 0.14436792206828652
+      },
+      "interpretation": "no remaining serial correlation in the mean model"
+    },
+    "failure_concentration": {
+      "model": "historical_mean_return",
+      "n_predictions": 1080,
+      "quantile": 0.95,
+      "error_threshold": 30077.306298776675,
+      "n_in_tail": 54,
+      "tail_mean_error": 37790.697725670005,
+      "overall_mean_error": 8109.685784799178,
+      "share_of_total_error": 0.23299729933128244,
+      "tail_directional_accuracy": 0.0,
+      "overall_directional_accuracy": 0.6287037037037037
+    }
+  },
+  "arima": {
+    "diagnostics": {
+      "model": "arima",
+      "n": 36,
+      "step": 31,
+      "mean_residual": 0.03859310198945479,
+      "mean_residual_t": 1.4006420863527882,
+      "biased": false,
+      "ljung_box": {
+        "name": "ljung_box",
+        "statistic": 3.1092448819470913,
+        "p_value": 0.874715558185314,
+        "null_hypothesis": "no autocorrelation up to lag 7",
+        "reject_means": "serial correlation is present",
+        "alpha": 0.05,
+        "rejects_null": false,
+        "lags": 7
+      },
+      "arch_lm": {
+        "name": "arch_lm",
+        "statistic": 3.9109632035382633,
+        "p_value": 0.7899737510168108,
+        "null_hypothesis": "no ARCH effects up to lag 7 (homoskedastic)",
+        "reject_means": "volatility clusters -- a conditional variance model is justified",
+        "alpha": 0.05,
+        "rejects_null": false,
+        "lags": 7,
+        "f_statistic": 0.4676500618895602,
+        "f_p_value": 0.8469056426058689
+      },
+      "jarque_bera": {
+        "name": "jarque_bera",
+        "statistic": 2.6006177220024114,
+        "p_value": 0.27244763158931884,
+        "null_hypothesis": "the series is normally distributed",
+        "reject_means": "non-normal: skewed and/or fat-tailed",
+        "alpha": 0.05,
+        "rejects_null": false,
+        "skew": 0.5962085775996968,
+        "kurtosis": 3.558467972213083,
+        "excess_kurtosis": 0.5584679722130832
+      },
+      "interpretation": "no remaining serial correlation in the mean model"
+    },
+    "failure_concentration": {
+      "model": "arima",
+      "n_predictions": 1080,
+      "quantile": 0.95,
+      "error_threshold": 22912.164749793206,
+      "n_in_tail": 54,
+      "tail_mean_error": 25737.050896503722,
+      "overall_mean_error": 7466.220093045538,
+      "share_of_total_error": 0.17235663143976077,
+      "tail_directional_accuracy": 0.6851851851851852,
+      "overall_directional_accuracy": 0.5305555555555556
+    }
+  },
+  "ets": {
+    "diagnostics": {
+      "model": "ets",
+      "n": 36,
+      "step": 31,
+      "mean_residual": 0.04107921000800778,
+      "mean_residual_t": 1.4918900179167214,
+      "biased": false,
+      "ljung_box": {
+        "name": "ljung_box",
+        "statistic": 1.3198270297405532,
+        "p_value": 0.9879013648946314,
+        "null_hypothesis": "no autocorrelation up to lag 7",
+        "reject_means": "serial correlation is present",
+        "alpha": 0.05,
+        "rejects_null": false,
+        "lags": 7
+      },
+      "arch_lm": {
+        "name": "arch_lm",
+        "statistic": 3.903578831942495,
+        "p_value": 0.7908139128071083,
+        "null_hypothesis": "no ARCH effects up to lag 7 (homoskedastic)",
+        "reject_means": "volatility clusters -- a conditional variance model is justified",
+        "alpha": 0.05,
+        "rejects_null": false,
+        "lags": 7,
+        "f_statistic": 0.4666297404481242,
+        "f_p_value": 0.8476150501683465
+      },
+      "jarque_bera": {
+        "name": "jarque_bera",
+        "statistic": 1.6961312051435993,
+        "p_value": 0.42824252248029737,
+        "null_hypothesis": "the series is normally distributed",
+        "reject_means": "non-normal: skewed and/or fat-tailed",
+        "alpha": 0.05,
+        "rejects_null": false,
+        "skew": 0.5054570409417137,
+        "kurtosis": 3.3298588422525404,
+        "excess_kurtosis": 0.32985884225254036
+      },
+      "interpretation": "no remaining serial correlation in the mean model"
+    },
+    "failure_concentration": {
+      "model": "ets",
+      "n_predictions": 1080,
+      "quantile": 0.95,
+      "error_threshold": 23940.20325722476,
+      "n_in_tail": 54,
+      "tail_mean_error": 26159.819636281227,
+      "overall_mean_error": 7940.485089624778,
+      "share_of_total_error": 0.1647243168459711,
+      "tail_directional_accuracy": 0.3888888888888889,
+      "overall_directional_accuracy": 0.43425925925925923
+    }
+  },
+  "prophet": {
+    "diagnostics": {
+      "model": "prophet",
+      "n": 36,
+      "step": 31,
+      "mean_residual": -0.08214234194214753,
+      "mean_residual_t": -1.4447818929782217,
+      "biased": false,
+      "ljung_box": {
+        "name": "ljung_box",
+        "statistic": 20.463803434709654,
+        "p_value": 0.004650354967187325,
+        "null_hypothesis": "no autocorrelation up to lag 7",
+        "reject_means": "serial correlation is present",
+        "alpha": 0.05,
+        "rejects_null": true,
+        "lags": 7
+      },
+      "arch_lm": {
+        "name": "arch_lm",
+        "statistic": 9.578118971618327,
+        "p_value": 0.2137677828757716,
+        "null_hypothesis": "no ARCH effects up to lag 7 (homoskedastic)",
+        "reject_means": "volatility clusters -- a conditional variance model is justified",
+        "alpha": 0.05,
+        "rejects_null": false,
+        "lags": 7,
+        "f_statistic": 1.4794837262603329,
+        "f_p_value": 0.22812651687268995
+      },
+      "jarque_bera": {
+        "name": "jarque_bera",
+        "statistic": 1.8653288717931775,
+        "p_value": 0.3935038465710541,
+        "null_hypothesis": "the series is normally distributed",
+        "reject_means": "non-normal: skewed and/or fat-tailed",
+        "alpha": 0.05,
+        "rejects_null": false,
+        "skew": -0.42554150065975443,
+        "kurtosis": 2.2794375071789896,
+        "excess_kurtosis": -0.7205624928210104
+      },
+      "interpretation": "residuals are serially correlated, so the mean model left structure behind"
+    },
+    "failure_concentration": {
+      "model": "prophet",
+      "n_predictions": 1080,
+      "quantile": 0.95,
+      "error_threshold": 63917.16472396517,
+      "n_in_tail": 54,
+      "tail_mean_error": 77906.77515780593,
+      "overall_mean_error": 17071.5058680466,
+      "share_of_total_error": 0.2281778062227863,
+      "tail_directional_accuracy": 0.2222222222222222,
+      "overall_directional_accuracy": 0.5462962962962963
+    }
+  },
+  "prophet_xgb_hybrid": {
+    "diagnostics": {
+      "model": "prophet_xgb_hybrid",
+      "n": 36,
+      "step": 31,
+      "mean_residual": -0.13186897440361467,
+      "mean_residual_t": -2.028466587414814,
+      "biased": true,
+      "ljung_box": {
+        "name": "ljung_box",
+        "statistic": 20.188854350101096,
+        "p_value": 0.005175885986178566,
+        "null_hypothesis": "no autocorrelation up to lag 7",
+        "reject_means": "serial correlation is present",
+        "alpha": 0.05,
+        "rejects_null": true,
+        "lags": 7
+      },
+      "arch_lm": {
+        "name": "arch_lm",
+        "statistic": 14.077745106910786,
+        "p_value": 0.04981573313470257,
+        "null_hypothesis": "no ARCH effects up to lag 7 (homoskedastic)",
+        "reject_means": "volatility clusters -- a conditional variance model is justified",
+        "alpha": 0.05,
+        "rejects_null": true,
+        "lags": 7,
+        "f_statistic": 2.830218061768358,
+        "f_p_value": 0.03042734421941653
+      },
+      "jarque_bera": {
+        "name": "jarque_bera",
+        "statistic": 2.054681425412762,
+        "p_value": 0.3579576081053462,
+        "null_hypothesis": "the series is normally distributed",
+        "reject_means": "non-normal: skewed and/or fat-tailed",
+        "alpha": 0.05,
+        "rejects_null": false,
+        "skew": -0.5325224152075854,
+        "kurtosis": 2.514750449616116,
+        "excess_kurtosis": -0.48524955038388384
+      },
+      "interpretation": "residuals are serially correlated, so the mean model left structure behind; ARCH effects remain, which is expected and is what the volatility model is for; forecasts are systematically over-predicting (biased mean residual)"
+    },
+    "failure_concentration": {
+      "model": "prophet_xgb_hybrid",
+      "n_predictions": 1080,
+      "quantile": 0.95,
+      "error_threshold": 69756.70934935611,
+      "n_in_tail": 54,
+      "tail_mean_error": 83911.54600956224,
+      "overall_mean_error": 17924.182009978264,
+      "share_of_total_error": 0.23407357156619274,
+      "tail_directional_accuracy": 0.037037037037037035,
+      "overall_directional_accuracy": 0.5435185185185185
+    }
+  },
+  "xgboost_causal_retuned": {
+    "diagnostics": {
+      "model": "xgboost_causal_retuned",
+      "n": 36,
+      "step": 31,
+      "mean_residual": 0.028155919612025695,
+      "mean_residual_t": 0.9336865346067683,
+      "biased": false,
+      "ljung_box": {
+        "name": "ljung_box",
+        "statistic": 3.469410522157237,
+        "p_value": 0.8384547884620904,
+        "null_hypothesis": "no autocorrelation up to lag 7",
+        "reject_means": "serial correlation is present",
+        "alpha": 0.05,
+        "rejects_null": false,
+        "lags": 7
+      },
+      "arch_lm": {
+        "name": "arch_lm",
+        "statistic": 4.076196040036556,
+        "p_value": 0.7709604887007004,
+        "null_hypothesis": "no ARCH effects up to lag 7 (homoskedastic)",
+        "reject_means": "volatility clusters -- a conditional variance model is justified",
+        "alpha": 0.05,
+        "rejects_null": false,
+        "lags": 7,
+        "f_statistic": 0.4906389144992941,
+        "f_p_value": 0.8306826769969191
+      },
+      "jarque_bera": {
+        "name": "jarque_bera",
+        "statistic": 3.3913197272864513,
+        "p_value": 0.18347811853415846,
+        "null_hypothesis": "the series is normally distributed",
+        "reject_means": "non-normal: skewed and/or fat-tailed",
+        "alpha": 0.05,
+        "rejects_null": false,
+        "skew": 0.6437690913629874,
+        "kurtosis": 3.7766113868684013,
+        "excess_kurtosis": 0.7766113868684013
+      },
+      "interpretation": "no remaining serial correlation in the mean model"
+    },
+    "failure_concentration": {
+      "model": "xgboost_causal_retuned",
+      "n_predictions": 1080,
+      "quantile": 0.95,
+      "error_threshold": 24244.56150375821,
+      "n_in_tail": 54,
+      "tail_mean_error": 27545.62772040192,
+      "overall_mean_error": 8047.53355212232,
+      "share_of_total_error": 0.1711432921776232,
+      "tail_directional_accuracy": 0.09259259259259259,
+      "overall_directional_accuracy": 0.41944444444444445
+    }
+  }
+}

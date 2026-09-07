@@ -13,7 +13,14 @@ import pandas as pd
 from fastapi import Depends, FastAPI, Header, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
+
+from btc_forecaster.artifacts.writer import (
+    FORECAST_CSV,
+    LEGACY_FORECAST_CSV,
+    MANIFEST_JSON,
+)
+from btc_forecaster.config.settings import DEFAULT_MODELS
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -28,12 +35,18 @@ S3_ARTIFACT_BUCKET = os.getenv("S3_ARTIFACT_BUCKET", "").strip()
 S3_ARTIFACT_PREFIX = os.getenv("S3_ARTIFACT_PREFIX", "").strip().strip("/")
 S3_REGION = os.getenv("S3_REGION", "").strip() or None
 
-RESULT_CSV = "nextgen_hybrid_forecast_results_montecarlo.csv"
+RESULT_CSV = FORECAST_CSV
+#: The dashboard shipped before Track A reads this filename directly. The
+#: pipeline writes both, so an old frontend against a new backend still works.
+LEGACY_RESULT_CSV = LEGACY_FORECAST_CSV
 SUMMARY_JSON = "forecast_summary.json"
 RUN_LOG = "forecast_run.log"
 
 app = FastAPI(title="BTC Bayesian Forecaster API", version="1.0.0")
-app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
+# StaticFiles raises at import time if the directory is missing, which took the
+# whole API down in the API container -- Dockerfile.api never copied frontend/.
+if FRONTEND_DIR.is_dir():
+    app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 app.mount("/out", StaticFiles(directory=str(DEFAULT_OUTPUT_DIR)), name="out")
 
 _state_lock = threading.Lock()
@@ -56,6 +69,26 @@ class ForecastRunRequest(BaseModel):
     max_lag: int = Field(default=60, ge=5, le=120)
     random_state: int = Field(default=42)
     output_dir: Optional[str] = None
+
+    # Track A: which models to compare, and how the walk-forward folds are cut.
+    # The baseline is what skill is measured against and is always included.
+    models: list[str] = Field(default_factory=lambda: list(DEFAULT_MODELS))
+    primary_model: str = Field(default="prophet_xgb_hybrid")
+    baseline_model: str = Field(default="random_walk")
+    walk_forward_folds: int = Field(default=6, ge=1, le=50)
+    walk_forward_horizon: int = Field(default=30, ge=1, le=365)
+    min_train_bars: int = Field(default=730, ge=90, le=10000)
+    embargo_bars: int = Field(default=0, ge=0, le=365)
+
+    @model_validator(mode="after")
+    def _baseline_must_be_scored(self) -> "ForecastRunRequest":
+        if self.baseline_model not in self.models:
+            self.models = [*self.models, self.baseline_model]
+        if self.primary_model not in self.models:
+            raise ValueError(
+                f"primary_model {self.primary_model!r} is not in models {self.models}"
+            )
+        return self
 
 
 def _is_under_root(path: Path, root: Path) -> bool:
@@ -126,10 +159,19 @@ def _run_forecast_job(req: ForecastRunRequest) -> None:
             "PLOT_SHOW": "0",
             "PYTHONUTF8": "1",
             "PYTHONIOENCODING": "utf-8",
+            # Track A additions. Every name above is unchanged, so existing
+            # deployments and Docker images keep working.
+            "MODELS": ",".join(req.models),
+            "PRIMARY_MODEL": req.primary_model,
+            "BASELINE_MODEL": req.baseline_model,
+            "WF_FOLDS": str(req.walk_forward_folds),
+            "WF_HORIZON": str(req.walk_forward_horizon),
+            "WF_MIN_TRAIN_BARS": str(req.min_train_bars),
+            "WF_EMBARGO_BARS": str(req.embargo_bars),
         }
     )
 
-    cmd = [sys.executable, "bayesianCutoff.py"]
+    cmd = [sys.executable, "-m", "btc_forecaster.cli", "run"]
     log_path = out_dir / RUN_LOG
 
     with _state_lock:
@@ -241,10 +283,15 @@ def artifacts(output_dir: Optional[str] = None):
 def latest(output_dir: Optional[str] = None):
     out_dir = _resolve_output_dir(output_dir)
     csv_path = out_dir / RESULT_CSV
+    if not csv_path.exists():
+        csv_path = out_dir / LEGACY_RESULT_CSV
     summary_path = out_dir / SUMMARY_JSON
 
     if not csv_path.exists():
-        raise HTTPException(status_code=404, detail=f"No forecast file found at {csv_path}")
+        raise HTTPException(
+            status_code=404,
+            detail=f"No forecast yet. POST /run to produce one (expected {RESULT_CSV} in {out_dir}).",
+        )
 
     df = pd.read_csv(csv_path, index_col=0)
     if df.empty:
@@ -260,13 +307,19 @@ def latest(output_dir: Optional[str] = None):
             stats = {}
 
     response = {
-        "csvList": [f"/out/{RESULT_CSV}", "/out/historical_prices.csv", f"/out/{SUMMARY_JSON}"],
+        "csvList": [
+            f"/out/{RESULT_CSV}",
+            f"/out/{LEGACY_RESULT_CSV}",
+            "/out/historical_prices.csv",
+            f"/out/{SUMMARY_JSON}",
+        ],
         "rows": int(len(df)),
         "start_date": str(df.index[0]),
         "end_date": str(df.index[-1]),
         "first_row": first_row,
         "last_row": last_row,
         "stats": stats,
+        "manifest_available": (out_dir / MANIFEST_JSON).exists(),
     }
 
     return json.loads(json.dumps(response, default=str))

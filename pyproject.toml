@@ -1,0 +1,126 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "btc-forecaster"
+version = "0.2.0"
+description = "Point-in-time correct forecasting research platform for BTC-USD"
+readme = "README.md"
+requires-python = ">=3.11"
+
+# Track A owns the quantitative core's dependencies. Bounds are deliberately
+# wide-below / capped-above at the next major: the repository was developed
+# against the versions pinned in constraints.txt, and those pins are what the
+# committed research artifacts were produced with.
+dependencies = [
+    "numpy>=1.24,<3",
+    "pandas>=2.0,<4",
+    "scipy>=1.10,<2",
+    "statsmodels>=0.14,<1",
+]
+
+[project.optional-dependencies]
+# Models that are heavy or awkward to install. The core package imports none of
+# these at module scope; every adapter degrades to a clear error if missing.
+models = [
+    "prophet>=1.1,<2",
+    "xgboost>=2.0,<4",
+    "scikit-learn>=1.3,<2",
+    "arch>=6.3,<9",
+]
+# Live market data. Never imported by unit tests.
+data = [
+    "yfinance>=0.2,<2",
+]
+plots = [
+    "matplotlib>=3.7,<4",
+]
+api = [
+    "fastapi>=0.115,<1",
+    "uvicorn[standard]>=0.30,<1",
+    "pydantic>=2.8,<3",
+]
+cloud = [
+    "boto3>=1.34,<2",
+]
+dev = [
+    "pytest>=8,<10",
+    "coverage[toml]>=7.10,<8",
+    "pytest-cov>=6,<8",
+    # fastapi.testclient needs httpx; the API tests skip without it.
+    "httpx>=0.27,<1",
+    "ruff>=0.6,<1",
+    "mypy>=1.10,<2",
+]
+# Everything needed to run the full pipeline end to end.
+all = [
+    "btc-forecaster[models,data,plots,api,cloud,dev]",
+]
+
+[project.scripts]
+btc-forecast = "btc_forecaster.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["btc_forecaster*"]
+
+[tool.setuptools.package-data]
+"btc_forecaster.shadow" = ["registry-v1.json"]
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+testpaths = ["tests"]
+addopts = [
+    "-q",
+    "--strict-markers",
+    "--strict-config",
+]
+markers = [
+    "network: test requires live network access (deselected by default)",
+    "slow: test fits a heavy model (Prophet/XGBoost/GARCH)",
+]
+filterwarnings = [
+    "ignore::DeprecationWarning",
+    "ignore::FutureWarning",
+]
+
+[tool.coverage.run]
+branch = true
+source = ["btc_forecaster"]
+
+[tool.coverage.report]
+show_missing = true
+skip_empty = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["research", ".venv"]
+
+[tool.ruff.lint]
+# Deliberately narrow. These catch real defects (undefined names, unused
+# imports, mutable defaults, bare except) without turning style opinions into
+# build failures on a research codebase.
+select = ["E4", "E7", "E9", "F", "B", "I", "UP", "C4"]
+ignore = [
+    "E741",   # ambiguous variable name -- `l` for lag is conventional here
+    "B008",   # function call in default arg -- FastAPI Depends/Header idiom
+    "UP038",  # isinstance tuple form is clearer than X | Y here
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Tests import symbols to assert they exist and re-import inside functions to
+# keep optional dependencies out of module scope.
+"tests/*" = ["B011", "E402"]
+
+[tool.mypy]
+python_version = "3.11"
+files = ["btc_forecaster"]
+ignore_missing_imports = true
+warn_unused_ignores = false
+# Not strict: the scientific stack is largely untyped, and demanding full
+# annotations would produce noise rather than caught defects. What is enforced
+# is that code which IS annotated is internally consistent -- which is how the
+# Optional-model-state bugs were found.
+check_untyped_defs = false
+disallow_untyped_defs = false

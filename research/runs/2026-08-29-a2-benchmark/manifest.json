@@ -1,0 +1,2025 @@
+{
+  "run_id": "20260829T052637Z-3a2c4c3b",
+  "generated_at": "2026-08-29T05:38:59.087994+00:00",
+  "dataset": {
+    "ticker": "BTC-USD",
+    "provider": "yfinance",
+    "retrieved_at": "2026-08-28T11:08:55.966696+00:00",
+    "start": "2017-01-01T00:00:00+00:00",
+    "end": "2026-08-28T00:00:00+00:00",
+    "rows": 3527,
+    "columns": [
+      "close",
+      "volume",
+      "open",
+      "high",
+      "low"
+    ],
+    "timezone": "UTC",
+    "frequency": "D",
+    "sha256": "056b866b16fee19ad078d9e54515bd39dd6ffabdf6eceb25df892258b0544887",
+    "schema_version": "1",
+    "provider_version": "1.2.0",
+    "missing_bars": 0,
+    "note": null
+  },
+  "outer_folds": {
+    "splitter": {
+      "mode": "expanding",
+      "horizon": 30,
+      "n_folds_requested": 36,
+      "min_train_bars": 900,
+      "window_bars": null,
+      "embargo_bars": 30,
+      "step_bars": null
+    },
+    "n_folds": 36,
+    "folds": [
+      {
+        "fold": 0,
+        "train_start": "2017-01-01",
+        "train_end": "2019-06-19",
+        "test_start": "2019-07-20",
+        "test_end": "2019-08-18",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 1,
+        "train_start": "2017-01-01",
+        "train_end": "2019-08-31",
+        "test_start": "2019-10-01",
+        "test_end": "2019-10-30",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 2,
+        "train_start": "2017-01-01",
+        "train_end": "2019-11-13",
+        "test_start": "2019-12-14",
+        "test_end": "2020-01-12",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 3,
+        "train_start": "2017-01-01",
+        "train_end": "2020-01-25",
+        "test_start": "2020-02-25",
+        "test_end": "2020-03-25",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 4,
+        "train_start": "2017-01-01",
+        "train_end": "2020-04-07",
+        "test_start": "2020-05-08",
+        "test_end": "2020-06-06",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 5,
+        "train_start": "2017-01-01",
+        "train_end": "2020-06-20",
+        "test_start": "2020-07-21",
+        "test_end": "2020-08-19",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 6,
+        "train_start": "2017-01-01",
+        "train_end": "2020-09-01",
+        "test_start": "2020-10-02",
+        "test_end": "2020-10-31",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 7,
+        "train_start": "2017-01-01",
+        "train_end": "2020-11-13",
+        "test_start": "2020-12-14",
+        "test_end": "2021-01-12",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 8,
+        "train_start": "2017-01-01",
+        "train_end": "2021-01-26",
+        "test_start": "2021-02-26",
+        "test_end": "2021-03-27",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 9,
+        "train_start": "2017-01-01",
+        "train_end": "2021-04-09",
+        "test_start": "2021-05-10",
+        "test_end": "2021-06-08",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 10,
+        "train_start": "2017-01-01",
+        "train_end": "2021-06-21",
+        "test_start": "2021-07-22",
+        "test_end": "2021-08-20",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 11,
+        "train_start": "2017-01-01",
+        "train_end": "2021-09-03",
+        "test_start": "2021-10-04",
+        "test_end": "2021-11-02",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 12,
+        "train_start": "2017-01-01",
+        "train_end": "2021-11-15",
+        "test_start": "2021-12-16",
+        "test_end": "2022-01-14",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 13,
+        "train_start": "2017-01-01",
+        "train_end": "2022-01-27",
+        "test_start": "2022-02-27",
+        "test_end": "2022-03-28",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 14,
+        "train_start": "2017-01-01",
+        "train_end": "2022-04-11",
+        "test_start": "2022-05-12",
+        "test_end": "2022-06-10",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 15,
+        "train_start": "2017-01-01",
+        "train_end": "2022-06-23",
+        "test_start": "2022-07-24",
+        "test_end": "2022-08-22",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 16,
+        "train_start": "2017-01-01",
+        "train_end": "2022-09-04",
+        "test_start": "2022-10-05",
+        "test_end": "2022-11-03",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 17,
+        "train_start": "2017-01-01",
+        "train_end": "2022-11-17",
+        "test_start": "2022-12-18",
+        "test_end": "2023-01-16",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 18,
+        "train_start": "2017-01-01",
+        "train_end": "2023-01-29",
+        "test_start": "2023-03-01",
+        "test_end": "2023-03-30",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 19,
+        "train_start": "2017-01-01",
+        "train_end": "2023-04-13",
+        "test_start": "2023-05-14",
+        "test_end": "2023-06-12",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 20,
+        "train_start": "2017-01-01",
+        "train_end": "2023-06-25",
+        "test_start": "2023-07-26",
+        "test_end": "2023-08-24",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 21,
+        "train_start": "2017-01-01",
+        "train_end": "2023-09-06",
+        "test_start": "2023-10-07",
+        "test_end": "2023-11-05",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 22,
+        "train_start": "2017-01-01",
+        "train_end": "2023-11-19",
+        "test_start": "2023-12-20",
+        "test_end": "2024-01-18",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 23,
+        "train_start": "2017-01-01",
+        "train_end": "2024-01-31",
+        "test_start": "2024-03-02",
+        "test_end": "2024-03-31",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 24,
+        "train_start": "2017-01-01",
+        "train_end": "2024-04-13",
+        "test_start": "2024-05-14",
+        "test_end": "2024-06-12",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 25,
+        "train_start": "2017-01-01",
+        "train_end": "2024-06-26",
+        "test_start": "2024-07-27",
+        "test_end": "2024-08-25",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 26,
+        "train_start": "2017-01-01",
+        "train_end": "2024-09-07",
+        "test_start": "2024-10-08",
+        "test_end": "2024-11-06",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 27,
+        "train_start": "2017-01-01",
+        "train_end": "2024-11-19",
+        "test_start": "2024-12-20",
+        "test_end": "2025-01-18",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 28,
+        "train_start": "2017-01-01",
+        "train_end": "2025-02-01",
+        "test_start": "2025-03-04",
+        "test_end": "2025-04-02",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 29,
+        "train_start": "2017-01-01",
+        "train_end": "2025-04-15",
+        "test_start": "2025-05-16",
+        "test_end": "2025-06-14",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 30,
+        "train_start": "2017-01-01",
+        "train_end": "2025-06-27",
+        "test_start": "2025-07-28",
+        "test_end": "2025-08-26",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 31,
+        "train_start": "2017-01-01",
+        "train_end": "2025-09-09",
+        "test_start": "2025-10-10",
+        "test_end": "2025-11-08",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 32,
+        "train_start": "2017-01-01",
+        "train_end": "2025-11-21",
+        "test_start": "2025-12-22",
+        "test_end": "2026-01-20",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 33,
+        "train_start": "2017-01-01",
+        "train_end": "2026-02-02",
+        "test_start": "2026-03-05",
+        "test_end": "2026-04-03",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 34,
+        "train_start": "2017-01-01",
+        "train_end": "2026-04-17",
+        "test_start": "2026-05-18",
+        "test_end": "2026-06-16",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      },
+      {
+        "fold": 35,
+        "train_start": "2017-01-01",
+        "train_end": "2026-06-29",
+        "test_start": "2026-07-30",
+        "test_end": "2026-08-28",
+        "train_bars": null,
+        "embargo_bars": 30,
+        "horizon": 30
+      }
+    ]
+  },
+  "models": {
+    "random_walk": {
+      "name": "random_walk",
+      "type": "RandomWalk",
+      "interval_level": 0.95
+    },
+    "random_walk_drift": {
+      "name": "random_walk_drift",
+      "type": "RandomWalkWithDrift",
+      "interval_level": 0.95
+    },
+    "historical_mean_return": {
+      "name": "historical_mean_return",
+      "type": "HistoricalMeanReturn",
+      "lookback": 365,
+      "interval_level": 0.95
+    },
+    "arima": {
+      "name": "arima",
+      "type": "ArimaModel",
+      "order": [
+        1,
+        1,
+        1
+      ],
+      "requested_order": [
+        1,
+        1,
+        1
+      ],
+      "trend": null,
+      "interval_level": 0.95,
+      "order_selection": null
+    },
+    "ets": {
+      "name": "ets",
+      "type": "EtsModel",
+      "trend": "add",
+      "damped_trend": true,
+      "seasonal": null,
+      "seasonal_periods": null,
+      "interval_level": 0.95
+    },
+    "prophet": {
+      "name": "prophet",
+      "type": "ProphetModel",
+      "interval_level": 0.95,
+      "weekly_seasonality": true,
+      "yearly_seasonality": true,
+      "daily_seasonality": false
+    },
+    "prophet_xgb_hybrid": {
+      "name": "prophet_xgb_hybrid",
+      "type": "ProphetXgboostHybrid",
+      "interval_level": 0.95,
+      "xgb_params": {
+        "max_depth": 3,
+        "learning_rate": 0.010349570637285655,
+        "subsample": 0.8021272578985711,
+        "colsample_bytree": 0.7728798862419759,
+        "objective": "reg:squarederror",
+        "verbosity": 0
+      },
+      "num_boost_round": 200,
+      "monte_carlo_runs": 500,
+      "use_garch": true,
+      "features": {
+        "features": [
+          "lag_ret_10",
+          "lag_ret_17",
+          "lag_ret_33",
+          "lag_ret_36",
+          "lag_ret_44",
+          "lag_ret_46",
+          "lag_ret_58",
+          "lag_ret_59",
+          "roll_mean_ret_21",
+          "roll_std_ret_21",
+          "close_over_sma_21",
+          "roll_vol_21",
+          "roll_mean_ret_30",
+          "roll_std_ret_30",
+          "close_over_sma_30",
+          "roll_vol_30",
+          "roll_mean_ret_60",
+          "roll_std_ret_60",
+          "close_over_sma_60",
+          "roll_vol_60",
+          "ema_21",
+          "ema_30"
+        ],
+        "lags": [
+          10,
+          17,
+          33,
+          36,
+          44,
+          46,
+          58,
+          59
+        ],
+        "rolling_windows": [
+          21,
+          30,
+          60
+        ],
+        "ema_spans": [
+          21,
+          30
+        ],
+        "fitted_on": {
+          "start": "2017-01-01T00:00:00+00:00",
+          "end": "2026-06-29T00:00:00+00:00",
+          "n_observations": 3467
+        },
+        "diagnostics": {
+          "pacf": {
+            "n_observations": 3466,
+            "max_lag_scanned": 60,
+            "significance_threshold": 0.03329153437466731,
+            "n_significant": 8,
+            "n_expected_by_chance": 3.0,
+            "n_significant_exceeds_chance": true,
+            "strongest_lag": 33,
+            "strongest_magnitude": 0.04715405011882542,
+            "strongest_over_threshold": 1.4163976219343792,
+            "fell_back_to_lag_1": false
+          },
+          "rolling_scores": {
+            "3": 0.01191,
+            "5": 0.020948,
+            "7": 0.023025,
+            "14": 0.029756,
+            "21": 0.033452,
+            "30": 0.032271,
+            "60": 0.030441
+          },
+          "ema_scores": {
+            "3": 0.010681,
+            "5": 0.001016,
+            "7": 0.007866,
+            "14": 0.020975,
+            "21": 0.027566,
+            "30": 0.032363
+          }
+        }
+      }
+    },
+    "xgboost_causal_retuned": {
+      "name": "xgboost_causal_retuned",
+      "type": "XgboostCausalRetuned",
+      "target": "next-bar log return",
+      "interval_level": 0.95,
+      "n_candidates": 12,
+      "max_boost_rounds": 300,
+      "early_stopping_rounds": 20,
+      "chosen_boost_rounds": 53,
+      "inner_splits": 3,
+      "inner_val_bars": 90,
+      "inner_embargo": 5,
+      "monte_carlo_runs": 500,
+      "search_space": {
+        "max_depth": [
+          2,
+          3,
+          4
+        ],
+        "learning_rate": [
+          0.01,
+          0.03,
+          0.05
+        ],
+        "subsample": [
+          0.6,
+          0.8,
+          1.0
+        ],
+        "colsample_bytree": [
+          0.6,
+          0.8,
+          1.0
+        ],
+        "min_child_weight": [
+          1,
+          5,
+          20
+        ],
+        "reg_lambda": [
+          1.0,
+          5.0,
+          20.0
+        ]
+      },
+      "tuning": {
+        "chosen": {
+          "max_depth": 4,
+          "learning_rate": 0.03,
+          "subsample": 0.6,
+          "colsample_bytree": 1.0,
+          "min_child_weight": 5,
+          "reg_lambda": 20.0
+        },
+        "chosen_score": 0.017311646166813768,
+        "n_candidates": 12,
+        "n_splits": 3,
+        "splits": [
+          {
+            "split": 2,
+            "n_train": 3131,
+            "n_val": 90,
+            "embargo": 5
+          },
+          {
+            "split": 1,
+            "n_train": 3221,
+            "n_val": 90,
+            "embargo": 5
+          },
+          {
+            "split": 0,
+            "n_train": 3311,
+            "n_val": 90,
+            "embargo": 5
+          }
+        ],
+        "top_5": [
+          {
+            "params": {
+              "max_depth": 4,
+              "learning_rate": 0.03,
+              "subsample": 0.6,
+              "colsample_bytree": 1.0,
+              "min_child_weight": 5,
+              "reg_lambda": 20.0
+            },
+            "mean_score": 0.017311646166813768,
+            "per_split": [
+              0.01678062251950097,
+              0.0208760842816749,
+              0.01427823169926544
+            ]
+          },
+          {
+            "params": {
+              "max_depth": 4,
+              "learning_rate": 0.03,
+              "subsample": 0.8,
+              "colsample_bytree": 0.8,
+              "min_child_weight": 1,
+              "reg_lambda": 20.0
+            },
+            "mean_score": 0.01735689174480892,
+            "per_split": [
+              0.01677529964201515,
+              0.02098347281830178,
+              0.01431190277410982
+            ]
+          },
+          {
+            "params": {
+              "max_depth": 2,
+              "learning_rate": 0.05,
+              "subsample": 0.8,
+              "colsample_bytree": 0.8,
+              "min_child_weight": 5,
+              "reg_lambda": 20.0
+            },
+            "mean_score": 0.017358728175275718,
+            "per_split": [
+              0.01674032255024132,
+              0.0209905216910152,
+              0.01434534028457064
+            ]
+          },
+          {
+            "params": {
+              "max_depth": 4,
+              "learning_rate": 0.05,
+              "subsample": 1.0,
+              "colsample_bytree": 0.6,
+              "min_child_weight": 5,
+              "reg_lambda": 5.0
+            },
+            "mean_score": 0.017378583677701603,
+            "per_split": [
+              0.01680600973357084,
+              0.02098635139134583,
+              0.01434338990818813
+            ]
+          },
+          {
+            "params": {
+              "max_depth": 2,
+              "learning_rate": 0.05,
+              "subsample": 0.6,
+              "colsample_bytree": 0.6,
+              "min_child_weight": 5,
+              "reg_lambda": 20.0
+            },
+            "mean_score": 0.01737914554531151,
+            "per_split": [
+              0.01677948896572666,
+              0.02107955520623363,
+              0.01427839246397424
+            ]
+          }
+        ],
+        "score_spread": 0.00014200869756880036,
+        "scoring": "inner-validation MAE on log return (lower is better)",
+        "train_rows": 3406,
+        "features": [
+          "lag_ret_10",
+          "lag_ret_17",
+          "lag_ret_33",
+          "lag_ret_36",
+          "lag_ret_44",
+          "lag_ret_46",
+          "lag_ret_58",
+          "lag_ret_59",
+          "roll_mean_ret_21",
+          "roll_std_ret_21",
+          "close_over_sma_21",
+          "roll_vol_21",
+          "roll_mean_ret_30",
+          "roll_std_ret_30",
+          "close_over_sma_30",
+          "roll_vol_30",
+          "roll_mean_ret_60",
+          "roll_std_ret_60",
+          "close_over_sma_60",
+          "roll_vol_60",
+          "ema_21",
+          "ema_30"
+        ],
+        "notes": []
+      },
+      "features": {
+        "features": [
+          "lag_ret_10",
+          "lag_ret_17",
+          "lag_ret_33",
+          "lag_ret_36",
+          "lag_ret_44",
+          "lag_ret_46",
+          "lag_ret_58",
+          "lag_ret_59",
+          "roll_mean_ret_21",
+          "roll_std_ret_21",
+          "close_over_sma_21",
+          "roll_vol_21",
+          "roll_mean_ret_30",
+          "roll_std_ret_30",
+          "close_over_sma_30",
+          "roll_vol_30",
+          "roll_mean_ret_60",
+          "roll_std_ret_60",
+          "close_over_sma_60",
+          "roll_vol_60",
+          "ema_21",
+          "ema_30"
+        ],
+        "lags": [
+          10,
+          17,
+          33,
+          36,
+          44,
+          46,
+          58,
+          59
+        ],
+        "rolling_windows": [
+          21,
+          30,
+          60
+        ],
+        "ema_spans": [
+          21,
+          30
+        ],
+        "fitted_on": {
+          "start": "2017-01-01T00:00:00+00:00",
+          "end": "2026-06-29T00:00:00+00:00",
+          "n_observations": 3467
+        },
+        "diagnostics": {
+          "pacf": {
+            "n_observations": 3466,
+            "max_lag_scanned": 60,
+            "significance_threshold": 0.03329153437466731,
+            "n_significant": 8,
+            "n_expected_by_chance": 3.0,
+            "n_significant_exceeds_chance": true,
+            "strongest_lag": 33,
+            "strongest_magnitude": 0.04715405011882542,
+            "strongest_over_threshold": 1.4163976219343792,
+            "fell_back_to_lag_1": false
+          },
+          "rolling_scores": {
+            "3": 0.01191,
+            "5": 0.020948,
+            "7": 0.023025,
+            "14": 0.029756,
+            "21": 0.033452,
+            "30": 0.032271,
+            "60": 0.030441
+          },
+          "ema_scores": {
+            "3": 0.010681,
+            "5": 0.001016,
+            "7": 0.007866,
+            "14": 0.020975,
+            "21": 0.027566,
+            "30": 0.032363
+          }
+        }
+      },
+      "n_boosted_trees": 53
+    }
+  },
+  "skipped_models": {},
+  "baseline": "random_walk",
+  "fold_selection": {
+    "xgboost_causal_retuned": {
+      "chosen": {
+        "max_depth": 4,
+        "learning_rate": 0.03,
+        "subsample": 0.6,
+        "colsample_bytree": 1.0,
+        "min_child_weight": 5,
+        "reg_lambda": 20.0
+      },
+      "chosen_score": 0.017311646166813768,
+      "n_candidates": 12,
+      "n_splits": 3,
+      "splits": [
+        {
+          "split": 2,
+          "n_train": 3131,
+          "n_val": 90,
+          "embargo": 5
+        },
+        {
+          "split": 1,
+          "n_train": 3221,
+          "n_val": 90,
+          "embargo": 5
+        },
+        {
+          "split": 0,
+          "n_train": 3311,
+          "n_val": 90,
+          "embargo": 5
+        }
+      ],
+      "top_5": [
+        {
+          "params": {
+            "max_depth": 4,
+            "learning_rate": 0.03,
+            "subsample": 0.6,
+            "colsample_bytree": 1.0,
+            "min_child_weight": 5,
+            "reg_lambda": 20.0
+          },
+          "mean_score": 0.017311646166813768,
+          "per_split": [
+            0.01678062251950097,
+            0.0208760842816749,
+            0.01427823169926544
+          ]
+        },
+        {
+          "params": {
+            "max_depth": 4,
+            "learning_rate": 0.03,
+            "subsample": 0.8,
+            "colsample_bytree": 0.8,
+            "min_child_weight": 1,
+            "reg_lambda": 20.0
+          },
+          "mean_score": 0.01735689174480892,
+          "per_split": [
+            0.01677529964201515,
+            0.02098347281830178,
+            0.01431190277410982
+          ]
+        },
+        {
+          "params": {
+            "max_depth": 2,
+            "learning_rate": 0.05,
+            "subsample": 0.8,
+            "colsample_bytree": 0.8,
+            "min_child_weight": 5,
+            "reg_lambda": 20.0
+          },
+          "mean_score": 0.017358728175275718,
+          "per_split": [
+            0.01674032255024132,
+            0.0209905216910152,
+            0.01434534028457064
+          ]
+        },
+        {
+          "params": {
+            "max_depth": 4,
+            "learning_rate": 0.05,
+            "subsample": 1.0,
+            "colsample_bytree": 0.6,
+            "min_child_weight": 5,
+            "reg_lambda": 5.0
+          },
+          "mean_score": 0.017378583677701603,
+          "per_split": [
+            0.01680600973357084,
+            0.02098635139134583,
+            0.01434338990818813
+          ]
+        },
+        {
+          "params": {
+            "max_depth": 2,
+            "learning_rate": 0.05,
+            "subsample": 0.6,
+            "colsample_bytree": 0.6,
+            "min_child_weight": 5,
+            "reg_lambda": 20.0
+          },
+          "mean_score": 0.01737914554531151,
+          "per_split": [
+            0.01677948896572666,
+            0.02107955520623363,
+            0.01427839246397424
+          ]
+        }
+      ],
+      "score_spread": 0.00014200869756880036,
+      "scoring": "inner-validation MAE on log return (lower is better)",
+      "train_rows": 3406,
+      "features": [
+        "lag_ret_10",
+        "lag_ret_17",
+        "lag_ret_33",
+        "lag_ret_36",
+        "lag_ret_44",
+        "lag_ret_46",
+        "lag_ret_58",
+        "lag_ret_59",
+        "roll_mean_ret_21",
+        "roll_std_ret_21",
+        "close_over_sma_21",
+        "roll_vol_21",
+        "roll_mean_ret_30",
+        "roll_std_ret_30",
+        "close_over_sma_30",
+        "roll_vol_30",
+        "roll_mean_ret_60",
+        "roll_std_ret_60",
+        "close_over_sma_60",
+        "roll_vol_60",
+        "ema_21",
+        "ema_30"
+      ],
+      "notes": []
+    }
+  },
+  "target_audit": {
+    "primary_task": "price_level",
+    "secondary_tasks": [
+      "cumulative_return",
+      "step_return"
+    ],
+    "why_price_level_is_primary": "The preserved LEAKAGE_CORRECTED_REFERENCE was scored on price-level MAE. Switching the primary metric would make the challenger incomparable to it, and choosing a metric on which the incumbent looks better is what btc_forecaster.evidence forbids.",
+    "why_returns_are_also_reported": "Log price is I(1), so price-level MAE is dominated by the price level and the random walk is near-optimal by construction. Returns are stationary, 'no skill' has a meaningful value of zero, and direction is defined on them.",
+    "directional_definition": "sign(predicted return from forecast origin) == sign(realised return from forecast origin). Zero counts as not-up, so a flat forecast predicts down.",
+    "known_limitation": "Scoring h bars against one origin yields h correlated observations, not h independent ones. Per-step decomposition and step-1 pooling across origins is the mitigation; block bootstrap handles the residual serial dependence between origins."
+  },
+  "inference_notes": {
+    "directional_uncertainty": "Stationary bootstrap (Politis-Romano) over the per-origin hit series at the shortest scored horizon, block length n**(1/3). Replaces the binomial test, whose independence assumption fails under overlapping horizons, within-fold correlation and volatility clustering.",
+    "directional_null": "The null is the accuracy of the best CONSTANT predictor, max(base_rate, 1 - base_rate), not 0.5. Over 31-day windows BTC rose 61% of the time, so an always-up forecast scores 0.611 while containing no information. Testing against a coin would report several models as significant on the base rate alone.",
+    "forecast_comparison": "Diebold-Mariano with Newey-West HAC variance (h-1 lags) and the Harvey-Leybourne-Newbold small-sample correction. Nested pairs are flagged and excluded: the statistic is not asymptotically normal for them.",
+    "multiple_testing": "Benjamini-Hochberg across the K-1 challenger-vs-baseline comparisons. Raw and adjusted p-values are both reported. Anything not corrected is labelled exploratory.",
+    "residual_limitations": "Block bootstrap handles short-range dependence, not structural breaks. A walk-forward study spanning multiple crypto regimes is not covariance-stationary in the strict sense the DM test assumes; treat p-values as indicative and prefer the confidence intervals."
+  },
+  "promotion_policy": {
+    "min_mae_skill": 0.02,
+    "require_interval_excludes_zero": true,
+    "max_worst_to_median": 3.0,
+    "max_coverage_error": 0.15,
+    "expensive_cost_multiple": 20.0,
+    "expensive_min_mae_skill": 0.1,
+    "min_folds": 10,
+    "declared": "before outer-fold aggregates were inspected (A2.21)"
+  },
+  "promotion_decisions": [
+    {
+      "model": "random_walk_drift",
+      "decision": "REJECT",
+      "mae_skill": 0.003957390795803151,
+      "skill_ci_lower": -0.27689210259745567,
+      "skill_ci_upper": 0.11260842806238608,
+      "worst_to_median": 6.409830161457471,
+      "coverage_error": 0.061111111111111144,
+      "cost_multiple": 1.0770024777999327,
+      "n_folds": 36,
+      "passed": [
+        "min_folds"
+      ],
+      "failed": [
+        "mae_skill"
+      ],
+      "rationale": "MAE skill 0.0040 does not clear the 0.02 required. A model that does not beat the naive baseline is rejected regardless of its other properties."
+    },
+    {
+      "model": "historical_mean_return",
+      "decision": "REJECT",
+      "mae_skill": -0.08842306635792463,
+      "skill_ci_lower": -0.5498695731203492,
+      "skill_ci_upper": 0.09459105606700367,
+      "worst_to_median": 8.98802504017045,
+      "coverage_error": 0.11296296296296299,
+      "cost_multiple": 1.2816287513099598,
+      "n_folds": 36,
+      "passed": [
+        "min_folds"
+      ],
+      "failed": [
+        "mae_skill"
+      ],
+      "rationale": "MAE skill -0.0884 does not clear the 0.02 required. A model that does not beat the naive baseline is rejected regardless of its other properties."
+    },
+    {
+      "model": "arima",
+      "decision": "REJECT",
+      "mae_skill": -0.0020617793858226374,
+      "skill_ci_lower": -0.008904198184952038,
+      "skill_ci_upper": 0.001028846279647968,
+      "worst_to_median": 5.119506425777803,
+      "coverage_error": 0.06944444444444448,
+      "cost_multiple": 119.75677014106721,
+      "n_folds": 36,
+      "passed": [
+        "min_folds"
+      ],
+      "failed": [
+        "mae_skill"
+      ],
+      "rationale": "MAE skill -0.0021 does not clear the 0.10 required at a 120x compute multiple. A model that does not beat the naive baseline is rejected regardless of its other properties."
+    },
+    {
+      "model": "ets",
+      "decision": "REJECT",
+      "mae_skill": -0.0657141791878686,
+      "skill_ci_lower": -0.2211107104499571,
+      "skill_ci_upper": 0.0032406633843962847,
+      "worst_to_median": 4.486557620719687,
+      "coverage_error": 0.05185185185185189,
+      "cost_multiple": 36.679117957763246,
+      "n_folds": 36,
+      "passed": [
+        "min_folds"
+      ],
+      "failed": [
+        "mae_skill"
+      ],
+      "rationale": "MAE skill -0.0657 does not clear the 0.10 required at a 37x compute multiple. A model that does not beat the naive baseline is rejected regardless of its other properties."
+    },
+    {
+      "model": "prophet",
+      "decision": "REJECT",
+      "mae_skill": -1.2912134029995235,
+      "skill_ci_lower": -3.683396373159611,
+      "skill_ci_upper": -0.6697310878497089,
+      "worst_to_median": 7.741558231580953,
+      "coverage_error": 0.38611111111111107,
+      "cost_multiple": 801.2150613792791,
+      "n_folds": 36,
+      "passed": [
+        "min_folds"
+      ],
+      "failed": [
+        "mae_skill"
+      ],
+      "rationale": "MAE skill -1.2912 does not clear the 0.10 required at a 801x compute multiple. A model that does not beat the naive baseline is rejected regardless of its other properties."
+    },
+    {
+      "model": "prophet_xgb_hybrid",
+      "decision": "REJECT",
+      "mae_skill": -1.4056533955761887,
+      "skill_ci_lower": -4.889628222004107,
+      "skill_ci_upper": -0.9235336951203353,
+      "worst_to_median": 8.555239342377083,
+      "coverage_error": 0.19629629629629633,
+      "cost_multiple": 1898.5178551600525,
+      "n_folds": 36,
+      "passed": [
+        "min_folds"
+      ],
+      "failed": [
+        "mae_skill"
+      ],
+      "rationale": "MAE skill -1.4057 does not clear the 0.10 required at a 1899x compute multiple. A model that does not beat the naive baseline is rejected regardless of its other properties."
+    },
+    {
+      "model": "xgboost_causal_retuned",
+      "decision": "REJECT",
+      "mae_skill": -0.0800814455521055,
+      "skill_ci_lower": -0.2034551959916351,
+      "skill_ci_upper": 0.08119586370619654,
+      "worst_to_median": 4.77551819081321,
+      "coverage_error": 0.07407407407407408,
+      "cost_multiple": 1779.0879823646924,
+      "n_folds": 36,
+      "passed": [
+        "min_folds"
+      ],
+      "failed": [
+        "mae_skill"
+      ],
+      "rationale": "MAE skill -0.0801 does not clear the 0.10 required at a 1779x compute multiple. A model that does not beat the naive baseline is rejected regardless of its other properties."
+    }
+  ],
+  "benchmark_table": [
+    {
+      "model": "random_walk",
+      "n_folds": 36,
+      "n_failed": 0,
+      "mae": 7450.858067475328,
+      "rmse": 7993.94915738954,
+      "mase": 18.147045809736717,
+      "directional_accuracy": 0.35462962962962963,
+      "return_correlation": NaN,
+      "mae_skill_vs_random_walk": 0.0,
+      "rmse_skill_vs_random_walk": 0.0,
+      "dir_acc_first_step": 0.3333333333333333,
+      "dir_ci_lower": 0.19444444444444445,
+      "dir_ci_upper": 0.4722222222222222,
+      "dir_null": 0.6111111111111112,
+      "dir_beats_null": false,
+      "dir_vs_null": "below",
+      "interval_coverage": 0.976851851851852,
+      "coverage_error": 0.06481481481481483,
+      "relative_interval_width": 1.0876297883330892,
+      "winkler_score": 51304.89367852607,
+      "mae_std": 6697.669860706367,
+      "mae_worst_to_median": 5.087711809913914,
+      "fit_seconds_median": 0.0018011500069405884,
+      "predict_seconds_median": 0.002122100006090477,
+      "cost_multiple_vs_cheapest": 1.0
+    },
+    {
+      "model": "random_walk_drift",
+      "n_folds": 36,
+      "n_failed": 0,
+      "mae": 7421.372110338266,
+      "rmse": 7943.638279262788,
+      "mase": 17.92717275881349,
+      "directional_accuracy": 0.6175925925925926,
+      "return_correlation": 0.22744338967123223,
+      "mae_skill_vs_random_walk": 0.003957390795803151,
+      "rmse_skill_vs_random_walk": 0.006293619978836706,
+      "dir_acc_first_step": 0.6111111111111112,
+      "dir_ci_lower": 0.5,
+      "dir_ci_upper": 0.7222222222222222,
+      "dir_null": 0.6111111111111112,
+      "dir_beats_null": false,
+      "dir_vs_null": "indistinguishable",
+      "interval_coverage": 0.9805555555555555,
+      "coverage_error": 0.061111111111111144,
+      "relative_interval_width": 1.179956424084822,
+      "winkler_score": 53559.385727181005,
+      "mae_std": 7433.582057342901,
+      "mae_worst_to_median": 6.409830161457471,
+      "fit_seconds_median": 0.0020381499925861135,
+      "predict_seconds_median": 0.0021871999924769625,
+      "cost_multiple_vs_cheapest": 1.0770024777999327
+    },
+    {
+      "model": "historical_mean_return",
+      "n_folds": 36,
+      "n_failed": 0,
+      "mae": 8109.685784799178,
+      "rmse": 8666.24661676157,
+      "mase": 19.367590256752095,
+      "directional_accuracy": 0.6287037037037037,
+      "return_correlation": 0.10275700003621059,
+      "mae_skill_vs_random_walk": -0.08842306635792463,
+      "rmse_skill_vs_random_walk": -0.0841007925038606,
+      "dir_acc_first_step": 0.6111111111111112,
+      "dir_ci_lower": 0.4722222222222222,
+      "dir_ci_upper": 0.7222222222222222,
+      "dir_null": 0.6111111111111112,
+      "dir_beats_null": false,
+      "dir_vs_null": "indistinguishable",
+      "interval_coverage": 0.9185185185185184,
+      "coverage_error": 0.11296296296296299,
+      "relative_interval_width": 0.9251288971959004,
+      "winkler_score": 57086.75194410389,
+      "mae_std": 8968.979017987278,
+      "mae_worst_to_median": 8.98802504017045,
+      "fit_seconds_median": 0.0028983000083826482,
+      "predict_seconds_median": 0.00212985000689514,
+      "cost_multiple_vs_cheapest": 1.2816287513099598
+    },
+    {
+      "model": "arima",
+      "n_folds": 36,
+      "n_failed": 0,
+      "mae": 7466.220093045539,
+      "rmse": 8008.327011981701,
+      "mase": 18.221395959257755,
+      "directional_accuracy": 0.5305555555555554,
+      "return_correlation": 0.09247249586697155,
+      "mae_skill_vs_random_walk": -0.0020617793858226374,
+      "rmse_skill_vs_random_walk": -0.0017985921988095122,
+      "dir_acc_first_step": 0.5,
+      "dir_ci_lower": 0.3611111111111111,
+      "dir_ci_upper": 0.6388888888888888,
+      "dir_null": 0.6111111111111112,
+      "dir_beats_null": false,
+      "dir_vs_null": "indistinguishable",
+      "interval_coverage": 0.9722222222222222,
+      "coverage_error": 0.06944444444444448,
+      "relative_interval_width": 1.0753812343623486,
+      "winkler_score": 50776.00701989539,
+      "mae_std": 6687.0614381123005,
+      "mae_worst_to_median": 5.119506425777803,
+      "fit_seconds_median": 0.46280695001769345,
+      "predict_seconds_median": 0.0070287999988067895,
+      "cost_multiple_vs_cheapest": 119.75677014106721
+    },
+    {
+      "model": "ets",
+      "n_folds": 36,
+      "n_failed": 0,
+      "mae": 7940.485089624779,
+      "rmse": 8445.57151441366,
+      "mase": 19.100989116868472,
+      "directional_accuracy": 0.43425925925925923,
+      "return_correlation": -0.2211436432859291,
+      "mae_skill_vs_random_walk": -0.0657141791878686,
+      "rmse_skill_vs_random_walk": -0.05649552531950275,
+      "dir_acc_first_step": 0.3611111111111111,
+      "dir_ci_lower": 0.19444444444444445,
+      "dir_ci_upper": 0.5555555555555556,
+      "dir_null": 0.6111111111111112,
+      "dir_beats_null": false,
+      "dir_vs_null": "below",
+      "interval_coverage": 0.9953703703703705,
+      "coverage_error": 0.05185185185185189,
+      "relative_interval_width": 1.2839455175185674,
+      "winkler_score": 57224.712186572964,
+      "mae_std": 6938.257657669703,
+      "mae_worst_to_median": 4.486557620719687,
+      "fit_seconds_median": 0.134185199989588,
+      "predict_seconds_median": 0.009716150016174652,
+      "cost_multiple_vs_cheapest": 36.679117957763246
+    },
+    {
+      "model": "prophet",
+      "n_folds": 36,
+      "n_failed": 0,
+      "mae": 17071.5058680466,
+      "rmse": 17590.24213877421,
+      "mase": 37.19897741340791,
+      "directional_accuracy": 0.5462962962962963,
+      "return_correlation": 0.03790621345297044,
+      "mae_skill_vs_random_walk": -1.2912134029995235,
+      "rmse_skill_vs_random_walk": -1.2004445853291346,
+      "dir_acc_first_step": 0.6388888888888888,
+      "dir_ci_lower": 0.5,
+      "dir_ci_upper": 0.7777777777777778,
+      "dir_null": 0.6111111111111112,
+      "dir_beats_null": false,
+      "dir_vs_null": "indistinguishable",
+      "interval_coverage": 0.6046296296296296,
+      "coverage_error": 0.38611111111111107,
+      "relative_interval_width": 0.9305386366703363,
+      "winkler_score": 202637.17100765803,
+      "mae_std": 20065.34293274804,
+      "mae_worst_to_median": 7.741558231580953,
+      "fit_seconds_median": 3.0436289999925066,
+      "predict_seconds_median": 0.09973800000443589,
+      "cost_multiple_vs_cheapest": 801.2150613792791
+    },
+    {
+      "model": "prophet_xgb_hybrid",
+      "n_folds": 36,
+      "n_failed": 0,
+      "mae": 17924.182009978264,
+      "rmse": 18568.532596175977,
+      "mase": 38.55513266120983,
+      "directional_accuracy": 0.5435185185185185,
+      "return_correlation": 0.04365530183771714,
+      "mae_skill_vs_random_walk": -1.4056533955761887,
+      "rmse_skill_vs_random_walk": -1.322823454413815,
+      "dir_acc_first_step": 0.6666666666666666,
+      "dir_ci_lower": 0.5277777777777778,
+      "dir_ci_upper": 0.8055555555555556,
+      "dir_null": 0.6111111111111112,
+      "dir_beats_null": false,
+      "dir_vs_null": "indistinguishable",
+      "interval_coverage": 0.8175925925925926,
+      "coverage_error": 0.19629629629629633,
+      "relative_interval_width": 1.439479878051201,
+      "winkler_score": 173270.3221155248,
+      "mae_std": 21622.149631018394,
+      "mae_worst_to_median": 8.555239342377083,
+      "fit_seconds_median": 4.274352749998798,
+      "predict_seconds_median": 3.174007449997589,
+      "cost_multiple_vs_cheapest": 1898.5178551600525
+    },
+    {
+      "model": "xgboost_causal_retuned",
+      "n_folds": 36,
+      "n_failed": 0,
+      "mae": 8047.5335521223205,
+      "rmse": 8575.71570993155,
+      "mase": 19.898532570987502,
+      "directional_accuracy": 0.41944444444444445,
+      "return_correlation": -0.19465710845319306,
+      "mae_skill_vs_random_walk": -0.0800814455521055,
+      "rmse_skill_vs_random_walk": -0.07277586347972065,
+      "dir_acc_first_step": 0.4444444444444444,
+      "dir_ci_lower": 0.2777777777777778,
+      "dir_ci_upper": 0.6388888888888888,
+      "dir_null": 0.6111111111111112,
+      "dir_beats_null": false,
+      "dir_vs_null": "indistinguishable",
+      "interval_coverage": 0.962037037037037,
+      "coverage_error": 0.07407407407407408,
+      "relative_interval_width": 1.1950647986529146,
+      "winkler_score": 55295.82357965554,
+      "mae_std": 7026.016206828013,
+      "mae_worst_to_median": 4.77551819081321,
+      "fit_seconds_median": 4.702538099998492,
+      "predict_seconds_median": 2.277268849997199,
+      "cost_multiple_vs_cheapest": 1779.0879823646924
+    }
+  ],
+  "scored_step": 31,
+  "directional_base_rate": 0.6111111111111112,
+  "directional_null": 0.6111111111111112,
+  "direction_intervals": {
+    "random_walk": {
+      "statistic": 0.3333333333333333,
+      "ci_lower": 0.19444444444444445,
+      "ci_upper": 0.4722222222222222,
+      "level": 0.95,
+      "n_observations": 36,
+      "n_resamples": 2000,
+      "method": "stationary bootstrap (Politis-Romano)",
+      "block_length": 3.0,
+      "null_value": 0.6111111111111112,
+      "excludes_null": true,
+      "exceeds_null": false,
+      "below_null": true,
+      "versus_null": "below"
+    },
+    "random_walk_drift": {
+      "statistic": 0.6111111111111112,
+      "ci_lower": 0.5,
+      "ci_upper": 0.7222222222222222,
+      "level": 0.95,
+      "n_observations": 36,
+      "n_resamples": 2000,
+      "method": "stationary bootstrap (Politis-Romano)",
+      "block_length": 3.0,
+      "null_value": 0.6111111111111112,
+      "excludes_null": false,
+      "exceeds_null": false,
+      "below_null": false,
+      "versus_null": "indistinguishable"
+    },
+    "historical_mean_return": {
+      "statistic": 0.6111111111111112,
+      "ci_lower": 0.4722222222222222,
+      "ci_upper": 0.7222222222222222,
+      "level": 0.95,
+      "n_observations": 36,
+      "n_resamples": 2000,
+      "method": "stationary bootstrap (Politis-Romano)",
+      "block_length": 3.0,
+      "null_value": 0.6111111111111112,
+      "excludes_null": false,
+      "exceeds_null": false,
+      "below_null": false,
+      "versus_null": "indistinguishable"
+    },
+    "arima": {
+      "statistic": 0.5,
+      "ci_lower": 0.3611111111111111,
+      "ci_upper": 0.6388888888888888,
+      "level": 0.95,
+      "n_observations": 36,
+      "n_resamples": 2000,
+      "method": "stationary bootstrap (Politis-Romano)",
+      "block_length": 3.0,
+      "null_value": 0.6111111111111112,
+      "excludes_null": false,
+      "exceeds_null": false,
+      "below_null": false,
+      "versus_null": "indistinguishable"
+    },
+    "ets": {
+      "statistic": 0.3611111111111111,
+      "ci_lower": 0.19444444444444445,
+      "ci_upper": 0.5555555555555556,
+      "level": 0.95,
+      "n_observations": 36,
+      "n_resamples": 2000,
+      "method": "stationary bootstrap (Politis-Romano)",
+      "block_length": 3.0,
+      "null_value": 0.6111111111111112,
+      "excludes_null": true,
+      "exceeds_null": false,
+      "below_null": true,
+      "versus_null": "below"
+    },
+    "prophet": {
+      "statistic": 0.6388888888888888,
+      "ci_lower": 0.5,
+      "ci_upper": 0.7777777777777778,
+      "level": 0.95,
+      "n_observations": 36,
+      "n_resamples": 2000,
+      "method": "stationary bootstrap (Politis-Romano)",
+      "block_length": 3.0,
+      "null_value": 0.6111111111111112,
+      "excludes_null": false,
+      "exceeds_null": false,
+      "below_null": false,
+      "versus_null": "indistinguishable"
+    },
+    "prophet_xgb_hybrid": {
+      "statistic": 0.6666666666666666,
+      "ci_lower": 0.5277777777777778,
+      "ci_upper": 0.8055555555555556,
+      "level": 0.95,
+      "n_observations": 36,
+      "n_resamples": 2000,
+      "method": "stationary bootstrap (Politis-Romano)",
+      "block_length": 3.0,
+      "null_value": 0.6111111111111112,
+      "excludes_null": false,
+      "exceeds_null": false,
+      "below_null": false,
+      "versus_null": "indistinguishable"
+    },
+    "xgboost_causal_retuned": {
+      "statistic": 0.4444444444444444,
+      "ci_lower": 0.2777777777777778,
+      "ci_upper": 0.6388888888888888,
+      "level": 0.95,
+      "n_observations": 36,
+      "n_resamples": 2000,
+      "method": "stationary bootstrap (Politis-Romano)",
+      "block_length": 3.0,
+      "null_value": 0.6111111111111112,
+      "excludes_null": false,
+      "exceeds_null": false,
+      "below_null": false,
+      "versus_null": "indistinguishable"
+    }
+  },
+  "skill_intervals": {
+    "random_walk_drift": [
+      -0.27689210259745567,
+      0.11260842806238608
+    ],
+    "historical_mean_return": [
+      -0.5498695731203492,
+      0.09459105606700367
+    ],
+    "arima": [
+      -0.008904198184952038,
+      0.001028846279647968
+    ],
+    "ets": [
+      -0.2211107104499571,
+      0.0032406633843962847
+    ],
+    "prophet": [
+      -3.683396373159611,
+      -0.6697310878497089
+    ],
+    "prophet_xgb_hybrid": [
+      -4.889628222004107,
+      -0.9235336951203353
+    ],
+    "xgboost_causal_retuned": [
+      -0.2034551959916351,
+      0.08119586370619654
+    ]
+  },
+  "residual_diagnostics": {
+    "random_walk": {
+      "diagnostics": {
+        "model": "random_walk",
+        "n": 36,
+        "step": 31,
+        "mean_residual": 0.03984991672050844,
+        "mean_residual_t": 1.4589732604226777,
+        "biased": false,
+        "ljung_box": {
+          "name": "ljung_box",
+          "statistic": 2.997330049981205,
+          "p_value": 0.885249113949427,
+          "null_hypothesis": "no autocorrelation up to lag 7",
+          "reject_means": "serial correlation is present",
+          "alpha": 0.05,
+          "rejects_null": false,
+          "lags": 7
+        },
+        "arch_lm": {
+          "name": "arch_lm",
+          "statistic": 3.9933976323497036,
+          "p_value": 0.7805375594102097,
+          "null_hypothesis": "no ARCH effects up to lag 7 (homoskedastic)",
+          "reject_means": "volatility clusters -- a conditional variance model is justified",
+          "alpha": 0.05,
+          "rejects_null": false,
+          "lags": 7,
+          "f_statistic": 0.4790811930751233,
+          "f_p_value": 0.8388944953795572
+        },
+        "jarque_bera": {
+          "name": "jarque_bera",
+          "statistic": 2.855862765346151,
+          "p_value": 0.2398044732027331,
+          "null_hypothesis": "the series is normally distributed",
+          "reject_means": "non-normal: skewed and/or fat-tailed",
+          "alpha": 0.05,
+          "rejects_null": false,
+          "skew": 0.6206967237257294,
+          "kurtosis": 3.602370997687762,
+          "excess_kurtosis": 0.6023709976877618
+        },
+        "interpretation": "no remaining serial correlation in the mean model"
+      },
+      "failure_concentration": {
+        "model": "random_walk",
+        "n_predictions": 1080,
+        "quantile": 0.95,
+        "error_threshold": 22916.00761714002,
+        "n_in_tail": 54,
+        "tail_mean_error": 25732.874963812967,
+        "overall_mean_error": 7450.858067475329,
+        "share_of_total_error": 0.17268396962319515,
+        "tail_directional_accuracy": 0.2962962962962963,
+        "overall_directional_accuracy": 0.35462962962962963
+      }
+    },
+    "random_walk_drift": {
+      "diagnostics": {
+        "model": "random_walk_drift",
+        "n": 36,
+        "step": 31,
+        "mean_residual": -0.014807210782272786,
+        "mean_residual_t": -0.5349333538352812,
+        "biased": false,
+        "ljung_box": {
+          "name": "ljung_box",
+          "statistic": 2.552764172724587,
+          "p_value": 0.9230717398788675,
+          "null_hypothesis": "no autocorrelation up to lag 7",
+          "reject_means": "serial correlation is present",
+          "alpha": 0.05,
+          "rejects_null": false,
+          "lags": 7
+        },
+        "arch_lm": {
+          "name": "arch_lm",
+          "statistic": 3.1243748581211337,
+          "p_value": 0.8732630269666525,
+          "null_hypothesis": "no ARCH effects up to lag 7 (homoskedastic)",
+          "reject_means": "volatility clusters -- a conditional variance model is justified",
+          "alpha": 0.05,
+          "rejects_null": false,
+          "lags": 7,
+          "f_statistic": 0.36223760867494187,
+          "f_p_value": 0.914003187448968
+        },
+        "jarque_bera": {
+          "name": "jarque_bera",
+          "statistic": 1.9773154458761322,
+          "p_value": 0.3720757847772685,
+          "null_hypothesis": "the series is normally distributed",
+          "reject_means": "non-normal: skewed and/or fat-tailed",
+          "alpha": 0.05,
+          "rejects_null": false,
+          "skew": 0.5114998353106379,
+          "kurtosis": 3.521231207008479,
+          "excess_kurtosis": 0.521231207008479
+        },
+        "interpretation": "no remaining serial correlation in the mean model"
+      },
+      "failure_concentration": {
+        "model": "random_walk_drift",
+        "n_predictions": 1080,
+        "quantile": 0.95,
+        "error_threshold": 24042.313714579723,
+        "n_in_tail": 54,
+        "tail_mean_error": 28038.10810746292,
+        "overall_mean_error": 7421.372110338267,
+        "share_of_total_error": 0.18890110676706748,
+        "tail_directional_accuracy": 0.12962962962962962,
+        "overall_directional_accuracy": 0.6175925925925926
+      }
+    },
+    "historical_mean_return": {
+      "diagnostics": {
+        "model": "historical_mean_return",
+        "n": 36,
+        "step": 31,
+        "mean_residual": -0.010844303670780046,
+        "mean_residual_t": -0.38512515149543036,
+        "biased": false,
+        "ljung_box": {
+          "name": "ljung_box",
+          "statistic": 1.8365935789089545,
+          "p_value": 0.9683284222455154,
+          "null_hypothesis": "no autocorrelation up to lag 7",
+          "reject_means": "serial correlation is present",
+          "alpha": 0.05,
+          "rejects_null": false,
+          "lags": 7
+        },
+        "arch_lm": {
+          "name": "arch_lm",
+          "statistic": 0.887287114472517,
+          "p_value": 0.996447805749577,
+          "null_hypothesis": "no ARCH effects up to lag 7 (homoskedastic)",
+          "reject_means": "volatility clusters -- a conditional variance model is justified",
+          "alpha": 0.05,
+          "rejects_null": false,
+          "lags": 7,
+          "f_statistic": 0.09468532454539048,
+          "f_p_value": 0.9981150018454759
+        },
+        "jarque_bera": {
+          "name": "jarque_bera",
+          "statistic": 0.07730738298578822,
+          "p_value": 0.9620838292764975,
+          "null_hypothesis": "the series is normally distributed",
+          "reject_means": "non-normal: skewed and/or fat-tailed",
+          "alpha": 0.05,
+          "rejects_null": false,
+          "skew": 0.08760159587807742,
+          "kurtosis": 3.1443679220682865,
+          "excess_kurtosis": 0.14436792206828652
+        },
+        "interpretation": "no remaining serial correlation in the mean model"
+      },
+      "failure_concentration": {
+        "model": "historical_mean_return",
+        "n_predictions": 1080,
+        "quantile": 0.95,
+        "error_threshold": 30077.306298776675,
+        "n_in_tail": 54,
+        "tail_mean_error": 37790.697725670005,
+        "overall_mean_error": 8109.685784799178,
+        "share_of_total_error": 0.23299729933128244,
+        "tail_directional_accuracy": 0.0,
+        "overall_directional_accuracy": 0.6287037037037037
+      }
+    },
+    "arima": {
+      "diagnostics": {
+        "model": "arima",
+        "n": 36,
+        "step": 31,
+        "mean_residual": 0.03859310198945479,
+        "mean_residual_t": 1.4006420863527882,
+        "biased": false,
+        "ljung_box": {
+          "name": "ljung_box",
+          "statistic": 3.1092448819470913,
+          "p_value": 0.874715558185314,
+          "null_hypothesis": "no autocorrelation up to lag 7",
+          "reject_means": "serial correlation is present",
+          "alpha": 0.05,
+          "rejects_null": false,
+          "lags": 7
+        },
+        "arch_lm": {
+          "name": "arch_lm",
+          "statistic": 3.9109632035382633,
+          "p_value": 0.7899737510168108,
+          "null_hypothesis": "no ARCH effects up to lag 7 (homoskedastic)",
+          "reject_means": "volatility clusters -- a conditional variance model is justified",
+          "alpha": 0.05,
+          "rejects_null": false,
+          "lags": 7,
+          "f_statistic": 0.4676500618895602,
+          "f_p_value": 0.8469056426058689
+        },
+        "jarque_bera": {
+          "name": "jarque_bera",
+          "statistic": 2.6006177220024114,
+          "p_value": 0.27244763158931884,
+          "null_hypothesis": "the series is normally distributed",
+          "reject_means": "non-normal: skewed and/or fat-tailed",
+          "alpha": 0.05,
+          "rejects_null": false,
+          "skew": 0.5962085775996968,
+          "kurtosis": 3.558467972213083,
+          "excess_kurtosis": 0.5584679722130832
+        },
+        "interpretation": "no remaining serial correlation in the mean model"
+      },
+      "failure_concentration": {
+        "model": "arima",
+        "n_predictions": 1080,
+        "quantile": 0.95,
+        "error_threshold": 22912.164749793206,
+        "n_in_tail": 54,
+        "tail_mean_error": 25737.050896503722,
+        "overall_mean_error": 7466.220093045538,
+        "share_of_total_error": 0.17235663143976077,
+        "tail_directional_accuracy": 0.6851851851851852,
+        "overall_directional_accuracy": 0.5305555555555556
+      }
+    },
+    "ets": {
+      "diagnostics": {
+        "model": "ets",
+        "n": 36,
+        "step": 31,
+        "mean_residual": 0.04107921000800778,
+        "mean_residual_t": 1.4918900179167214,
+        "biased": false,
+        "ljung_box": {
+          "name": "ljung_box",
+          "statistic": 1.3198270297405532,
+          "p_value": 0.9879013648946314,
+          "null_hypothesis": "no autocorrelation up to lag 7",
+          "reject_means": "serial correlation is present",
+          "alpha": 0.05,
+          "rejects_null": false,
+          "lags": 7
+        },
+        "arch_lm": {
+          "name": "arch_lm",
+          "statistic": 3.903578831942495,
+          "p_value": 0.7908139128071083,
+          "null_hypothesis": "no ARCH effects up to lag 7 (homoskedastic)",
+          "reject_means": "volatility clusters -- a conditional variance model is justified",
+          "alpha": 0.05,
+          "rejects_null": false,
+          "lags": 7,
+          "f_statistic": 0.4666297404481242,
+          "f_p_value": 0.8476150501683465
+        },
+        "jarque_bera": {
+          "name": "jarque_bera",
+          "statistic": 1.6961312051435993,
+          "p_value": 0.42824252248029737,
+          "null_hypothesis": "the series is normally distributed",
+          "reject_means": "non-normal: skewed and/or fat-tailed",
+          "alpha": 0.05,
+          "rejects_null": false,
+          "skew": 0.5054570409417137,
+          "kurtosis": 3.3298588422525404,
+          "excess_kurtosis": 0.32985884225254036
+        },
+        "interpretation": "no remaining serial correlation in the mean model"
+      },
+      "failure_concentration": {
+        "model": "ets",
+        "n_predictions": 1080,
+        "quantile": 0.95,
+        "error_threshold": 23940.20325722476,
+        "n_in_tail": 54,
+        "tail_mean_error": 26159.819636281227,
+        "overall_mean_error": 7940.485089624778,
+        "share_of_total_error": 0.1647243168459711,
+        "tail_directional_accuracy": 0.3888888888888889,
+        "overall_directional_accuracy": 0.43425925925925923
+      }
+    },
+    "prophet": {
+      "diagnostics": {
+        "model": "prophet",
+        "n": 36,
+        "step": 31,
+        "mean_residual": -0.08214234194214753,
+        "mean_residual_t": -1.4447818929782217,
+        "biased": false,
+        "ljung_box": {
+          "name": "ljung_box",
+          "statistic": 20.463803434709654,
+          "p_value": 0.004650354967187325,
+          "null_hypothesis": "no autocorrelation up to lag 7",
+          "reject_means": "serial correlation is present",
+          "alpha": 0.05,
+          "rejects_null": true,
+          "lags": 7
+        },
+        "arch_lm": {
+          "name": "arch_lm",
+          "statistic": 9.578118971618327,
+          "p_value": 0.2137677828757716,
+          "null_hypothesis": "no ARCH effects up to lag 7 (homoskedastic)",
+          "reject_means": "volatility clusters -- a conditional variance model is justified",
+          "alpha": 0.05,
+          "rejects_null": false,
+          "lags": 7,
+          "f_statistic": 1.4794837262603329,
+          "f_p_value": 0.22812651687268995
+        },
+        "jarque_bera": {
+          "name": "jarque_bera",
+          "statistic": 1.8653288717931775,
+          "p_value": 0.3935038465710541,
+          "null_hypothesis": "the series is normally distributed",
+          "reject_means": "non-normal: skewed and/or fat-tailed",
+          "alpha": 0.05,
+          "rejects_null": false,
+          "skew": -0.42554150065975443,
+          "kurtosis": 2.2794375071789896,
+          "excess_kurtosis": -0.7205624928210104
+        },
+        "interpretation": "residuals are serially correlated, so the mean model left structure behind"
+      },
+      "failure_concentration": {
+        "model": "prophet",
+        "n_predictions": 1080,
+        "quantile": 0.95,
+        "error_threshold": 63917.16472396517,
+        "n_in_tail": 54,
+        "tail_mean_error": 77906.77515780593,
+        "overall_mean_error": 17071.5058680466,
+        "share_of_total_error": 0.2281778062227863,
+        "tail_directional_accuracy": 0.2222222222222222,
+        "overall_directional_accuracy": 0.5462962962962963
+      }
+    },
+    "prophet_xgb_hybrid": {
+      "diagnostics": {
+        "model": "prophet_xgb_hybrid",
+        "n": 36,
+        "step": 31,
+        "mean_residual": -0.13186897440361467,
+        "mean_residual_t": -2.028466587414814,
+        "biased": true,
+        "ljung_box": {
+          "name": "ljung_box",
+          "statistic": 20.188854350101096,
+          "p_value": 0.005175885986178566,
+          "null_hypothesis": "no autocorrelation up to lag 7",
+          "reject_means": "serial correlation is present",
+          "alpha": 0.05,
+          "rejects_null": true,
+          "lags": 7
+        },
+        "arch_lm": {
+          "name": "arch_lm",
+          "statistic": 14.077745106910786,
+          "p_value": 0.04981573313470257,
+          "null_hypothesis": "no ARCH effects up to lag 7 (homoskedastic)",
+          "reject_means": "volatility clusters -- a conditional variance model is justified",
+          "alpha": 0.05,
+          "rejects_null": true,
+          "lags": 7,
+          "f_statistic": 2.830218061768358,
+          "f_p_value": 0.03042734421941653
+        },
+        "jarque_bera": {
+          "name": "jarque_bera",
+          "statistic": 2.054681425412762,
+          "p_value": 0.3579576081053462,
+          "null_hypothesis": "the series is normally distributed",
+          "reject_means": "non-normal: skewed and/or fat-tailed",
+          "alpha": 0.05,
+          "rejects_null": false,
+          "skew": -0.5325224152075854,
+          "kurtosis": 2.514750449616116,
+          "excess_kurtosis": -0.48524955038388384
+        },
+        "interpretation": "residuals are serially correlated, so the mean model left structure behind; ARCH effects remain, which is expected and is what the volatility model is for; forecasts are systematically over-predicting (biased mean residual)"
+      },
+      "failure_concentration": {
+        "model": "prophet_xgb_hybrid",
+        "n_predictions": 1080,
+        "quantile": 0.95,
+        "error_threshold": 69756.70934935611,
+        "n_in_tail": 54,
+        "tail_mean_error": 83911.54600956224,
+        "overall_mean_error": 17924.182009978264,
+        "share_of_total_error": 0.23407357156619274,
+        "tail_directional_accuracy": 0.037037037037037035,
+        "overall_directional_accuracy": 0.5435185185185185
+      }
+    },
+    "xgboost_causal_retuned": {
+      "diagnostics": {
+        "model": "xgboost_causal_retuned",
+        "n": 36,
+        "step": 31,
+        "mean_residual": 0.028155919612025695,
+        "mean_residual_t": 0.9336865346067683,
+        "biased": false,
+        "ljung_box": {
+          "name": "ljung_box",
+          "statistic": 3.469410522157237,
+          "p_value": 0.8384547884620904,
+          "null_hypothesis": "no autocorrelation up to lag 7",
+          "reject_means": "serial correlation is present",
+          "alpha": 0.05,
+          "rejects_null": false,
+          "lags": 7
+        },
+        "arch_lm": {
+          "name": "arch_lm",
+          "statistic": 4.076196040036556,
+          "p_value": 0.7709604887007004,
+          "null_hypothesis": "no ARCH effects up to lag 7 (homoskedastic)",
+          "reject_means": "volatility clusters -- a conditional variance model is justified",
+          "alpha": 0.05,
+          "rejects_null": false,
+          "lags": 7,
+          "f_statistic": 0.4906389144992941,
+          "f_p_value": 0.8306826769969191
+        },
+        "jarque_bera": {
+          "name": "jarque_bera",
+          "statistic": 3.3913197272864513,
+          "p_value": 0.18347811853415846,
+          "null_hypothesis": "the series is normally distributed",
+          "reject_means": "non-normal: skewed and/or fat-tailed",
+          "alpha": 0.05,
+          "rejects_null": false,
+          "skew": 0.6437690913629874,
+          "kurtosis": 3.7766113868684013,
+          "excess_kurtosis": 0.7766113868684013
+        },
+        "interpretation": "no remaining serial correlation in the mean model"
+      },
+      "failure_concentration": {
+        "model": "xgboost_causal_retuned",
+        "n_predictions": 1080,
+        "quantile": 0.95,
+        "error_threshold": 24244.56150375821,
+        "n_in_tail": 54,
+        "tail_mean_error": 27545.62772040192,
+        "overall_mean_error": 8047.53355212232,
+        "share_of_total_error": 0.1711432921776232,
+        "tail_directional_accuracy": 0.09259259259259259,
+        "overall_directional_accuracy": 0.41944444444444445
+      }
+    }
+  },
+  "preserved_evidence": {
+    "verified": {
+      "LEGACY_INVALID_RESULT": {
+        "directional_accuracy": 0.6896551724137931,
+        "p_value": 0.03071417286992073,
+        "walk_forward_mean_accuracy": 0.5862068965517241
+      },
+      "LEAKAGE_CORRECTED_REFERENCE": {
+        "hybrid_directional_accuracy": 0.24444444444444444,
+        "hybrid_mae_skill_vs_random_walk": -1.6395517444453533,
+        "hybrid_interval_coverage": 0.2333333333333333,
+        "hybrid_mae": 10158.505895137203,
+        "random_walk_mae": 3848.572363286555
+      }
+    },
+    "records": [
+      {
+        "label": "LEGACY_INVALID_RESULT",
+        "run_dir": "2026-04-02",
+        "source_commit": "952b304",
+        "status": "INVALID -- do not cite as a result",
+        "headline": {
+          "directional_accuracy": 0.6896551724137931,
+          "p_value": 0.03071417286992073,
+          "walk_forward_mean_accuracy": 0.5862068965517241
+        },
+        "why": "Produced by bayesianCutoff.py with three independent defects: features and target on the same bar (rolling/EMA/SMA columns at row D contain close[D], the target was the residual of log_close[D]); the cutoff selected by scoring 48 candidates on the same last-90-days window the holdout was then reported on; and a directional metric that compared the forecast path against itself via np.diff. The walk-forward number is also contaminated -- features were selected once, over a window overlapping every fold's test period.",
+        "do_not": [
+          "cite 0.6897 or p=0.031 as evidence of forecasting skill",
+          "compare a new model against it -- it is not a valid baseline",
+          "re-run bayesianCutoff.py and overwrite this directory"
+        ]
+      },
+      {
+        "label": "LEAKAGE_CORRECTED_REFERENCE",
+        "run_dir": "2026-08-28-track-a-baseline",
+        "source_commit": "c415b03",
+        "status": "VALID -- negative result, preserved deliberately",
+        "headline": {
+          "hybrid_directional_accuracy": 0.24444444444444444,
+          "hybrid_mae_skill_vs_random_walk": -1.6395517444453533,
+          "hybrid_interval_coverage": 0.2333333333333333,
+          "hybrid_mae": 10158.505895137203,
+          "random_walk_mae": 3848.572363286555
+        },
+        "why": "The same Prophet+XGBoost hybrid, scored through identical walk-forward folds with the leaks removed. It is the worst of seven models tested: 2.6x the random walk's error, directional accuracy materially below a coin, and a stated 95% interval containing 23% of outcomes. Nothing about the model changed -- only that it can no longer see the price it is predicting. This is the reference every A2 challenger is measured against, and the number the project must not quietly walk back.",
+        "do_not": [
+          "re-tune the legacy hybrid until this improves -- build a named challenger instead (XGBOOST_CAUSAL_RETUNED)",
+          "swap the metric for one on which the hybrid looks better",
+          "overwrite this directory with a later run"
+        ]
+      }
+    ]
+  },
+  "environment": {
+    "python": "3.14.3",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "packages": {
+      "numpy": "2.4.3",
+      "pandas": "3.0.1",
+      "scipy": "1.17.1",
+      "statsmodels": "0.14.6",
+      "prophet": "1.3.0",
+      "xgboost": "3.2.0",
+      "arch": "8.0.0"
+    },
+    "git_commit": "2b28303924b3607118ca54ff33ae27de4d9a8c54",
+    "python_full": "3.14.3 (tags/v3.14.3:323c59a, Feb  3 2026, 16:04:56) [MSC v.1944 64 bit (AMD64)]",
+    "platform_machine": "AMD64"
+  },
+  "n_backtest_failures": 0
+}
