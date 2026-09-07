@@ -1,4 +1,9 @@
-name: C0 validation
+# Named for the whole quantitative core, not just C0. It runs A2's evaluation
+# semantics, the A4 typed core, the C0 paper engine and the A3 shadow ledger --
+# every test that is not the collector's. The filename is left as
+# c0-validation.yml so this workflow keeps its run history; GitHub keys that on
+# the path, not the name.
+name: Quantitative core (A2/A4 + C0 paper + A3 shadow)
 
 # Scoped to the quantitative core. The collector has its own workflow, its own
 # lint contract and its own coverage floor; before these filters existed this
@@ -23,7 +28,7 @@ on:
       - "constraints.txt"
 
 jobs:
-  verify:
+  quant-core:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
