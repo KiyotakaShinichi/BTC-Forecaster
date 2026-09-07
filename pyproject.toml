@@ -44,6 +44,18 @@ api = [
 cloud = [
     "boto3>=1.34,<2",
 ]
+# The point-in-time intelligence corpus. duckdb needs pytz to hand a TIMESTAMPTZ
+# back as a Python datetime and does not declare it, and every timestamp in the
+# corpus is TIMESTAMPTZ -- so without it the collector raises on the first read
+# of anything it wrote. It reached developer machines only transitively through
+# yfinance, which is why a clean install was the only place it was visible.
+market-intelligence = [
+    "duckdb>=1.0,<2",
+    "pytz>=2024.1",
+    "fastapi>=0.115,<1",
+    "uvicorn[standard]>=0.30,<1",
+    "pydantic>=2.8,<3",
+]
 dev = [
     "pytest>=8,<10",
     "coverage[toml]>=7.10,<8",
@@ -55,7 +67,7 @@ dev = [
 ]
 # Everything needed to run the full pipeline end to end.
 all = [
-    "btc-forecaster[models,data,plots,api,cloud,dev]",
+    "btc-forecaster[models,data,plots,api,cloud,market-intelligence,dev]",
 ]
 
 [project.scripts]
