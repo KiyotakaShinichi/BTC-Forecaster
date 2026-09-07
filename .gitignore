@@ -22,6 +22,8 @@ env/
 .ruff_cache/
 .mypy_cache/
 .coverage
+# scripts/coverage.sh writes this next to .coverage; it is a report, not evidence.
+coverage.json
 htmlcov/
 
 # --- Runtime forecast output (see ARTIFACTS.md) ---
