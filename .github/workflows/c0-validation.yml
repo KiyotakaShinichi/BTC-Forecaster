@@ -39,8 +39,22 @@ jobs:
         run: python -m mypy btc_forecaster --ignore-missing-imports
       - name: Compile
         run: python -m compileall -q btc_forecaster tests api_server.py
+      # Output captured so a failure is legible to anyone who can see the repo:
+      # job logs need `actions:read` and step summaries are not exposed by the
+      # API at all, but annotations are.
       - name: Full pytest and coverage
-        run: bash scripts/coverage.sh
+        run: |
+          set -o pipefail
+          bash scripts/coverage.sh 2>&1 | tee pytest.log
+      - name: Publish failure detail
+        if: failure()
+        run: |
+          echo "### quantitative core failed" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          tail -n 120 pytest.log >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          detail=$(grep -E "^(FAILED|ERROR|E  )|Required test coverage" pytest.log | head -n 30 | sed "s/%/%25/g" | awk '{printf "%s%%0A", $0}')
+          echo "::error title=quantitative core::${detail:-see step summary}"
       - name: C0 fail-closed A2 regression
         run: python -m pytest tests/test_paper_a2_regression.py -q
       - name: Diff integrity
