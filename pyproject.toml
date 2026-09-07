@@ -82,8 +82,10 @@ include = ["btc_forecaster*"]
 [tool.pytest.ini_options]
 minversion = "8.0"
 testpaths = ["tests"]
+# Deliberately no `-q` here. Both CI jobs pass `-q` explicitly, and a second
+# one from addopts makes it `-qq`, which suppresses the summary line -- so a
+# green run reports nothing and a red one reports less.
 addopts = [
-    "-q",
     "--strict-markers",
     "--strict-config",
 ]
@@ -107,7 +109,17 @@ skip_empty = true
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-extend-exclude = ["research", ".venv"]
+# `market_intelligence/` and its tests are linted by the market-intelligence
+# workflow under market_intelligence/ruff.toml, which sets a different line
+# length and rule set. Excluding them here means each subsystem is checked once,
+# under the contract it was written against, rather than twice under two.
+extend-exclude = [
+    "research",
+    ".venv",
+    "market_intelligence",
+    "tests/test_intelligence_*.py",
+    "tests/test_market_intelligence.py",
+]
 
 [tool.ruff.lint]
 # Deliberately narrow. These catch real defects (undefined names, unused

@@ -1,8 +1,26 @@
 name: C0 validation
 
+# Scoped to the quantitative core. The collector has its own workflow, its own
+# lint contract and its own coverage floor; before these filters existed this
+# job ran on every push, including collector-only ones, and linted the
+# collector's tests under the wrong ruff config.
 on:
   push:
+    paths:
+      - "btc_forecaster/**"
+      - "tests/**"
+      - "api_server.py"
+      - "scripts/coverage.sh"
+      - "pyproject.toml"
+      - "constraints.txt"
+      - ".github/workflows/c0-validation.yml"
   pull_request:
+    paths:
+      - "btc_forecaster/**"
+      - "tests/**"
+      - "api_server.py"
+      - "pyproject.toml"
+      - "constraints.txt"
 
 jobs:
   verify:
@@ -27,3 +45,34 @@ jobs:
         run: python -m pytest tests/test_paper_a2_regression.py -q
       - name: Diff integrity
         run: git diff --check
+
+  dependency-contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      # The whole repository from the canonical contract alone. This is the
+      # gate that would have caught pytz: the collector was installable and
+      # unable to read its own corpus, because duckdb needs pytz for a
+      # TIMESTAMPTZ and does not declare it.
+      - name: Install the declared contract
+        run: python -m pip install -e ".[market-intelligence,dev]" -c constraints.txt
+      - name: Both halves import
+        run: |
+          python -c "import btc_forecaster, market_intelligence; print('both packages import')"
+      - name: A TIMESTAMPTZ round trip survives it
+        run: |
+          python - <<'PY'
+          import datetime, duckdb
+          c = duckdb.connect()
+          c.execute("CREATE TABLE t (x TIMESTAMPTZ)")
+          c.execute("INSERT INTO t VALUES (?)", [datetime.datetime.now(datetime.timezone.utc)])
+          value = c.execute("SELECT x FROM t").fetchone()[0]
+          assert value.tzinfo is not None, "TIMESTAMPTZ came back naive"
+          print("TIMESTAMPTZ round trip ok:", value.isoformat())
+          PY
+      - name: The contract agrees with itself
+        run: python -m pytest tests/test_dependency_contract.py -q

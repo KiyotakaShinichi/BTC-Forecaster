@@ -6,7 +6,10 @@ PY="${PYTHON:-./.venv/Scripts/python.exe}"
 [ -x "$PY" ] || PY="python"
 
 rm -f .coverage coverage.json
-"$PY" -m pytest --cov=btc_forecaster --cov-branch --cov-report=term-missing -q
+# The collector's tests belong to the market-intelligence workflow: they are
+# measured against market_intelligence, not btc_forecaster, and running them
+# here would need duckdb/pytz and would run the same suite twice.
+"$PY" -m pytest --cov=btc_forecaster --cov-branch --cov-report=term-missing --cov-fail-under=85 --ignore-glob="tests/test_intelligence_*.py" --ignore="tests/test_market_intelligence.py" -q
 test -s .coverage
 "$PY" -m coverage json -o coverage.json
 "$PY" - <<'PY'
