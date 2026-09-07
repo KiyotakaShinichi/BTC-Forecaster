@@ -15,11 +15,12 @@ Lineage, oldest first (reconstructed from each file's own docstring header):
 | `MC_Automation.py` | `..._montecarlo.py` | GARCH(1,1) on residuals feeding a Monte Carlo band; automatic rolling/EMA/SMA window selection. |
 | `cutoffOptimization.py` | `..._WITH_AUTO_CUTOFF.py` | Replaced the hardcoded `START = "2021-01-01"` with a search over candidate cutoff dates scored on directional accuracy + MAE. |
 
-`bayesianCutoff.py` (kept at the repository root) is the direct successor to
+`bayesianCutoff.py` is the direct successor to
 `cutoffOptimization.py`: it replaced argmax cutoff selection with a
 softmax/temperature posterior over cutoffs and added regime detection and
 walk-forward evaluation. It was the only script maintained after the initial
-commit and is the one the API invokes.
+commit, and the one the API invoked until the API was refactored to call
+`btc-forecast run`. It now sits here with the rest of the lineage.
 
 ## Why this matters for the current code
 

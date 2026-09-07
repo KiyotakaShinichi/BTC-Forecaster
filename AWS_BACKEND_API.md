@@ -3,7 +3,7 @@
 ## TL;DR recommendation
 Use **AWS ECS Fargate**.
 
-- **Batch forecast (scheduled):** EventBridge Scheduler -> ECS Task (runs `bayesianCutoff.py`) -> writes CSV/PNGs to S3.
+- **Batch forecast (scheduled):** EventBridge Scheduler -> ECS Task (runs `btc-forecast run`) -> writes CSV/PNGs to S3.
 - **On-demand API:** API Gateway or ALB -> ECS Fargate Service (runs `api_server.py`) -> triggers forecast run and serves latest output.
 
 This is the cleanest fit for your current Python stack (`prophet`, `xgboost`, `arch`) without forcing Lambda limits.
@@ -62,7 +62,7 @@ Works only if runtime/memory/time fits. Heavy ML libs and long forecast runs oft
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-pip install -r requirements.txt
+pip install -e ".[models,data,plots,api,cloud]" -c constraints.txt
 python api_server.py
 ```
 
