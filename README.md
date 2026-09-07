@@ -7,7 +7,18 @@ The question it exists to answer is not "what will BTC do" but **"does this mode
 beat a random walk, on identical folds, out of sample?"** — and to be able to
 report "no" when the answer is no.
 
-> Research and educational project. Not financial advice.
+It has two layers, and they are honest about different things:
+
+| Layer | What it is | Where it stands |
+|---|---|---|
+| **Quantitative core** (`btc_forecaster/`) | Causal features, model adapters, walk-forward backtesting, honest evaluation | Working. **Nothing beats the random walk.** |
+| **Market intelligence** (`market_intelligence/`) | Point-in-time collection of official announcements, and the machinery to replay a corpus as of any past instant | Working, collecting nothing yet: no host. **Historical validation returned HOLD.** |
+
+Neither has produced a tradeable edge, and the platform is built so that saying
+so is easy.
+
+> Research and educational project. Not financial advice. No live trading, no
+> execution and no leverage: there is no broker integration in this repository.
 
 ---
 
@@ -90,9 +101,19 @@ btc_forecaster/
     cli.py           btc-forecast
 ```
 
-Nothing in the core imports Prophet, XGBoost, arch, matplotlib or yfinance at
-module scope, so it is importable — and the whole unit suite runs — without them
-and without a network connection.
+```
+market_intelligence/
+    collection/      feeds, syndication parsing, matching, clustering, readiness
+    ops/             scheduled runs, storage paths, integrity, backup, watchdog
+    corrections.py   the append-only ledger and the eligibility contract
+    storage.py       the DuckDB corpus and its point-in-time reads
+    b4/              the historical event-study engine
+    cli.py           btc-intel
+```
+
+Nothing in either core imports Prophet, XGBoost, arch, matplotlib, yfinance or
+the network at module scope, so both are importable — and the whole unit suite
+runs — without them and offline.
 
 ### The time contract
 
@@ -238,9 +259,15 @@ docker run --rm -p 8010:8010 -v "$PWD/out:/app/out" btc-forecast-api
 ## Tests
 
 ```bash
-pytest                      # full suite, no network, no live data
-pytest tests/test_leakage.py -v
+pytest                                    # everything, no network, no live data
+pytest tests/test_leakage.py -v           # the quantitative causality guard
+pytest tests/test_intelligence_*.py -q    # the collector
+bash scripts/coverage.sh                  # quantitative core, gated at 85%
 ```
+
+The two suites run under separate CI jobs because they have different
+dependencies and different lint contracts; between them they cover the whole
+repository. `pytest` with no arguments runs both, which needs `.[all]`.
 
 The suite is offline by construction: every series comes from seeded generators
 in `btc_forecaster/testing.py`. `tests/test_leakage.py` is the centrepiece — it
@@ -269,8 +296,76 @@ A promoted research run without its manifest is an anecdote.
 - [`docs/benchmark.md`](docs/benchmark.md) — what the benchmark measures, how to read it, what it cannot tell you
 - [`docs/seams.md`](docs/seams.md) — where external signals attach (Track B contract)
 - [`DEPLOYMENT.md`](DEPLOYMENT.md), [`AWS_BACKEND_API.md`](AWS_BACKEND_API.md) — deployment
+- [`DEPENDENCIES.md`](DEPENDENCIES.md) — the one dependency contract, and why the other files exist
+- [`deploy/DEPLOYMENT.md`](deploy/DEPLOYMENT.md) — running the collector on a host
+- [`deploy/COLLECTION_FREEZE.md`](deploy/COLLECTION_FREEZE.md) — the frozen collection contracts
+- [`corrections/README.md`](corrections/README.md) — why invalidated evidence is kept
+- `research/market_intelligence/b4/` — the historical event study and its HOLD verdict
 - `research/legacy/` — superseded implementations, kept deliberately
 - `research/runs/` — frozen, dated run evidence
+
+---
+
+## Market intelligence
+
+The second layer asks whether *what regulators and central banks actually
+announce* helps forecast BTC. Answering that honestly turns out to be mostly a
+data-provenance problem, not a modelling one.
+
+### Availability is retrieval, never publication
+
+A document becomes usable at the moment it was **retrieved**, not the moment its
+publisher stamped it. A three-week-old press release first seen today became
+usable today; treating its publication date as availability fabricates three
+weeks of hindsight. Rediscovering a document later never moves that first
+availability forward.
+
+This is the same inequality as the quantitative core's time contract, applied to
+a different kind of evidence, and it has the same consequence: it cannot be
+recovered after the fact. A corpus collected late is not the corpus that existed.
+
+### Historical validation returned HOLD
+
+`research/market_intelligence/b4/` holds a full event-study run — preregistered
+hypotheses, matched controls, block bootstrap, Benjamini-Hochberg correction —
+against historical intelligence. The finding was that **nothing survives, and
+most of it was never testable**: no point-in-time-valid historical corpus exists,
+because availability cannot be reconstructed for documents collected after the
+fact. The verdict was HOLD rather than a negative result, which is a different
+and more honest claim: the question was not answerable with that evidence.
+
+### Forward collection
+
+So the corpus is built forward instead, one bounded cycle at a time, from six
+public government feeds (SEC press and administrative proceedings, two Federal
+Reserve feeds, CFTC, BLS). Two further feeds are retired but kept resolvable, so
+a manifest that names them still reads.
+
+The collector is a **frozen deployment candidate** and is **not deployed** — no
+persistent host is available, so nothing is currently collecting. See
+[`deploy/DEPLOYMENT.md`](deploy/DEPLOYMENT.md) to run it and
+[`deploy/COLLECTION_FREEZE.md`](deploy/COLLECTION_FREEZE.md) for the contracts
+that are frozen and what changing one requires.
+
+`btc-intel corpus-status` reports readiness against B4's thresholds. It says
+`NOT_READY`, and will for months: the remaining bottleneck is **elapsed calendar
+time**, which is not an engineering problem and cannot be worked around.
+
+### Corrections, not deletions
+
+An observation that turns out to be an artefact of a defect is **invalidated,
+never deleted**. A correction is a new row in an append-only ledger; the
+observation stays exactly where it was written. Two views follow — a raw one for
+audit and integrity, and an eligible one that research counts — so a bad record
+is *preserved physically and excluded scientifically*. Deleting it would leave a
+corpus that cannot explain its own history, and a corpus whose contents can
+change without leaving evidence is not evidence.
+
+`tests/test_intelligence_silent_empty.py` is the counterpart to
+`tests/test_leakage.py`: fifteen defects that each made a cycle report success
+while writing nothing, which is the failure mode this layer is most prone to
+because its output is *plausible* — a green run with zero documents looks exactly
+like a quiet news day.
 
 ---
 
@@ -295,6 +390,20 @@ A promoted research run without its manifest is an anecdote.
 - Interval coverage is measured but not yet calibrated against.
 - The binomial direction test remains uncorrected for multiple comparisons; its
   caveat travels with the result rather than being buried in a comment.
+- **The intelligence corpus is nearly empty and cannot be hurried.** It holds a
+  handful of documents from a few manual cycles. B4 readiness needs 30 events
+  across 3 publishers spanning 180 days; that is months of elapsed time, and
+  collecting faster does not help because availability is retrieval time.
+- **Nothing is collecting.** The collector is verified and frozen but has no
+  host, so the corpus is not growing. `ops-watch` reports `COLLECTION_STALE`,
+  which is the absence of a deployment rather than a fault.
+- The administrative-proceedings feed titles its entries with respondent names,
+  so topical filtering matches almost nothing from it. That is a property of the
+  source, recorded as `subject_bearing=False`, and deliberately not worked
+  around by loosening the filter.
+- The two layers are not connected. There is no fusion model, and the seams in
+  [`docs/seams.md`](docs/seams.md) describe where one could attach, not one that
+  does.
 
 ## License
 
