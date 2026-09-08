@@ -126,12 +126,31 @@ def infer_frequency(origins: list[datetime]) -> OriginFrequency | None:
     return None
 
 
+def parse_origin(value: str) -> datetime:
+    """Parse one forecast origin from text, in UTC, or raise.
+
+    A naive timestamp is refused rather than assumed to be UTC. The whole
+    corpus is timezone-aware and every comparison in the point-in-time contract
+    is between aware instants; guessing here would make an origin mean whatever
+    the machine's clock happened to be configured for, and the error would show
+    up as a silent offset in a dataset rather than as a failure.
+
+    `Z` is accepted because it is what every feed and every manifest writes;
+    `datetime.fromisoformat` did not understand it before Python 3.11.
+    """
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        raise ValueError("timestamp must include a timezone")
+    return parsed.astimezone(timezone.utc)
+
+
 __all__ = [
     "OriginFrequency",
     "OriginScheduleError",
     "generate_origins",
     "infer_frequency",
     "next_origin_after",
+    "parse_origin",
     "require_utc",
     "validate_origin_schedule",
 ]

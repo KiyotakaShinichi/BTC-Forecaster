@@ -391,9 +391,11 @@ def create_app(db_path: str | Path | None = None, store: IntelligenceStore | Non
         Counts and readiness only. No raw document text crosses this boundary,
         so a non-redistributable provider's content cannot leak through it.
         """
-        from .cli import _corpus_status  # noqa: PLC0415 -- one implementation, shared with the CLI
+        # noqa: PLC0415 -- one implementation, shared with the CLI. Aliased
+        # because the endpoint above it has the same name.
+        from .reports import corpus_status as build_status  # noqa: PLC0415
 
-        return _corpus_status(store, extractor_version, entities.split(","))
+        return build_status(store, extractor_version, entities.split(","))
 
     @app.get("/corpora", response_model=list[CorpusSnapshot])
     def corpora(limit: int = 50) -> list[CorpusSnapshot]:
@@ -409,9 +411,9 @@ def create_app(db_path: str | Path | None = None, store: IntelligenceStore | Non
     @app.get("/collection/providers")
     def collection_providers() -> list[dict[str, object]]:
         """Declared providers and whether each can run. Credentials never appear."""
-        from .cli import _provider_report  # noqa: PLC0415 -- shared with the CLI
+        from .reports import provider_report  # noqa: PLC0415 -- shared with the CLI
 
-        return _provider_report()
+        return provider_report()
 
     @app.get("/quarantine", response_model=Page[QuarantineRecord])
     def quarantine(
