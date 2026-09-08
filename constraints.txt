@@ -48,9 +48,9 @@ pytz==2026.1.post1
 boto3==1.43.82
 
 # --- dev ---
-pytest==8.4.1
-coverage==7.15.4
-pytest-cov==6.2.1
-ruff==0.12.11
-mypy==1.17.1
+pytest==9.1.1
+coverage==7.16.0
+pytest-cov==7.1.0
+ruff==0.16.6
+mypy==2.3.1
 httpx==0.28.1
