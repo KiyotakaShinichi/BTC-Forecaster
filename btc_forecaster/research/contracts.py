@@ -208,6 +208,11 @@ class EvaluationContext:
     y: pd.Series
     series: pd.Series
     close: pd.Series
+    #: The last bar whose data is legitimately available for each row -- i.e.
+    #: the forecast origin. Carried explicitly rather than derived by
+    #: subtracting a bar, because the calendar is not guaranteed to be regular
+    #: and "the day before" is not a safe way to say "the previous bar".
+    feature_bar: pd.Series
     train_end: pd.Timestamp
 
     def __post_init__(self) -> None:
@@ -216,31 +221,45 @@ class EvaluationContext:
         if len(self.X) == 0:
             raise ValueError("evaluation context is empty")
         if bool((self.X.index <= self.train_end).any()):
-            raise ValueError("an evaluation origin is inside the training partition")
+            raise ValueError("an evaluation target bar is inside the training partition")
+        if bool((pd.DatetimeIndex(self.feature_bar) >= self.X.index).any()):
+            raise ValueError("a forecast origin is not strictly before the bar it predicts")
 
     def __len__(self) -> int:
         return len(self.X)
 
     @property
-    def origins(self) -> pd.DatetimeIndex:
+    def target_bars(self) -> pd.DatetimeIndex:
+        """The bars being predicted, one per row."""
         return pd.DatetimeIndex(self.X.index)
 
-    def history_at(self, i: int) -> pd.Series:
-        """Realised log returns up to and including evaluation origin ``i``.
+    @property
+    def origins(self) -> pd.DatetimeIndex:
+        """The forecast origins: the last bar observable for each prediction.
 
-        The only route to the series. It cannot return a bar after the origin,
-        so a model that uses this accessor is causal by construction.
+        Strictly earlier than :attr:`target_bars`. Conflating the two is the
+        off-by-one that makes a model appear to predict the present, and it is
+        the reason this is a distinct property rather than an alias.
+        """
+        return pd.DatetimeIndex(self.feature_bar)
+
+    def history_at(self, i: int) -> pd.Series:
+        """Realised log returns up to and including forecast origin ``i``.
+
+        The only route to the series, and it stops at the origin -- **not** at
+        the bar being predicted. Slicing at the target bar would hand the model
+        the very return it is being asked for.
         """
         if not 0 <= i < len(self.X):
             raise IndexError(f"evaluation origin {i} out of range (0..{len(self.X) - 1})")
-        origin = self.X.index[i]
+        origin = self.feature_bar.iloc[i]
         return self.series.loc[self.series.index <= origin]
 
     def close_at(self, i: int) -> pd.Series:
-        """Realised closes up to and including evaluation origin ``i``."""
+        """Realised closes up to and including forecast origin ``i``."""
         if not 0 <= i < len(self.X):
             raise IndexError(f"evaluation origin {i} out of range (0..{len(self.X) - 1})")
-        origin = self.X.index[i]
+        origin = self.feature_bar.iloc[i]
         return self.close.loc[self.close.index <= origin]
 
 

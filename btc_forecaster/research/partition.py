@@ -212,6 +212,7 @@ class ZooDataset:
             y=self.y.loc[dev],
             series=self.series.loc[self.series.index <= dev.max()],
             close=self.close.loc[self.close.index <= dev.max()],
+            feature_bar=self.feature_bar.loc[dev],
             train_end=self.partition.budget.max(),
         )
 
@@ -223,6 +224,7 @@ class ZooDataset:
             y=self.y.loc[holdout],
             series=self.series,
             close=self.close,
+            feature_bar=self.feature_bar.loc[holdout],
             train_end=self.partition.dev.max(),
         )
 

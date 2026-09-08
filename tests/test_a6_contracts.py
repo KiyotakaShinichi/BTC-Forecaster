@@ -192,14 +192,29 @@ class TestThePartitionIsDisciplined:
         assert partition.train.max() < partition.dev.min()
         assert partition.dev.max() < partition.holdout.min()
 
-    def test_an_evaluation_origin_inside_training_is_refused(self, dataset) -> None:
+    def test_an_evaluation_target_inside_training_is_refused(self, dataset) -> None:
         with pytest.raises(ValueError, match="inside the training partition"):
             EvaluationContext(
                 X=dataset.X,
                 y=dataset.y,
                 series=dataset.series,
                 close=dataset.close,
+                feature_bar=dataset.feature_bar,
                 train_end=dataset.X.index[-1],
+            )
+
+    def test_a_forecast_origin_at_or_after_its_target_is_refused(self, dataset) -> None:
+        """The off-by-one that makes a model appear to predict the present."""
+        holdout = dataset.partition.holdout
+        with pytest.raises(ValueError, match="not strictly before"):
+            EvaluationContext(
+                X=dataset.X.loc[holdout],
+                y=dataset.y.loc[holdout],
+                series=dataset.series,
+                close=dataset.close,
+                # The origin set to the target bar itself.
+                feature_bar=pd.Series(holdout, index=holdout),
+                train_end=dataset.partition.dev.max(),
             )
 
     def test_a_short_budget_is_recorded_not_topped_up(self, frame: pd.DataFrame) -> None:
@@ -230,15 +245,22 @@ class TestThePartitionIsDisciplined:
 
 
 class TestHistoryCannotReachForward:
-    def test_history_at_stops_at_the_origin(self, dataset) -> None:
+    def test_history_stops_strictly_before_the_bar_being_predicted(self, dataset) -> None:
+        """The bug this contract shipped with for one commit: slicing at the
+        target bar hands the model the very return it is being asked for."""
         context = dataset.evaluation_context()
         for i in (0, len(context) // 2, len(context) - 1):
             history = context.history_at(i)
-            assert history.index.max() <= context.origins[i]
+            assert history.index.max() < context.target_bars[i]
+            assert history.index.max() == context.origins[i]
 
-    def test_close_at_stops_at_the_origin(self, dataset) -> None:
+    def test_close_stops_strictly_before_the_bar_being_predicted(self, dataset) -> None:
         context = dataset.evaluation_context()
-        assert context.close_at(3).index.max() <= context.origins[3]
+        assert context.close_at(3).index.max() < context.target_bars[3]
+
+    def test_the_origin_is_never_the_target(self, dataset) -> None:
+        context = dataset.evaluation_context()
+        assert bool((context.origins < context.target_bars).all())
 
     def test_an_out_of_range_origin_raises(self, dataset) -> None:
         context = dataset.evaluation_context()
