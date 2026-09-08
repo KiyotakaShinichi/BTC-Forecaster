@@ -348,11 +348,35 @@ class ZooModel(ABC):
 
     # -- lifecycle -------------------------------------------------------
 
+    #: Split-conformal methods need a block that estimation never touched.
+    #: Declared here so the runner hands it DEV -- never HOLDOUT, which would
+    #: calibrate the intervals on the data they are about to be scored against.
+    needs_calibration: bool = False
+
     def fit(self, train: TrainingSet) -> ZooModel:
         self._train_fingerprint = train.fingerprint()
         self._fit(train)
         self._fitted = True
         return self
+
+    def calibrate(self, context: EvaluationContext) -> None:
+        """Absorb a held-out calibration block. Only for declared models.
+
+        Called by the runner with DEV after :meth:`fit`. A model that declares
+        this and is never calibrated will say so when asked for an interval,
+        rather than returning one derived from its training residuals -- which
+        would be a resubstitution interval wearing a conformal label.
+        """
+        if not self.needs_calibration:
+            raise CapabilityNotSupported(
+                f"{self.model_id} does not use a calibration block"
+            )
+        self._calibrate(context)
+
+    def _calibrate(self, context: EvaluationContext) -> None:
+        raise CapabilityNotSupported(
+            f"{self.model_id} declared needs_calibration but did not implement it"
+        )
 
     def predict(self, context: EvaluationContext) -> ZooForecast:
         if not self._fitted:
