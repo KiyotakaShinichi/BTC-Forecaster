@@ -16,6 +16,10 @@ StateDirectory=btc-intel
 Environment=BTC_INTEL_STATE_ROOT=%S/btc-intel
 Environment=PYTHONPATH=/opt/btc-intel
 
+# One JSON object per line on stderr, which the journal captures verbatim.
+# Read it with `journalctl -u btc-intel-collect -o cat | jq`.
+Environment=BTC_INTEL_LOG_LEVEL=INFO
+
 # Optional. Absent is fine -- the leading dash means "do not fail if missing" --
 # and the only reason to have one is a licensed provider's credential.
 EnvironmentFile=-/etc/btc-intel/collector.env

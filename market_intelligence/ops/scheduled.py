@@ -27,6 +27,7 @@ due, 2 a real failure.
 from __future__ import annotations
 
 import json
+import logging
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -36,10 +37,17 @@ from ..collection.policy import ProviderDeclaration
 from ..collection.service import ForwardCollectionResult, ForwardCollector, cadence_due
 from ..configuration import QuerySpec
 from ..extractors import EventExtractor
+from ..logs import get_logger
 from ..retrieval import MultiProviderRetriever
 from ..storage import IntelligenceStore
 from .paths import StoragePaths, looks_ephemeral, require_usable
 from .runlock import LockHeld, RunLock
+
+#: The scheduler path had no structured logging at all. Everything it knew
+#: reached the operator as one JSON blob on stdout and a manifest, neither of
+#: which says *why* a cycle did nothing -- and "ran, collected zero" and
+#: "did not run" are the two outcomes an operator most needs to tell apart.
+_log = get_logger("collect")
 
 EXIT_OK = 0
 EXIT_FAILED = 2
@@ -132,6 +140,11 @@ def run_scheduled(
     ephemeral = looks_ephemeral(paths.root)
     if ephemeral:
         warnings.append(ephemeral)
+        # A corpus on ephemeral storage is lost at the next reboot and cannot be
+        # re-collected, because availability is retrieval time. Loud on purpose.
+        _log.emit("storage_ephemeral", severity=logging.WARNING, detail=ephemeral)
+
+    _log.emit("collection_started", origin=moment, state_root=str(paths.root))
 
     paths.ensure()
     require_usable(paths, require_free_bytes=require_free_bytes)
@@ -143,6 +156,9 @@ def run_scheduled(
         # Not a failure. A scheduler firing while a long cycle is still running
         # is normal, and treating it as an error trains operators to ignore
         # the collector's exit code.
+        # Not an error, so not a warning: a scheduler firing while a long cycle
+        # is still running is the system working.
+        _log.emit("collection_skipped", origin=moment, reason=str(held), exit_code=EXIT_LOCK_HELD)
         return ScheduledOutcome(
             exit_code=EXIT_LOCK_HELD,
             reason=str(held),
@@ -157,6 +173,12 @@ def run_scheduled(
             last_success = _last_success_by_provider(store)
             due, skipped = due_providers(declarations, last_success, moment)
             if not due:
+                _log.emit(
+                    "collection_not_due",
+                    origin=moment,
+                    skipped_providers=list(skipped),
+                    exit_code=EXIT_NOTHING_DUE,
+                )
                 return ScheduledOutcome(
                     exit_code=EXIT_NOTHING_DUE,
                     reason="no provider is due yet under its declared cadence",
@@ -176,6 +198,29 @@ def run_scheduled(
                 configuration,
                 manifest_path=manifest_path,
                 source_sha=source_sha,
+            )
+            for provider_id, succeeded in sorted(result.manifest.provider_success.items()):
+                _log.emit(
+                    "provider_result",
+                    # A provider that failed is the single most common cause of
+                    # a green run with an empty corpus.
+                    severity=logging.INFO if succeeded else logging.WARNING,
+                    run_id=result.manifest.run_id,
+                    provider_id=provider_id,
+                    succeeded=succeeded,
+                )
+            _log.emit(
+                "collection_finished",
+                run_id=result.manifest.run_id,
+                origin=moment,
+                documents_retrieved=result.manifest.documents_retrieved,
+                documents_new=result.manifest.documents_new,
+                documents_rediscovered=result.manifest.documents_rediscovered,
+                events_extracted=result.manifest.events_extracted,
+                corpus_id=result.manifest.corpus_id,
+                due_providers=list(due),
+                skipped_providers=list(skipped),
+                exit_code=EXIT_OK,
             )
             return ScheduledOutcome(
                 exit_code=EXIT_OK,

@@ -22,6 +22,7 @@ from .errors import FeatureContractError, IntelligenceError, ReplayIntegrityErro
 from .feature_matrix import DEFAULT_CHUNK_SIZE
 from .features import FEATURE_CONTRACT_VERSION, FEATURE_DEFINITIONS, FeatureDefinition
 from .historical import HistoricalDatasetService
+from .logs import get_logger
 from .models import Direction, Document, EventSignal, EventType
 from .operations import (
     IntelligenceSnapshot,
@@ -118,7 +119,7 @@ def create_app(db_path: str | Path | None = None, store: IntelligenceStore | Non
 
     app = FastAPI(title="BTC Market Intelligence Service", version="3.0.0", lifespan=lifespan)
     app.state.store = store
-    logger = logging.getLogger("btc_intelligence.api")
+    logger = get_logger("api")
 
     @app.middleware("http")
     async def correlation(request: Request, call_next: Callable[[Request], Awaitable[Response]]) -> Response:
@@ -131,12 +132,15 @@ def create_app(db_path: str | Path | None = None, store: IntelligenceStore | Non
         finally:
             request_id_context.reset(token)
         response.headers["X-Request-ID"] = request_id
-        logger.info(
-            "request_complete request_id=%s method=%s path=%s status=%s",
-            request_id,
-            request.method,
-            request.url.path,
-            response.status_code,
+        logger.emit(
+            "request_complete",
+            # A 5xx is not information. Levelled so an operator can filter for
+            # failures without parsing every line first.
+            severity=logging.ERROR if response.status_code >= 500 else logging.INFO,
+            request_id=request_id,
+            method=request.method,
+            path=request.url.path,
+            status=response.status_code,
         )
         return response
 

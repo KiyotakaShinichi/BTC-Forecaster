@@ -128,7 +128,16 @@ def collect_scheduled(args: argparse.Namespace) -> int:
     It manages its own storage, which is why it is registered as a command that
     must not be handed a store.
     """
+    from ..logs import configure
     from ..ops.profile import CollectionProfile, collect_once
+
+    # Configured here and not in `main`, because this is the only command that
+    # is always non-interactive. The structured records existed for a year with
+    # no handler attached to receive them; systemd captures stderr into the
+    # journal, so this is where they finally go somewhere. The other commands
+    # write their result to stdout for a caller to pipe into `jq`, and diagnostics
+    # arriving alongside would be noise they did not ask for.
+    configure()
 
     profile = CollectionProfile.load(args.profile)
     paths = StoragePaths.from_environment(args.state_root)

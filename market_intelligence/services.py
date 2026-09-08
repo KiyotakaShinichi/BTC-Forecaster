@@ -1,16 +1,18 @@
 from __future__ import annotations
 
-import logging
 from datetime import datetime
 
 from .aggregation import FeatureAggregator
 from .context import request_id_context
 from .cycle import ReplayService
 from .features import FEATURE_CONTRACT_VERSION
+from .logs import get_logger
 from .operations import IntelligenceSnapshot, ProviderHealth, QualityReport
 from .quality import evaluate_quality
 from .replay_engine import BulkReplayEngine
 from .storage import IntelligenceStore
+
+_log = get_logger("replay")
 
 
 class IntelligenceReadService:
@@ -42,10 +44,10 @@ class SnapshotService:
     def build_snapshot(
         self, forecast_origin: datetime, provider_versions: dict[str, str], configuration_fingerprint: str
     ) -> IntelligenceSnapshot:
-        logging.getLogger("btc_intelligence.replay").info(
-            "snapshot_build request_id=%s forecast_origin=%s",
-            request_id_context.get(),
-            forecast_origin.isoformat(),
+        _log.emit(
+            "snapshot_build",
+            request_id=request_id_context.get(),
+            origin=forecast_origin,
         )
         return ReplayService(self.store).replay(forecast_origin, provider_versions, configuration_fingerprint)
 
@@ -68,10 +70,11 @@ class SnapshotService:
         """
         if not forecast_origins:
             return []
-        logging.getLogger("btc_intelligence.replay").info(
-            "snapshot_batch request_id=%s origin_count=%s mode=REFERENCE",
-            request_id_context.get(),
-            len(forecast_origins),
+        _log.emit(
+            "snapshot_batch",
+            request_id=request_id_context.get(),
+            origin_count=len(forecast_origins),
+            mode="REFERENCE",
         )
         documents = self.store.documents_as_of(max(forecast_origins))
         events = self.store.eligible_signals_as_of(max(forecast_origins))
@@ -112,10 +115,11 @@ class SnapshotService:
         """
         if not forecast_origins:
             return []
-        logging.getLogger("btc_intelligence.replay").info(
-            "snapshot_batch request_id=%s origin_count=%s mode=OPTIMIZED",
-            request_id_context.get(),
-            len(forecast_origins),
+        _log.emit(
+            "snapshot_batch",
+            request_id=request_id_context.get(),
+            origin_count=len(forecast_origins),
+            mode="OPTIMIZED",
         )
         horizon = max(forecast_origins)
         engine = BulkReplayEngine(

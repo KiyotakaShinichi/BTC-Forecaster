@@ -16,6 +16,7 @@ from .cache import DeterministicCache
 from .configuration import QuerySpec, configuration_fingerprint
 from .extractors import EventExtractor
 from .features import FEATURE_CONTRACT_VERSION
+from .logs import StructuredLogger
 from .models import Document, EventSignal
 from .operations import (
     HealthState,
@@ -45,19 +46,13 @@ class IntelligenceRunReport(BaseModel):
     manifest: RunManifest
 
 
-class StructuredRunLogger:
-    def __init__(self, logger: logging.Logger | None = None):
-        self.logger = logger or logging.getLogger("btc_intelligence")
-
-    def emit(self, event: str, **fields: object) -> None:
-        safe = {
-            key: value
-            for key, value in fields.items()
-            if "credential" not in key.casefold()
-            and "api_key" not in key.casefold()
-            and "authorization" not in key.casefold()
-        }
-        self.logger.info(json.dumps({"event": event, **safe}, default=str, sort_keys=True))
+#: The emitter moved to `logs.py` so the collection path and the API can use
+#: the same one; the name stays because this module's callers and its tests
+#: import it. It gained a destination, a timestamp, a severity and value-level
+#: redaction in the move -- it previously dropped fields whose *names* looked
+#: like credentials, which does nothing about an address travelling inside a
+#: `detail` string.
+StructuredRunLogger = StructuredLogger
 
 
 def _health(attempts: list[ProviderAttempt], now: datetime) -> list[ProviderHealth]:
@@ -249,6 +244,10 @@ def run_intelligence_cycle(
         manifest.write_atomic(manifest_path)  # deliberately last durable run artifact
     logger.emit(
         "run_finished",
+        # A partial run is a warning, not information. Emitting both at INFO
+        # meant a provider outage and a clean cycle were the same line to
+        # anything filtering by level.
+        severity=logging.WARNING if failed else logging.INFO,
         run_id=run_id,
         documents_received=len(retrieval.documents),
         documents_deduped=len(documents),
@@ -256,6 +255,12 @@ def run_intelligence_cycle(
         events_rejected=rejected_events,
         cache_hits=cache_hits,
         cache_misses=cache_misses,
+        queries_failed=failed,
+        providers_unavailable=sorted(
+            health.provider_id
+            for health in provider_health
+            if health.state is not HealthState.HEALTHY
+        ),
         status="PARTIAL" if failed else "SUCCESS",
     )
     return IntelligenceRunReport(
