@@ -98,7 +98,14 @@ class ZooRegistration:
 #: only place the set is written down -- a module absent from it is a module
 #: whose models silently do not exist, which is precisely the failure the
 #: registry is here to prevent.
-ADAPTER_MODULES: tuple[str, ...] = ("baselines", "statistical", "volatility")
+ADAPTER_MODULES: tuple[str, ...] = (
+    "baselines",
+    "statistical",
+    "volatility",
+    "linear",
+    "trees",
+    "local",
+)
 
 _REGISTRY: dict[str, ZooRegistration] = {}
 
