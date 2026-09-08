@@ -32,6 +32,25 @@ ENV_PREFIX = "BTC_INTEL_"
 #: works and silently loses data is worse than one that requires a decision.
 DEFAULT_ROOT = "./btc-intel-state"
 
+#: The per-path override suffixes, in the order `from_environment` applies them.
+#: Named here rather than only at the call sites so the environment surface can
+#: be enumerated -- `.env.example` is checked against this, and a suffix added
+#: without documenting it fails that check rather than staying invisible.
+PATH_ENV_SUFFIXES: tuple[str, ...] = (
+    "STATE_ROOT",
+    "DATABASE",
+    "MANIFEST_DIR",
+    "CORPUS_DIR",
+    "BACKUP_DIR",
+    "LOG_DIR",
+    "LOCK_FILE",
+)
+
+#: Every variable `StoragePaths` reads, fully qualified.
+PATH_ENV_VARIABLES: tuple[str, ...] = tuple(
+    f"{ENV_PREFIX}{suffix}" for suffix in PATH_ENV_SUFFIXES
+)
+
 
 @dataclass(frozen=True)
 class StoragePaths:
@@ -219,6 +238,8 @@ def looks_ephemeral(path: Path) -> str | None:
 __all__ = [
     "DEFAULT_ROOT",
     "ENV_PREFIX",
+    "PATH_ENV_SUFFIXES",
+    "PATH_ENV_VARIABLES",
     "PathCheck",
     "StoragePaths",
     "StorageValidation",

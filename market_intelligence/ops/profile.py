@@ -54,10 +54,17 @@ from .scheduled import ScheduledOutcome, run_scheduled
 SYNDICATION = "syndication"
 
 
+#: The one variable a collection deployment genuinely requires. Named as a
+#: constant rather than written inline because it is read through an aliased
+#: mapping -- `env.get(...)`, where `env` may be a test double -- which no scan
+#: of `os.environ` can see. `.env.example` is checked against declarations like
+#: this one, so an undeclared read is an undocumented variable.
+CONTACT_ENV = "BTC_INTEL_CONTACT"
+
 #: Substituted into `user_agent` so a contact address never has to be committed.
 #: The address identifies a person, and a repository is the wrong place to
 #: publish one; the host supplies it and only the shape lives in the profile.
-CONTACT_PLACEHOLDER = "${BTC_INTEL_CONTACT}"
+CONTACT_PLACEHOLDER = "${" + CONTACT_ENV + "}"
 
 
 def _resolve_user_agent(
@@ -80,7 +87,7 @@ def _resolve_user_agent(
     env = os.environ if environment is None else environment
 
     if CONTACT_PLACEHOLDER in template:
-        contact = (env.get("BTC_INTEL_CONTACT") or "").strip()
+        contact = (env.get(CONTACT_ENV) or "").strip()
         if not contact:
             raise ConfigurationError(
                 f"collection profile {origin} asks for a contact address via "
