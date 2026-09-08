@@ -105,10 +105,14 @@ btc_forecaster/
 market_intelligence/
     collection/      feeds, syndication parsing, matching, clustering, readiness
     ops/             scheduled runs, storage paths, integrity, backup, watchdog
+    storage/         schema.py (the only DDL), store.py (every write),
+                     queries.py (every read, in a total order)
+    commands/        one module per command family, behind a registry
     corrections.py   the append-only ledger and the eligibility contract
-    storage.py       the DuckDB corpus and its point-in-time reads
+    reports.py       corpus status, providers, operations -- shared with the API
+    logs.py          structured JSON logging, and what it refuses to print
     b4/              the historical event-study engine
-    cli.py           btc-intel
+    cli.py           btc-intel: the parser, and nothing else
 ```
 
 Nothing in either core imports Prophet, XGBoost, arch, matplotlib, yfinance or
