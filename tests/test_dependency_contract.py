@@ -275,6 +275,21 @@ class TestThereIsOnePackagingAuthority:
         assert pyproject["project"]["dependencies"], "pyproject declares the base"
         assert "all" in pyproject["project"]["optional-dependencies"]
 
+    def test_both_packages_are_actually_packaged(self, pyproject: dict) -> None:
+        """`market_intelligence` was left out of `packages.find`, so
+        `pip install -e ".[market-intelligence]"` installed the collector's
+        dependencies and not the collector. Every green CI run and every
+        deployment worked because it happened to start in the repository root;
+        `import market_intelligence` raised from anywhere else."""
+        include = pyproject["tool"]["setuptools"]["packages"]["find"]["include"]
+        assert "btc_forecaster*" in include
+        assert "market_intelligence*" in include
+
+    def test_the_data_the_collector_reads_travels_with_it(self, pyproject: dict) -> None:
+        """`gold.py` resolves its fixtures relative to its own file."""
+        data = pyproject["tool"]["setuptools"]["package-data"]
+        assert "gold_*.json" in data["market_intelligence"]
+
     def test_the_lock_is_regenerable_by_a_committed_script(self) -> None:
         script = (REPO_ROOT / "scripts" / "lock.sh").read_text(encoding="utf-8")
         assert "pip compile pyproject.toml" in script

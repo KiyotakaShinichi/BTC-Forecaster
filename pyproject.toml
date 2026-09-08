@@ -73,11 +73,19 @@ all = [
 [project.scripts]
 btc-forecast = "btc_forecaster.cli:main"
 
+# Both packages. `market_intelligence` used to be omitted, so
+# `pip install -e ".[market-intelligence]"` installed the collector's
+# dependencies and not the collector: every green CI run and every deployment
+# worked only because it happened to be launched from the repository root, and
+# `import market_intelligence` raised anywhere else.
 [tool.setuptools.packages.find]
-include = ["btc_forecaster*"]
+include = ["btc_forecaster*", "market_intelligence*"]
 
 [tool.setuptools.package-data]
 "btc_forecaster.shadow" = ["registry-v1.json"]
+# `gold.py` reads these relative to its own file, so they have to travel with
+# the package or the gold-standard evaluation cannot run from an install.
+"market_intelligence" = ["gold_*.json", "config.example.json"]
 
 [tool.pytest.ini_options]
 minversion = "8.0"
