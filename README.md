@@ -323,6 +323,8 @@ A promoted research run without its manifest is an anecdote.
 - [`docs/seams.md`](docs/seams.md) — where external signals attach (Track B contract)
 - [`DEPLOYMENT.md`](DEPLOYMENT.md), [`AWS_BACKEND_API.md`](AWS_BACKEND_API.md) — deployment
 - [`DEPENDENCIES.md`](DEPENDENCIES.md) — the one dependency contract, and why the other files exist
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — how to build it, what CI enforces, and the four rules that are about the science rather than the code
+- [`CHANGELOG.md`](CHANGELOG.md) — the milestones, including the negative results
 - [`deploy/DEPLOYMENT.md`](deploy/DEPLOYMENT.md) — running the collector on a host
 - [`deploy/COLLECTION_FREEZE.md`](deploy/COLLECTION_FREEZE.md) — the frozen collection contracts
 - [`corrections/README.md`](corrections/README.md) — why invalidated evidence is kept
