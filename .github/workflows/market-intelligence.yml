@@ -1,3 +1,10 @@
+# The collector's test suite, its coverage floor, and the offline smoke tests
+# that prove the collection path works without touching a network.
+#
+# Tests only. Ruff, mypy and compileall for this subsystem live in
+# `quality.yml`, which runs on every push with no path filter, so the
+# collector is still linted under its own strict contract when a change lands
+# somewhere else entirely.
 name: Market Intelligence
 
 on:
@@ -35,8 +42,6 @@ jobs:
           python-version: "3.11"
           cache: pip
       - run: python -m pip install -r requirements-market-intelligence-dev.txt
-      - run: python -m ruff check --config market_intelligence/ruff.toml market_intelligence scripts btc-intel.py btc-intel-api.py tests/test_intelligence_*.py tests/test_market_intelligence.py
-      - run: python -m mypy --config-file market_intelligence/mypy.ini market_intelligence scripts btc-intel.py btc-intel-api.py
       # Output is captured so a failure is legible to somebody without admin
       # rights on this repository: job logs need `actions:read`, but a step
       # summary is published in the check run and is readable by anyone who can
@@ -61,7 +66,6 @@ jobs:
           # elevated permissions to read through the API, annotations do not.
           detail=$(grep -E "^(FAILED|ERROR|E  )" pytest.log | head -n 30 | sed "s/%/%25/g" | awk '{printf "%s%%0A", $0}')
           echo "::error title=pytest::${detail:-see step summary}"
-      - run: python -m compileall -q market_intelligence scripts tests btc-intel.py btc-intel-api.py
       - run: python btc-intel.py demo --output-dir .ci-intelligence-demo
       - run: python btc-intel.py gold-report --output .ci-gold-report.json
       - run: python -c "import hashlib,json,pathlib; p=pathlib.Path('.ci-intelligence-demo/replay-features.parquet'); m=json.loads(pathlib.Path('.ci-intelligence-demo/replay-features.manifest.json').read_text()); assert m['file_hash']==hashlib.sha256(p.read_bytes()).hexdigest(); assert m['row_count']==2"
@@ -201,19 +205,19 @@ jobs:
         run: |
           python - <<'PY'
           import tempfile, pathlib
-          from market_intelligence.cli import _corpus_status, _provider_report
+          from market_intelligence.reports import corpus_status, provider_report
           from market_intelligence.collection.policy import redact_mapping
           from market_intelligence.storage import IntelligenceStore
 
           with tempfile.TemporaryDirectory() as tmp:
               store = IntelligenceStore(pathlib.Path(tmp) / "empty.duckdb")
-              status = _corpus_status(store, "rules-v1", ["SEC", "Donald Trump"])
+              status = corpus_status(store, "rules-v1", ["SEC", "Donald Trump"])
               assert status.readiness.value == "NOT_READY", status.readiness
               assert all(not f.ready for f in status.families)
               assert "Donald Trump" in status.missing_entities
               store.close()
 
-          rows = _provider_report()
+          rows = provider_report()
           assert {r["provider_id"] for r in rows} >= {"syndication", "statements", "whales"}
           assert not any(r["operable"] and r["credentials_env"] and not r["credential_present"]
                          for r in rows), "a provider without its credential must not be operable"

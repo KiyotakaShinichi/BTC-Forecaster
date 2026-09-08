@@ -1,0 +1,210 @@
+# Repository-wide gates. Everything here runs on every push, with no path
+# filters, because each job answers a question about the repository rather than
+# about one subsystem.
+#
+# The two subsystem workflows -- `c0-validation.yml` (quant-core) and
+# `market-intelligence.yml` (intelligence) -- are path-filtered and own the test
+# suites and coverage floors, each under the lint contract it was written
+# against. This one owns what neither of them can:
+#
+#   static-quality        does the WHOLE repository lint, typecheck and compile
+#   dependency-contract   does the declared contract install and hold together
+#   fresh-clone           does a clean clone install from the lock and pass
+#
+# `fresh-clone` re-runs tests the subsystem jobs also run, and that overlap is
+# deliberate rather than accidental: those jobs prove the suites pass in the
+# narrow environments they are scoped to, and this one proves they pass together
+# in the single environment the lockfile actually describes. Nothing else here
+# is duplicated -- the static checks were removed from both subsystem jobs when
+# `static-quality` took them over, so each check has one home.
+name: Repository quality
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  static-quality:
+    name: static-quality
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      # Both halves, so both lint contracts can run in one job.
+      - name: Install the tooling
+        run: python -m pip install -e ".[dev,market-intelligence]" -c constraints.txt
+
+      # Two ruff configurations on purpose: the collector uses a different line
+      # length and rule set. Each subsystem is checked once, under its own
+      # contract, rather than twice under two.
+      - name: Ruff (quantitative core)
+        run: python -m ruff check btc_forecaster tests
+
+      - name: Ruff (market intelligence)
+        run: >-
+          python -m ruff check --config market_intelligence/ruff.toml
+          market_intelligence scripts btc-intel.py btc-intel-api.py
+          tests/test_intelligence_*.py tests/test_market_intelligence.py
+
+      # The collector is checked under mypy strict; the quantitative core is
+      # not, because the scientific stack is largely untyped and demanding full
+      # annotations there produces noise rather than caught defects.
+      - name: Mypy (quantitative core)
+        run: python -m mypy btc_forecaster --ignore-missing-imports
+
+      - name: Mypy (market intelligence, strict)
+        run: >-
+          python -m mypy --config-file market_intelligence/mypy.ini
+          market_intelligence scripts btc-intel.py btc-intel-api.py
+
+      - name: Compile everything
+        run: >-
+          python -m compileall -q btc_forecaster market_intelligence tests scripts
+          api_server.py btc-intel.py btc-intel-api.py
+
+      - name: Diff integrity
+        run: git diff --check
+
+      # No credential and no contact address may enter source control. The
+      # deployment's contact was configured into the host environment on that
+      # explicit condition, and this is the check that keeps it true.
+      #
+      # Structural rather than a list of forbidden strings: a scan that names
+      # the address it is looking for has put the address in a tracked file, and
+      # a list only ever catches the leak somebody already thought of. Every
+      # email in this repository is on a reserved example domain, so anything
+      # that is not is either a real address or a fixture that should have been.
+      - name: Secret scan
+        run: |
+          set -uo pipefail
+          fail=0
+
+          addresses=$(git grep -hIoE "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}" -- . | sort -u)
+          found=$(printf '%s\n' "$addresses" | grep -vE "@example\.[A-Za-z]+$|\.invalid$" || true)
+          if [ -n "$found" ]; then
+            echo "::error title=secret scan::real email address in a tracked file: $found"
+            fail=1
+          fi
+
+          if git grep -nIE "AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----" -- .; then
+            echo "::error title=secret scan::a credential is in a tracked file"
+            fail=1
+          fi
+
+          if git ls-files --error-unmatch .env >/dev/null 2>&1; then
+            echo "::error title=secret scan::.env is tracked; only .env.example may be"
+            fail=1
+          fi
+
+          [ "$fail" = 0 ] && echo "no real address, credential or .env in tracked files"
+          exit "$fail"
+
+      # The frontend has no package.json and no build step: 658 lines of
+      # hand-written HTML, CSS and JavaScript. Its whole dependency surface is
+      # one CDN script, so what it needs checking for is that the script is
+      # still pinned by hash as well as by version.
+      - name: Frontend integrity
+        run: |
+          set -euo pipefail
+          grep -q 'integrity="sha384-' frontend/index.html
+          grep -q 'crossorigin="anonymous"' frontend/index.html
+          test ! -f package.json
+          echo "frontend: 1 CDN dependency, pinned by version and hash"
+
+  dependency-contract:
+    name: dependency-contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      # The whole repository from the canonical contract alone. This is the
+      # gate that would have caught pytz: the collector was installable and
+      # unable to read its own corpus, because duckdb needs pytz for a
+      # TIMESTAMPTZ and does not declare it.
+      - name: Install the declared contract
+        run: python -m pip install -e ".[market-intelligence,dev]" -c constraints.txt
+
+      - name: Both halves import
+        run: python -c "import btc_forecaster, market_intelligence; print('both packages import')"
+
+      - name: A TIMESTAMPTZ round trip survives it
+        run: |
+          python - <<'PY'
+          import datetime, duckdb
+          c = duckdb.connect()
+          c.execute("CREATE TABLE t (x TIMESTAMPTZ)")
+          c.execute("INSERT INTO t VALUES (?)", [datetime.datetime.now(datetime.timezone.utc)])
+          value = c.execute("SELECT x FROM t").fetchone()[0]
+          assert value.tzinfo is not None, "TIMESTAMPTZ came back naive"
+          print("TIMESTAMPTZ round trip ok:", value.isoformat())
+          PY
+
+      # Asserts the lock is a real closure, fully hashed, resolved at 3.11, and
+      # that it has not drifted from the versions the committed evidence was
+      # produced under. A Dependabot pull request that bumps a declaration
+      # without regenerating the lock fails here, which is the intended
+      # behaviour -- Dependabot cannot run `scripts/lock.sh`.
+      - name: The contract agrees with itself
+        run: python -m pytest tests/test_dependency_contract.py tests/test_environment_template.py -q
+
+  fresh-clone:
+    name: fresh-clone
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      # No editable install, no extras, no constraints: exactly the two
+      # commands README and CONTRIBUTING tell a newcomer to run. If this job
+      # fails, the documented way into the repository does not work.
+      - name: Install from the lock, hashes enforced
+        run: |
+          python -m pip install --require-hashes -r requirements.lock
+          python -m pip install --no-deps -e .
+
+      # `market_intelligence` was absent from `packages.find` for months and
+      # nothing noticed, because everything that exercises it starts in the
+      # repository root. Importing from elsewhere is the only way to see it.
+      - name: Both packages import from outside the checkout
+        run: |
+          mkdir -p /tmp/elsewhere && cd /tmp/elsewhere
+          python -c "import btc_forecaster, market_intelligence; print('installed, not merely present')"
+
+      - name: CLI smoke
+        run: |
+          set -euo pipefail
+          btc-forecast --help > /dev/null
+          btc-forecast models
+          python btc-intel.py providers > /dev/null
+          python btc-intel.py --db /tmp/smoke.duckdb corpus-verify --json > /dev/null
+          python btc-intel.py --db /tmp/smoke.duckdb corpus-status --json --entities SEC > /dev/null
+          echo "both CLIs answer"
+
+      # The whole suite in one environment. The subsystem jobs run these under
+      # narrower installs and enforce the coverage floors; this proves they pass
+      # together, from the closure a deployment would actually get.
+      - name: The entire test suite
+        run: |
+          set -o pipefail
+          python -m pytest -q -rf --tb=short 2>&1 | tee pytest.log
+
+      - name: Publish failure detail
+        if: failure()
+        run: |
+          echo "### fresh clone failed" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          tail -n 120 pytest.log >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          detail=$(grep -E "^(FAILED|ERROR|E  )" pytest.log | head -n 30 | sed "s/%/%25/g" | awk '{printf "%s%%0A", $0}')
+          echo "::error title=fresh clone::${detail:-see step summary}"

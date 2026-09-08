@@ -356,3 +356,34 @@ class TestDependencyUpdatesAreAutomated:
         # script; without it the integrity attribute is silently inert.
         assert 'crossorigin="anonymous"' in page
 
+class TestCiExposesTheRepositoryWideGates:
+    WORKFLOWS = REPO_ROOT / ".github" / "workflows"
+
+    def test_the_repository_wide_workflow_has_no_path_filter(self) -> None:
+        """The subsystem workflows are path-filtered, so a collector-only change
+        used to leave the quantitative core unlinted and vice versa. The gates
+        that are about the repository run on everything."""
+        text = (self.WORKFLOWS / "quality.yml").read_text(encoding="utf-8")
+        head = text[: text.index("jobs:")]
+        assert "paths:" not in head, "quality.yml must run on every push"
+
+    def test_each_job_is_named_for_what_it_answers(self) -> None:
+        text = (self.WORKFLOWS / "quality.yml").read_text(encoding="utf-8")
+        for job in ("static-quality:", "dependency-contract:", "fresh-clone:"):
+            assert job in text, job
+
+    def test_the_static_checks_have_exactly_one_home(self) -> None:
+        """They used to run inside both subsystem jobs, under two different
+        configurations, with neither covering the other's code."""
+        quality = (self.WORKFLOWS / "quality.yml").read_text(encoding="utf-8")
+        assert "ruff check" in quality and "mypy" in quality and "compileall" in quality
+        for other in ("c0-validation.yml", "market-intelligence.yml"):
+            text = (self.WORKFLOWS / other).read_text(encoding="utf-8")
+            body = text[text.index("jobs:") :]
+            assert "ruff check" not in body, other
+            assert "compileall" not in body, other
+
+    def test_the_fresh_clone_job_installs_from_the_lock(self) -> None:
+        text = (self.WORKFLOWS / "quality.yml").read_text(encoding="utf-8")
+        assert "--require-hashes -r requirements.lock" in text
+        assert "--no-deps -e ." in text

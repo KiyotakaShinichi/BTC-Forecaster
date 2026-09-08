@@ -261,21 +261,30 @@ class TestTheDeploymentTemplateAgreesWithIt:
         assert collector <= set(template), sorted(collector - set(template))
 
     def test_it_carries_no_address_either(self) -> None:
-        text = self.COLLECTOR_TEMPLATE.read_text(encoding="utf-8").casefold()
-        for fragment in TestTheTemplateCarriesNoSecrets.FORBIDDEN:
-            assert fragment not in text, fragment
+        assert not real_addresses(self.COLLECTOR_TEMPLATE.read_text(encoding="utf-8"))
+
+
+#: RFC 2606 reserves these for documentation, and `.invalid` for anything that
+#: must never resolve. An address outside them in a template is a real address.
+_ADDRESS = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
+_RESERVED = re.compile(r"@example\.[A-Za-z]+$|\.invalid$")
+
+
+def real_addresses(text: str) -> list[str]:
+    return sorted({
+        found for found in _ADDRESS.findall(text) if not _RESERVED.search(found)
+    })
 
 
 class TestTheTemplateCarriesNoSecrets:
     #: A dedicated project address was configured into the deployment host in an
     #: earlier track, on the explicit condition that it never enter source
-    #: control. This is the check that keeps that true.
-    FORBIDDEN = ("santos.cesarndrei", "gmail.com", "ndreisantos")
+    #: control. This is the check that keeps that true -- and it checks the
+    #: *shape* rather than naming the address, because a test that names the
+    #: thing it forbids has put that thing in a tracked file.
 
     def test_no_real_contact_address(self) -> None:
-        text = TEMPLATE.read_text(encoding="utf-8").casefold()
-        for fragment in self.FORBIDDEN:
-            assert fragment not in text, fragment
+        assert not real_addresses(TEMPLATE.read_text(encoding="utf-8"))
 
     def test_the_contact_is_a_placeholder(self, template: dict[str, str]) -> None:
         value = template["BTC_INTEL_CONTACT"]

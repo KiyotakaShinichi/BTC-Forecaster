@@ -1,8 +1,13 @@
-# Named for the whole quantitative core, not just C0. It runs A2's evaluation
-# semantics, the A4 typed core, the C0 paper engine and the A3 shadow ledger --
-# every test that is not the collector's. The filename is left as
+# The quantitative core's test suite and its coverage floor. It runs A2's
+# evaluation semantics, the A4 typed core, the C0 paper engine and the A3 shadow
+# ledger -- every test that is not the collector's. The filename is left as
 # c0-validation.yml so this workflow keeps its run history; GitHub keys that on
 # the path, not the name.
+#
+# Tests only. Ruff, mypy, compileall and the dependency contract live in
+# `quality.yml`, which runs on every push with no path filter -- so a change
+# that touches only the collector still gets the whole repository linted, and
+# each check has exactly one home.
 name: Quantitative core (A2/A4 + C0 paper + A3 shadow)
 
 # Scoped to the quantitative core. The collector has its own workflow, its own
@@ -38,12 +43,6 @@ jobs:
           cache: pip
       - name: Install declared environment
         run: python -m pip install -e ".[dev]" -c constraints.txt
-      - name: Ruff
-        run: python -m ruff check btc_forecaster tests
-      - name: Mypy
-        run: python -m mypy btc_forecaster --ignore-missing-imports
-      - name: Compile
-        run: python -m compileall -q btc_forecaster tests api_server.py
       # Output captured so a failure is legible to anyone who can see the repo:
       # job logs need `actions:read` and step summaries are not exposed by the
       # API at all, but annotations are.
@@ -62,36 +61,3 @@ jobs:
           echo "::error title=quantitative core::${detail:-see step summary}"
       - name: C0 fail-closed A2 regression
         run: python -m pytest tests/test_paper_a2_regression.py -q
-      - name: Diff integrity
-        run: git diff --check
-
-  dependency-contract:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: pip
-      # The whole repository from the canonical contract alone. This is the
-      # gate that would have caught pytz: the collector was installable and
-      # unable to read its own corpus, because duckdb needs pytz for a
-      # TIMESTAMPTZ and does not declare it.
-      - name: Install the declared contract
-        run: python -m pip install -e ".[market-intelligence,dev]" -c constraints.txt
-      - name: Both halves import
-        run: |
-          python -c "import btc_forecaster, market_intelligence; print('both packages import')"
-      - name: A TIMESTAMPTZ round trip survives it
-        run: |
-          python - <<'PY'
-          import datetime, duckdb
-          c = duckdb.connect()
-          c.execute("CREATE TABLE t (x TIMESTAMPTZ)")
-          c.execute("INSERT INTO t VALUES (?)", [datetime.datetime.now(datetime.timezone.utc)])
-          value = c.execute("SELECT x FROM t").fetchone()[0]
-          assert value.tzinfo is not None, "TIMESTAMPTZ came back naive"
-          print("TIMESTAMPTZ round trip ok:", value.isoformat())
-          PY
-      - name: The contract agrees with itself
-        run: python -m pytest tests/test_dependency_contract.py -q
