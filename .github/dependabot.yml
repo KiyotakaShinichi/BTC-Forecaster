@@ -1,0 +1,116 @@
+# Automated dependency updates.
+#
+# Three ecosystems are configured because three exist here. There is no `npm`
+# entry, and that absence is deliberate: see the note at the bottom.
+#
+# Nothing here auto-merges. Every update opens a pull request that has to pass
+# the same five CI jobs as any other change, and two of those are the reason
+# this configuration is worth having at all -- `dependency-contract` asserts the
+# lockfile still agrees with the declared contract, and `fresh-clone` installs
+# from the lock with `--require-hashes` and runs the whole suite.
+#
+# IMPORTANT: Dependabot cannot regenerate `requirements.lock`. It reads
+# `pyproject.toml` and the pinned requirements files; the lock is compiled from
+# those by `scripts/lock.sh` with uv, which Dependabot does not run. So a
+# dependency PR arrives with the declaration bumped and the closure stale, and
+# `dependency-contract` fails until somebody runs the script and pushes the
+# regenerated lock onto the branch. That is a real manual step, and a red build
+# is the right way to be told about it -- an update that silently left the lock
+# behind would be worse than no automation.
+version: 2
+
+updates:
+  # ---------------------------------------------------------------- Python
+  # Reads pyproject.toml, constraints.txt and the collector's pinned lists.
+  - package-ecosystem: pip
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - python
+    commit-message:
+      prefix: build(deps)
+      prefix-development: build(deps-dev)
+    groups:
+      # One PR for the toolchain rather than four. These move often, break
+      # nothing scientific, and reviewing them separately is pure noise.
+      dev-tooling:
+        patterns:
+          - ruff
+          - mypy
+          - pytest*
+          - coverage
+          - httpx
+    ignore:
+      # The scientific stack stays where the committed evidence under
+      # research/runs/ was produced. Bumping numpy or pandas across a major is
+      # a change that has to produce its own evidence -- the artifacts record
+      # package versions precisely because a result is a result *under* them --
+      # so it is not something to accept from an automated pull request.
+      - dependency-name: numpy
+        update-types: [version-update:semver-major]
+      - dependency-name: pandas
+        update-types: [version-update:semver-major]
+      - dependency-name: scipy
+        update-types: [version-update:semver-major]
+      - dependency-name: statsmodels
+        update-types: [version-update:semver-major]
+      - dependency-name: scikit-learn
+        update-types: [version-update:semver-major]
+      - dependency-name: xgboost
+        update-types: [version-update:semver-major]
+      - dependency-name: prophet
+        update-types: [version-update:semver-major]
+
+  # ------------------------------------------------------- GitHub Actions
+  # `actions/checkout@v4` and friends are dependencies with the most privileged
+  # position in the repository: they run with the workflow token.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    labels:
+      - dependencies
+      - ci
+    commit-message:
+      prefix: ci(deps)
+
+  # ---------------------------------------------------------------- Docker
+  # Both images are FROM python:3.11-slim. A base image is where security
+  # patches arrive without anything in this repository changing.
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    labels:
+      - dependencies
+      - docker
+    commit-message:
+      prefix: build(docker)
+    ignore:
+      # 3.11 is the deployment contract: the floor in requires-python, the
+      # version both CI jobs use and the version requirements.lock is resolved
+      # at. Moving it is a decision, not an update.
+      - dependency-name: python
+        update-types: [version-update:semver-major, version-update:semver-minor]
+
+# --------------------------------------------------------------------------
+# Why there is no `npm` entry.
+#
+# `frontend/` is 658 lines of hand-written HTML, CSS and JavaScript with no
+# package.json, no build step and no node_modules. Its entire dependency surface
+# is one version-pinned script tag pulling plotly.js from a CDN, which
+# Dependabot's npm ecosystem cannot see and would not update.
+#
+# Adding a package.json so that a scanner finds an npm manifest would create a
+# dependency file describing dependencies that do not exist. What that single
+# CDN dependency actually needed was a subresource-integrity hash, so the
+# browser refuses a script whose bytes changed -- a pinned version alone trusts
+# the CDN to keep serving the same file under the same URL. That is in
+# `frontend/index.html`, and a test checks it stays there.
+# --------------------------------------------------------------------------

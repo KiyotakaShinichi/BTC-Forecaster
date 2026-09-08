@@ -296,3 +296,63 @@ class TestThereIsOnePackagingAuthority:
         assert "--constraints constraints.txt" in script
         assert "--generate-hashes" in script
         assert "--output-file requirements.lock" in script
+
+
+class TestDependencyUpdatesAreAutomated:
+    """`.github/dependabot.yml`, checked as text.
+
+    Parsed with plain string checks rather than a YAML library on purpose: this
+    file has to pass in the quant CI job, which installs `.[dev]` and has no
+    yaml. A test that skipped itself when an import was missing would be a test
+    that never ran in the one environment it was written for -- and GitHub
+    already rejects a malformed configuration visibly, so what is worth pinning
+    here is the *policy*, not the syntax.
+    """
+
+    CONFIG = REPO_ROOT / ".github" / "dependabot.yml"
+
+    def test_it_exists(self) -> None:
+        assert self.CONFIG.exists()
+
+    def test_it_covers_the_ecosystems_that_exist(self) -> None:
+        text = self.CONFIG.read_text(encoding="utf-8")
+        for ecosystem in ("pip", "github-actions", "docker"):
+            assert f"package-ecosystem: {ecosystem}" in text, ecosystem
+
+    def test_it_does_not_configure_an_ecosystem_that_does_not_exist(self) -> None:
+        """`frontend/` is hand-written HTML, CSS and JavaScript with no
+        package.json and no build step. An npm entry would describe
+        dependencies that are not there, which is configuration for a scanner
+        rather than for a maintainer."""
+        assert "package-ecosystem: npm" not in self.CONFIG.read_text(encoding="utf-8")
+        assert not (REPO_ROOT / "package.json").exists()
+
+    def test_nothing_auto_merges(self) -> None:
+        """Every update goes through the same five CI jobs as any other change.
+        Two of them exist to catch exactly what an unattended bump breaks."""
+        directives = " ".join(
+            line
+            for line in self.CONFIG.read_text(encoding="utf-8").splitlines()
+            if not line.strip().startswith("#")
+        ).casefold()
+        assert "automerge" not in directives and "auto-merge" not in directives
+
+    def test_the_scientific_stack_is_not_bumped_across_a_major(self) -> None:
+        """The committed evidence under `research/runs/` records the package
+        versions it was produced under, because a result is a result *under*
+        them. Moving numpy or pandas is a change that has to produce its own
+        evidence, not one to accept from an automated pull request."""
+        text = self.CONFIG.read_text(encoding="utf-8")
+        for name in ("numpy", "pandas", "scipy", "statsmodels", "prophet", "xgboost"):
+            assert f"dependency-name: {name}" in text, name
+
+    def test_the_one_frontend_dependency_is_pinned_by_hash(self) -> None:
+        """What that single CDN script tag actually needed. A pinned version
+        alone trusts the CDN to keep serving the same bytes under the same URL,
+        and the browser cannot tell when it stops."""
+        page = (REPO_ROOT / "frontend" / "index.html").read_text(encoding="utf-8")
+        assert 'integrity="sha384-' in page
+        # Required for the browser to check the hash at all on a cross-origin
+        # script; without it the integrity attribute is silently inert.
+        assert 'crossorigin="anonymous"' in page
+

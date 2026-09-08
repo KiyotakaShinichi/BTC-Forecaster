@@ -5,7 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>BTC Bayesian Forecaster</title>
   <link rel="stylesheet" href="/static/styles.css" />
-  <script src="https://cdn.plot.ly/plotly-2.32.0.min.js"></script>
+  <!-- The only third-party code this page loads. Pinned by version AND by
+     hash: a version alone trusts the CDN to keep serving the same bytes
+     under the same URL, and the browser cannot tell if it stops.
+     `crossorigin` is required for the browser to check the hash at all.
+     Regenerate after any version change:
+       curl -s <url> | openssl dgst -sha384 -binary | openssl base64 -A -->
+<script src="https://cdn.plot.ly/plotly-2.32.0.min.js"
+        integrity="sha384-7TVmlZWH60iKX5Uk7lSvQhjtcgw2tkFjuwLcXoRSR4zXTyWFJRm9aPAguMh7CIra"
+        crossorigin="anonymous"
+        referrerpolicy="no-referrer"></script>
 </head>
 <body>
   <main class="container">
