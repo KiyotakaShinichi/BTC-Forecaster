@@ -46,6 +46,7 @@ from .contracts import (
     ModelStatus,
     TrainingSet,
     ZooForecast,
+    ZooModel,
 )
 from .metrics import (
     SMAPE_EXCLUSION_REASON,
@@ -107,6 +108,9 @@ class BenchmarkResult:
 
     outcomes: list[ModelOutcome]
     forecasts: dict[str, ZooForecast]
+    #: The fitted models, kept so the run can serialize them and prove the
+    #: round trip. Forty small models; the largest is about a megabyte.
+    models: dict[str, ZooModel]
     dataset: ZooDataset
     actual: np.ndarray
     origins: pd.DatetimeIndex
@@ -197,7 +201,7 @@ def run_model(
     evaluation: EvaluationContext,
     *,
     naive_mae: float,
-) -> tuple[ModelOutcome, ZooForecast | None]:
+) -> tuple[ModelOutcome, ZooForecast | None, ZooModel | None]:
     """Fit, calibrate if declared, predict and score one model.
 
     Every failure path lands in the outcome rather than propagating, because one
@@ -214,10 +218,10 @@ def run_model(
 
     if outcome.status is ModelStatus.UNSUITABLE_FOR_CONSTRAINED_LAB:
         outcome.failure = {"reason": registration.unsuitable_reason}
-        return outcome, None
+        return outcome, None, None
     if outcome.status is ModelStatus.SKIPPED_DEPENDENCY:
         outcome.failure = {"missing_dependency": registration.missing_dependency()}
-        return outcome, None
+        return outcome, None, None
 
     budget = RESOURCE_BUDGET_SECONDS[registration.resource_class]
     started = time.perf_counter()
@@ -246,7 +250,7 @@ def run_model(
             "resource_class": registration.resource_class.value,
             "budget_seconds": budget,
         }
-        return outcome, None
+        return outcome, None, None
 
     if outcome.total_seconds > budget:
         # Recorded, not discarded: the forecast is valid, the model simply cost
@@ -273,7 +277,7 @@ def run_model(
     )
     if outcome.status is not ModelStatus.RESOURCE_LIMIT:
         outcome.status = ModelStatus.ACTIVE
-    return outcome, forecast
+    return outcome, forecast, model
 
 
 def run_benchmark(
@@ -296,17 +300,21 @@ def run_benchmark(
     started = time.perf_counter()
     outcomes: list[ModelOutcome] = []
     forecasts: dict[str, ZooForecast] = {}
+    models: dict[str, ZooModel] = {}
     for model_id in wanted:
-        outcome, forecast = run_model(
+        outcome, forecast, model = run_model(
             model_id, train, development, evaluation, naive_mae=naive_mae
         )
         outcomes.append(outcome)
         if forecast is not None:
             forecasts[model_id] = forecast
+        if model is not None:
+            models[model_id] = model
 
     return BenchmarkResult(
         outcomes=outcomes,
         forecasts=forecasts,
+        models=models,
         dataset=dataset,
         actual=actual,
         origins=evaluation.origins,
@@ -362,6 +370,7 @@ def build_manifest(result: BenchmarkResult, *, extra: dict | None = None) -> dic
             ),
         },
         "registry": registry.summary(),
+        "registry_entries": [r.as_dict() for r in registry.all_registrations()],
         "capability_matrix": registry.capability_matrix(),
         "counts": {
             "attempted": len(result.outcomes),
@@ -385,13 +394,52 @@ def build_manifest(result: BenchmarkResult, *, extra: dict | None = None) -> dic
     return manifest
 
 
-def write_run(result: BenchmarkResult, directory: Path | str, *, extra: dict | None = None) -> Path:
+def analyse(result: BenchmarkResult) -> dict:
+    """The four post-hoc analyses, computed from one run's forecasts.
+
+    Kept out of `run_benchmark` because they answer questions *about* the table
+    rather than producing it, and because each can be recomputed from a saved
+    run without refitting forty models.
+    """
+    from . import comparison as comparison_module
+    from . import diagnostics as diagnostics_module
+
+    points = {model_id: forecast.point for model_id, forecast in result.forecasts.items()}
+    if not points:
+        return {"status": "no model produced a forecast"}
+
+    comparisons: dict = {"status": "the baseline did not run"}
+    if comparison_module.DEFAULT_BASELINE in points:
+        raw = comparison_module.compare_against_baseline(result.actual, points)
+        comparisons = comparison_module.correct_for_multiplicity(raw)
+
+    stability = comparison_module.stability_by_block(result.actual, points)
+    return {
+        "comparison": comparisons,
+        "stability": stability.to_dict(orient="records"),
+        "diversity": comparison_module.error_diversity(result.actual, points),
+        "diagnostics": diagnostics_module.diagnose_all(
+            {model_id: result.actual - point for model_id, point in points.items()}
+        ),
+    }
+
+
+def write_run(
+    result: BenchmarkResult,
+    directory: Path | str,
+    *,
+    extra: dict | None = None,
+    serialize_models: bool = True,
+) -> Path:
     """Write the artifacts, manifest **last**.
 
     Everything before the manifest can crash and leave a partial directory; the
     manifest's presence is the claim that the run finished. Same rule, same
     reason, as the collector's manifest.
     """
+    from .cards import write_cards
+    from .serialization import round_trip_is_exact, write_artifact
+
     out = Path(directory)
     out.mkdir(parents=True, exist_ok=True)
 
@@ -414,7 +462,41 @@ def write_run(result: BenchmarkResult, directory: Path | str, *, extra: dict | N
         encoding="utf-8",
     )
 
-    manifest = build_manifest(result, extra=extra)
+    analyses = analyse(result)
+    (out / "analysis.json").write_text(
+        json.dumps(analyses, indent=2, default=str), encoding="utf-8"
+    )
+
+    artifacts: dict[str, dict] = {}
+    if serialize_models:
+        evaluation = result.dataset.evaluation_context()
+        for model_id, model in sorted(result.models.items()):
+            try:
+                artifact = write_artifact(model, out / "artifacts")
+                entry = artifact.as_dict()
+                entry["round_trip_exact"] = round_trip_is_exact(model, evaluation)
+                artifacts[model_id] = entry
+            except Exception as exc:  # noqa: BLE001 -- recorded like any other failure
+                artifacts[model_id] = {
+                    "model_id": model_id,
+                    "error": f"{type(exc).__name__}: {exc}",
+                }
+        (out / "artifacts.json").write_text(
+            json.dumps(artifacts, indent=2), encoding="utf-8"
+        )
+
+    manifest = build_manifest(
+        result, extra={**(extra or {}), "analysis": analyses, "artifacts": artifacts}
+    )
+    write_cards(
+        manifest,
+        out / "cards",
+        diagnostics=analyses.get("diagnostics"),
+        comparisons=analyses.get("comparison"),
+        stability=analyses.get("stability"),
+        artifacts=artifacts,
+    )
+
     # Last. Deliberately.
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2, default=str), encoding="utf-8")
     return out / "manifest.json"
@@ -435,6 +517,7 @@ def assert_nothing_promoted(manifest: dict) -> None:
 
 __all__ = [
     "BENCHMARK_KIND",
+    "analyse",
     "BenchmarkResult",
     "ModelOutcome",
     "assert_nothing_promoted",

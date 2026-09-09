@@ -110,6 +110,35 @@ class Tensor:
         assert self.grad is not None, "a backward closure ran on a constant node"
         return self.grad
 
+    # -- pickling ---------------------------------------------------------
+
+    def __getstate__(self) -> dict:
+        """Persist the value, drop the tape.
+
+        `_backward` is a closure and `_parents` is the graph it walks; neither
+        is picklable and neither means anything after training. What a saved
+        model needs is the number. Dropping them is what makes the deep family
+        serializable at all -- a lambda cannot be pickled, and a Tensor without
+        this would take every one of them down with it.
+        """
+        return {
+            "data": self.data,
+            "grad": self.grad,
+            "requires_grad": self.requires_grad,
+            "_label": self._label,
+        }
+
+    def __setstate__(self, state: dict) -> None:
+        self.data = state["data"]
+        self.grad = state["grad"]
+        self.requires_grad = state["requires_grad"]
+        self._label = state.get("_label", "")
+        # A reloaded tensor is a leaf: it has a value and no history. Calling
+        # backward() through it is a no-op rather than an error, which is
+        # correct -- there is nothing behind it to differentiate.
+        self._parents = ()
+        self._backward = lambda: None
+
     def zero_grad(self) -> None:
         if self.requires_grad:
             self.grad = np.zeros_like(self.data)
