@@ -436,7 +436,7 @@ def write_run(
     manifest's presence is the claim that the run finished. Same rule, same
     reason, as the collector's manifest.
     """
-    from .cards import write_cards
+    from .cards import build_run_readme, write_cards
     from .serialization import round_trip_is_exact, write_artifact
 
     out = Path(directory)
@@ -495,6 +495,10 @@ def write_run(
         stability=analyses.get("stability"),
         artifacts=artifacts,
     )
+
+    # The directory's own entry point. A reader who opens it before reading
+    # anything else must meet the scientific status before the numbers.
+    (out / "README.md").write_text(build_run_readme(manifest), encoding="utf-8")
 
     # Last. Deliberately.
     (out / "manifest.json").write_text(json.dumps(manifest, indent=2, default=str), encoding="utf-8")

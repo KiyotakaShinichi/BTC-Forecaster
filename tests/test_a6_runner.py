@@ -282,3 +282,34 @@ class TestTheCommandLine:
 
     def test_the_parser_defaults_to_one_thousand_rows(self) -> None:
         assert build_parser().parse_args([]).train_rows == 1000
+
+    def test_the_manifest_names_the_snapshot_it_ran_on(self, tmp_path: Path) -> None:
+        """The snapshot is not committed, so its hash is the only thing that
+        makes a written run checkable.
+
+        Without it the evidence directory reports numbers whose input cannot be
+        identified. yfinance revises history silently -- the A6 and A2 pulls
+        cover almost the same span and hash differently -- so a reader with a
+        later snapshot must be able to see that in the provenance rather than
+        infer it from results that do not reproduce.
+        """
+        import hashlib
+
+        csv = tmp_path / "data.csv"
+        frame = synthetic_market_frame(periods=400, kind="ar1", seed=11)
+        frame.to_csv(csv)
+
+        out = tmp_path / "run"
+        assert main(
+            [
+                "--data", str(csv),
+                "--output", str(out),
+                "--train-rows", "120",
+                "--models", "naive_last_value,ar_p",
+            ]
+        ) == 0
+
+        source = json.loads((out / "manifest.json").read_text(encoding="utf-8"))["source"]
+        assert source["sha256"] == hashlib.sha256(csv.read_bytes()).hexdigest()
+        assert source["bars"] == len(frame)
+        assert source["not_committed"] is True

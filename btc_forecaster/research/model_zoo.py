@@ -17,6 +17,7 @@ model set here, in the README, or in the tests.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 from pathlib import Path
@@ -169,7 +170,20 @@ def main(argv: list[str] | None = None) -> int:
 
     result = run_benchmark(frame, spec=spec, model_ids=model_ids)
 
-    extra: dict = {}
+    # The snapshot is not committed -- Yahoo's terms do not grant redistribution
+    # -- so the hash is the only thing that makes this run checkable. Without it
+    # the evidence directory states results whose input cannot be identified,
+    # and a reader running against a revised snapshot would see the mismatch in
+    # the numbers rather than in the provenance. yfinance revises history
+    # silently, so that is not hypothetical here.
+    extra: dict = {
+        "source": {
+            "path": data_path.as_posix(),
+            "sha256": hashlib.sha256(data_path.read_bytes()).hexdigest(),
+            "bars": int(len(frame)),
+            "not_committed": True,
+        }
+    }
     if args.sample_efficiency:
         print("  running the sample-efficiency subset...")
         extra["sample_efficiency"] = {

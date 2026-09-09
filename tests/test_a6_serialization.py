@@ -20,7 +20,11 @@ import numpy as np
 import pytest
 
 from btc_forecaster.research import registry
-from btc_forecaster.research.cards import SHARED_LIMITATIONS, build_card
+from btc_forecaster.research.cards import (
+    SHARED_LIMITATIONS,
+    build_card,
+    build_run_readme,
+)
 from btc_forecaster.research.contracts import EXPLORATORY, Capability
 from btc_forecaster.research.partition import PartitionSpec
 from btc_forecaster.research.runner import analyse, build_manifest, run_benchmark, write_run
@@ -150,6 +154,69 @@ class TestTheRunWritesItsArtifacts:
             (p for p in tmp_path.rglob("*") if p.is_file()), key=lambda p: p.stat().st_mtime
         )
         assert newest.name == "manifest.json"
+
+
+class TestTheRunDirectoryExplainsItself:
+    """A reader opening the evidence directory meets its status before its
+    numbers.
+
+    Ninety files and no entry point invites the most damaging possible
+    inference: that the top row of `results.csv` is the best model and therefore
+    a recommendation. The README is generated rather than written so that a
+    rerun which changes a count cannot leave a confident summary of the old one
+    standing.
+    """
+
+    def test_the_status_precedes_the_numbers(self, result, tmp_path) -> None:
+        write_run(result, tmp_path)
+        text = (tmp_path / "README.md").read_text(encoding="utf-8")
+        assert EXPLORATORY in text
+        assert "do not supersede A2" in text
+        # Before any measured value appears.
+        assert text.index("do not supersede A2") < text.index("Headline")
+
+    def test_it_names_the_snapshot_when_one_is_known(self, result, tmp_path) -> None:
+        """Written runs come from the CLI, which passes the source block. The
+        hash is the only thing that identifies the input, which is not
+        committed."""
+        write_run(
+            result,
+            tmp_path,
+            extra={"source": {"path": "data/x.csv", "sha256": "a" * 64, "bars": 3536}},
+        )
+        text = (tmp_path / "README.md").read_text(encoding="utf-8")
+        assert "a" * 64 in text
+        assert "not committed" in text
+
+    def test_it_states_that_nothing_was_promoted(self, result, tmp_path) -> None:
+        write_run(result, tmp_path)
+        text = (tmp_path / "README.md").read_text(encoding="utf-8")
+        assert "| Promoted | 0 |" in text
+        assert "| Live trading | False |" in text
+        assert "Not a trading recommendation" in text
+
+    def test_it_counts_rather_than_ranks(self, result, tmp_path) -> None:
+        """It may say how many models beat the baseline. It may not present the
+        leader as a choice."""
+        write_run(result, tmp_path)
+        text = (tmp_path / "README.md").read_text(encoding="utf-8")
+        assert "beat the naive zero-return forecast" in text
+        assert "is not a finding" in text
+        assert "recommend" not in text.lower().replace("not a trading recommendation", "")
+
+    def test_it_is_derived_not_authored(self, result) -> None:
+        manifest = build_manifest(result)
+        text = build_run_readme(manifest)
+        assert str(manifest["counts"]["scored"]) in text
+        assert str(manifest["wall_clock_seconds"]) in text
+
+    def test_it_is_written_before_the_manifest(self, result, tmp_path) -> None:
+        """Same rule as everything else here: the manifest is the completion
+        claim, so it lands last."""
+        write_run(result, tmp_path)
+        readme = (tmp_path / "README.md").stat().st_mtime_ns
+        manifest = (tmp_path / "manifest.json").stat().st_mtime_ns
+        assert readme <= manifest
 
 
 class TestModelCardsAreGenerated:
