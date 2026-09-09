@@ -214,6 +214,14 @@ class EvaluationContext:
     #: and "the day before" is not a safe way to say "the previous bar".
     feature_bar: pd.Series
     train_end: pd.Timestamp
+    #: The design matrix over *all* supervised rows, training included. Sequence
+    #: models need it so their first evaluation window reaches back into
+    #: realised history instead of starting from nothing. Handing over rows that
+    #: postdate an origin is safe because a window is built as
+    #: ``[position - lookback + 1, position]`` and every row in it carries a
+    #: feature bar strictly before the bar being predicted -- which the leakage
+    #: suite verifies by poisoning the future and asserting nothing moves.
+    design: pd.DataFrame | None = None
 
     def __post_init__(self) -> None:
         if not self.X.index.equals(self.y.index):

@@ -106,6 +106,7 @@ ADAPTER_MODULES: tuple[str, ...] = (
     "trees",
     "local",
     "probabilistic",
+    "deep",
 )
 
 _REGISTRY: dict[str, ZooRegistration] = {}

@@ -214,6 +214,7 @@ class ZooDataset:
             close=self.close.loc[self.close.index <= dev.max()],
             feature_bar=self.feature_bar.loc[dev],
             train_end=self.partition.budget.max(),
+            design=self.X,
         )
 
     def evaluation_context(self) -> EvaluationContext:
@@ -226,6 +227,7 @@ class ZooDataset:
             close=self.close,
             feature_bar=self.feature_bar.loc[holdout],
             train_end=self.partition.dev.max(),
+            design=self.X,
         )
 
     def as_dict(self) -> dict:
