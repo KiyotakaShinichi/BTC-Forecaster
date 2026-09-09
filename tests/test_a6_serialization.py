@@ -16,6 +16,8 @@ somebody believed when they wrote it -- and stops being true silently.
 
 from __future__ import annotations
 
+import json
+
 import numpy as np
 import pytest
 
@@ -27,7 +29,13 @@ from btc_forecaster.research.cards import (
 )
 from btc_forecaster.research.contracts import EXPLORATORY, Capability
 from btc_forecaster.research.partition import PartitionSpec
-from btc_forecaster.research.runner import analyse, build_manifest, run_benchmark, write_run
+from btc_forecaster.research.runner import (
+    TIMING_COLUMNS,
+    analyse,
+    build_manifest,
+    run_benchmark,
+    write_run,
+)
 from btc_forecaster.research.serialization import (
     Artifact,
     ArtifactIntegrityError,
@@ -209,6 +217,21 @@ class TestTheRunDirectoryExplainsItself:
         text = build_run_readme(manifest)
         assert str(manifest["counts"]["scored"]) in text
         assert str(manifest["wall_clock_seconds"]) in text
+
+    def test_it_publishes_the_digest_a_reproduction_is_checked_against(
+        self, result, tmp_path
+    ) -> None:
+        """The README is where a reader looks first, so the check belongs there
+        rather than only in the manifest -- together with what the digest
+        covers, since a hash whose inputs are unstated cannot be reproduced."""
+        write_run(result, tmp_path)
+        manifest = json.loads((tmp_path / "manifest.json").read_text(encoding="utf-8"))
+        text = (tmp_path / "README.md").read_text(encoding="utf-8")
+        assert manifest["results_table_sha256"] in text
+        assert "Reproducing this run" in text
+        assert "`mae`" in text
+        for excluded in TIMING_COLUMNS:
+            assert f"`{excluded}`" not in text
 
     def test_it_is_written_before_the_manifest(self, result, tmp_path) -> None:
         """Same rule as everything else here: the manifest is the completion

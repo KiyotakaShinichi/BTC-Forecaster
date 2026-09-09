@@ -331,6 +331,26 @@ def build_run_readme(manifest: dict) -> str:
         "block analysis in `analysis.json` exists because a mean across the "
         "holdout can describe nothing.",
         "",
+        "## Reproducing this run",
+        "",
+        "```bash",
+        "python -m btc_forecaster.research.model_zoo \\",
+        f"    --train-rows {(dataset.get('partition') or {}).get('spec', {}).get('train_rows')} \\",
+        "    --output research/runs/a6-model-zoo --sample-efficiency",
+        "```",
+        "",
+        f"- `results_table_sha256` **`{manifest.get('results_table_sha256')}`**",
+        "- That digest covers "
+        + ", ".join(f"`{c}`" for c in manifest.get("results_table_hashed_columns") or [])
+        + ".",
+        "- Wall-clock columns are deliberately outside it: they are properties of "
+        "the machine, not of the result, and hashing them would make the one "
+        "field offered as a reproducibility check disagree with itself on every "
+        "run.",
+        "- A reproduction that matches this digest and the snapshot hash above "
+        "reproduced the study. One that matches the snapshot but not the digest "
+        "is a defect worth reporting.",
+        "",
         "## Files",
         "",
         "| file | what it is |",
