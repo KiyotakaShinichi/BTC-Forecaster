@@ -555,11 +555,11 @@ for _cls, _description, _notes in _DEEP:
             requires=(),
             notes=(
                 *_notes,
-                f"Trained on the numpy autodiff engine in this repository, whose "
-                f"gradients are checked against central finite differences. torch "
-                f"is not a dependency: the lock is compiled with --all-extras and "
-                f"installed by the fresh-clone CI job, so a torch extra would put "
-                f"a multi-gigabyte CUDA closure in every clean install.",
+                "Trained on the numpy autodiff engine in this repository, whose "
+                "gradients are checked against central finite differences. torch "
+                "is not a dependency: the lock is compiled with --all-extras and "
+                "installed by the fresh-clone CI job, so a torch extra would put "
+                "a multi-gigabyte CUDA closure in every clean install.",
                 f"Budget frozen and shared across all seven: lookback {LOOKBACK}, "
                 f"max {MAX_EPOCHS} epochs, batch {BATCH_SIZE}, lr {LEARNING_RATE}, "
                 f"patience {PATIENCE}, seed {SEED}. Early stopping watches DEV.",

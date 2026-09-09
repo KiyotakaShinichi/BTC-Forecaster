@@ -28,7 +28,7 @@ import hashlib
 import pickle
 import platform
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import numpy as np
@@ -95,7 +95,7 @@ def serialize(model: ZooModel) -> Artifact:
         payload=payload,
         sha256=hashlib.sha256(payload).hexdigest(),
         bytes_written=len(payload),
-        created_at=datetime.now(timezone.utc).isoformat(),
+        created_at=datetime.now(UTC).isoformat(),
         environment=_environment(),
     )
 

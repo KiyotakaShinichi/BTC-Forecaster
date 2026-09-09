@@ -31,7 +31,7 @@ import platform
 import time
 import traceback
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import numpy as np
@@ -41,7 +41,6 @@ from . import registry
 from .contracts import (
     EXPLORATORY,
     RESOURCE_BUDGET_SECONDS,
-    Capability,
     EvaluationContext,
     ModelStatus,
     TrainingSet,
@@ -339,7 +338,7 @@ def build_manifest(result: BenchmarkResult, *, extra: dict | None = None) -> dic
     manifest = {
         "benchmark": BENCHMARK_KIND,
         "scientific_status": EXPLORATORY,
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "generated_at": datetime.now(UTC).isoformat(),
         "warning": (
             "A6 is exploratory model-zoo evidence at n=1,000 on a single "
             "partition. It is not a promotion study and does not supersede A2's "
