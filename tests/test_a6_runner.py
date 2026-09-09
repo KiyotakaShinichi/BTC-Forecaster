@@ -45,6 +45,7 @@ from btc_forecaster.research.partition import PartitionSpec
 from btc_forecaster.research.registry import ZooRegistration, register
 from btc_forecaster.research.runner import (
     BENCHMARK_KIND,
+    TIMING_COLUMNS,
     assert_nothing_promoted,
     build_manifest,
     run_benchmark,
@@ -100,6 +101,40 @@ class TestTheRunIsDeterministic:
 
     def test_the_data_is_fingerprinted(self, result) -> None:
         assert len(result.data_fingerprint) == 64
+
+    def test_the_published_results_hash_survives_a_rerun(self, frame) -> None:
+        """The manifest advertises `results_table_sha256` as what a reader
+        checks a reproduction against. It has to actually be stable.
+
+        It was not: the hash covered `fit_seconds` and `total_seconds`, so two
+        runs with bit-identical metrics published different digests and the one
+        field offered as a reproducibility check disagreed with itself every
+        time. Comparing forecast arrays -- what the test above does -- could not
+        see it, because the defect was in the manifest, not the models.
+        """
+        spec = PartitionSpec(train_rows=150)
+        first = build_manifest(run_benchmark(frame, spec=spec, model_ids=FAST_MODELS))
+        second = build_manifest(run_benchmark(frame, spec=spec, model_ids=FAST_MODELS))
+        assert first["results_table_sha256"] == second["results_table_sha256"]
+
+    def test_the_hash_names_the_columns_it_covers(self, result) -> None:
+        """A digest whose inputs are unstated cannot be reproduced by anyone who
+        did not write it."""
+        manifest = build_manifest(result)
+        covered = manifest["results_table_hashed_columns"]
+        assert "mae" in covered and "skill_vs_naive" in covered
+        for excluded in TIMING_COLUMNS:
+            assert excluded not in covered
+
+    def test_timings_are_still_reported_just_not_hashed(self, result) -> None:
+        """Excluded from the digest, not from the record. How long a model took
+        on a 1,000-row budget is part of what this study measures."""
+        manifest = build_manifest(result)
+        assert all(
+            model.get("fit_seconds") is not None
+            for model in manifest["models"]
+            if model["status"] == "ACTIVE"
+        )
 
 
 class TestFailuresAreRecordedNotSwallowed:

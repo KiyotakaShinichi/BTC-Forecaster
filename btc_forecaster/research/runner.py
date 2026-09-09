@@ -60,6 +60,13 @@ from .partition import PartitionSpec, ZooDataset, build_dataset
 #: What the benchmark is, stamped on every artifact it writes.
 BENCHMARK_KIND = "RESOURCE_CONSTRAINED_EXPLORATORY"
 
+#: Excluded from the results hash. Wall-clock timings are properties of the
+#: machine and the moment, not of the result: hashing them makes the digest
+#: change on every run, which turns the one field a reader would use to check
+#: reproducibility into a timestamp that always disagrees. Found exactly that
+#: way -- two runs with bit-identical metrics and different digests.
+TIMING_COLUMNS = ("fit_seconds", "total_seconds")
+
 
 @dataclass
 class ModelOutcome:
@@ -385,9 +392,11 @@ def build_manifest(result: BenchmarkResult, *, extra: dict | None = None) -> dic
         "live_trading_enabled": False,
     }
     if len(frame):
+        scientific = frame.drop(columns=list(TIMING_COLUMNS), errors="ignore")
         manifest["results_table_sha256"] = hashlib.sha256(
-            frame.to_csv(index=False).encode()
+            scientific.to_csv(index=False).encode()
         ).hexdigest()
+        manifest["results_table_hashed_columns"] = list(scientific.columns)
     if extra:
         manifest.update(extra)
     return manifest
@@ -520,6 +529,7 @@ def assert_nothing_promoted(manifest: dict) -> None:
 
 __all__ = [
     "BENCHMARK_KIND",
+    "TIMING_COLUMNS",
     "analyse",
     "BenchmarkResult",
     "ModelOutcome",
