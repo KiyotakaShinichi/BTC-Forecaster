@@ -4,11 +4,11 @@
 > not supersede A2's historical promotion study.**
 
 That sentence is the whole scientific status of this package, and everything
-below is an elaboration of it. A6 fits 43 registered models on 1,000
-deterministically chosen training rows and scores them on one frozen holdout
-block. A2 ran 8 models through 36 walk-forward folds and promoted none. The two
-are not comparable, and the second remains the authoritative historical
-evidence.
+below is an elaboration of it. A6 registers 43 models, fits the 40 that can
+honestly run on 1,000 deterministically chosen training rows, and scores them on
+one frozen holdout block of 705 bars. A2 ran 8 models through 36 walk-forward
+folds and promoted none. The two are not comparable, and the second remains the
+authoritative historical evidence.
 
 ## Why build it anyway
 
@@ -16,13 +16,22 @@ Breadth is cheap and ignorance is not. Before A6 the repository could not answer
 questions it should be able to answer:
 
 - Does *anything* beat a random walk on this series when you try forty things
-  rather than eight?
-- Do different model families make different mistakes, or the same ones?
-- How much data does each architecture need before it stops being noise?
+  rather than eight? **No.** Twenty-eight of thirty-nine models are
+  significantly different from the naive forecast after Benjamini-Hochberg, and
+  all twenty-eight are worse. Zero are better. The two with positive raw skill
+  sit at q = 0.88.
+- Do different model families make different mistakes, or the same ones? **The
+  same ones.** Mean pairwise error correlation across the forty is 0.945.
+- How much data does each architecture need before it stops being noise? **More
+  than this.** Every model with real capacity — MLP, TCN, LSTM, N-BEATS, the
+  boosting family — is among the worst performers, and none of the forty is
+  positive in every temporal block.
 
-The answers are in [`research/runs/a6-model-zoo/`](../research/runs/a6-model-zoo/).
-They are worth having before anyone proposes a preregistered study — not because
-they settle anything, but because they narrow what is worth preregistering.
+The full evidence is in
+[`research/runs/a6-model-zoo/`](../research/runs/a6-model-zoo/), which carries
+its own generated README. These answers are worth having before anyone proposes
+a preregistered study — not because they settle anything, but because they
+narrow what is worth preregistering.
 
 ## The 1,000-row constraint
 
@@ -65,28 +74,57 @@ raises rather than guessing. A deterministic point forecaster has no probability
 to report, and a benchmark cell left blank is more honest than one filled by a
 Gaussian nobody chose.
 
-## What is *not* comparable to A2
+## What A6 says about A2
 
-| | A2 | A6 |
-|---|---|---|
-| Design | 36 walk-forward folds | 1 fixed partition |
-| Training rows | full history per fold | 1,000 |
-| Models | 8 | 43 registered, 40 runnable |
-| Target | next-bar log return | next-bar log return |
-| Data | snapshot `056b866b…` | snapshot `39b93e34…` |
-| Purpose | promotion study | exploratory breadth |
-| Outcome | 0 promoted | 0 promoted, **and none can be** |
+Nothing, mostly — and the table below says which parts of "nothing" are which.
+Every A6 claim is classified against A2's frozen evidence using four labels:
 
-The data differs for a reason worth stating: the two snapshots cover almost the
-same span, and yfinance silently revised the history between them. Truncating
-the newer pull to A2's last bar gives the same 3,527 rows and a *different*
-hash. A6 therefore cannot reproduce A2's bytes, which is one more reason the two
-studies are `NOT_COMPARABLE` rather than merely different.
+- **`NOT_COMPARABLE`** — the two studies do not measure the same quantity. No
+  inference either way.
+- **`EXPLORATORY_ONLY`** — an A6 observation with no A2 counterpart. It is a
+  candidate for a future study, not a result.
+- **`CONSISTENT`** — A6 saw the same qualitative thing under a different design.
+  Corroboration, not confirmation.
+- **`INTERESTING_FOR_FUTURE_VALIDATION`** — worth a preregistered test, and not
+  evidence until it gets one.
 
-`xgboost` here is **not** A2's `xgboost_causal_retuned`. That model selected
-hyperparameters by nested inner validation inside every one of 36 folds; this
-one is frozen at the family capacity ceiling and fitted once. The names are one
-word apart and the studies are not.
+| Claim | A2 | A6 | Verdict |
+|---|---|---|---|
+| Headline error figures | MAE ≈ 7,451 **USD**, MASE ≈ 18 | MAE ≈ 0.0164 **log return**, MASE ≈ 1.00 | `NOT_COMPARABLE` |
+| Forecast target | price path, scored at step 31 | next-bar log return, one step | `NOT_COMPARABLE` |
+| Data | snapshot `056b866b…`, 3,527 rows | snapshot `39b93e34…`, 3,536 rows | `NOT_COMPARABLE` |
+| Design | 36 walk-forward folds | 1 fixed partition | `NOT_COMPARABLE` |
+| `random_walk_drift` skill | **+0.003957** (best, still rejected) | **−0.001909** (q = 0.46) | `NOT_COMPARABLE` |
+| Directional accuracy of drift | 0.6176 | 0.4993 | `NOT_COMPARABLE` |
+| Nothing beat the random walk | 0 of 8 promoted | 0 of 40 significantly better | `CONSISTENT` |
+| Gradient boosting loses to naive | `xgboost_causal_retuned` −0.080081 | `xgboost` −0.226512 (q < 0.0001) | `CONSISTENT` |
+| High-capacity models lose hardest | Prophet hybrid −1.405653, worst of 8 | MLP DM +15.4, TCN +11.4, LSTM +9.9 — the worst of 40 | `CONSISTENT` |
+| ARIMA sits just under naive | −0.002062 | −0.002729 (q = 0.51) | `CONSISTENT` |
+| `holt_linear_trend` best at +0.000464 | not in A2's model set | q = 0.8836 | `EXPLORATORY_ONLY` |
+| Three seasonal models excluded on measured absence of weekly seasonality | not tested | ACF(7) = −0.018 vs ±0.062 band, day-of-week ANOVA p = 0.946, STL strength 0.065 — TRAIN only | `EXPLORATORY_ONLY` |
+| Deep architectures on a numpy autodiff engine | no deep family | 7 models, gradient-checked | `EXPLORATORY_ONLY` |
+| No model is positive in every temporal block | per-fold stability reported | 0 of 40 | `INTERESTING_FOR_FUTURE_VALIDATION` |
+| Mean pairwise error correlation 0.945 across eight families | not measured | measured, no ensemble built | `INTERESTING_FOR_FUTURE_VALIDATION` |
+| Conditional variance is predictable where the mean is not | not tested | GARCH family scored on QLIKE, separately from direction | `INTERESTING_FOR_FUTURE_VALIDATION` |
+
+Two rows deserve their own sentence.
+
+**The drift sign flip is not a contradiction.** A2's `random_walk_drift` beat a
+zero-drift random walk over a 31-step price path across 36 folds; A6's loses to a
+zero-return forecast on next-bar log returns over one block. A drift term helps
+when errors compound over thirty-one steps and hurts when there is one step for
+it to be wrong about. Reading either number as a correction of the other requires
+ignoring what each measured.
+
+**`xgboost` here is not A2's `xgboost_causal_retuned`.** That model selected its
+hyperparameters by nested inner validation inside every one of 36 folds. This one
+is frozen at the family capacity ceiling and fitted once. The names are one word
+apart and the studies are not.
+
+And the snapshots differ for a reason worth stating: yfinance silently revised
+the history between the two pulls. Truncating the newer snapshot to A2's last bar
+gives the same 3,527 rows and a *different* hash. A6 cannot reproduce A2's bytes,
+which is one more reason these are two studies rather than one study run twice.
 
 ## Running the benchmark
 
@@ -107,9 +145,16 @@ It needs a hash-verified market snapshot, which is **not committed** — Yahoo's
 terms do not grant redistribution. Run `btc-forecast snapshot` first, or pass
 `--data` to an existing one.
 
-The full zoo takes roughly three minutes and is deliberately **not** a CI job.
-CI runs the registry check, the leakage adversaries, the synthetic worlds and a
-four-model smoke benchmark; the complete run is an explicit research command.
+Fitting and scoring the forty models takes about 75 seconds -- the manifest
+records it as `wall_clock_seconds` -- and the full command, with the
+sample-efficiency subset and forty serialized artifacts written and hash-checked,
+takes a few minutes. It is deliberately **not** a CI job. CI runs the registry
+check, the leakage adversaries, the synthetic worlds and a four-model smoke
+benchmark; the complete run is an explicit research command.
+
+Two runs of it agree: the same `results_table_sha256`, byte-identical
+`predictions.csv`, the same training fingerprint on every model. If yours
+disagrees while the snapshot hash matches, that is a defect worth reporting.
 
 ## Adding a model
 
@@ -144,9 +189,10 @@ list to update.
   not raise — it produces a model that trains, converges and learns nothing.
 - **Determinism.** One seed, contiguous rows, fingerprinted training data. Two
   runs produce bit-identical forecasts.
-- **Multiplicity.** Forty comparisons at alpha 0.05 yield two significant
-  results from nothing. Raw p-values, Benjamini-Hochberg q-values and the
-  expected false-positive count are reported together.
+- **Multiplicity.** Thirty-nine comparisons at alpha 0.05 yield 1.95 significant
+  results from nothing. Raw p-values, Benjamini-Hochberg q-values and that
+  expected false-positive count are reported together, so a reader can see the
+  number of free hits before reading the hits.
 - **Nothing promotes.** There is no `promoted` field. Every result carries
   `EXPLORATORY`, `assert_nothing_promoted` refuses a manifest that says
   otherwise, and the paper-trading engine stays fail-closed.

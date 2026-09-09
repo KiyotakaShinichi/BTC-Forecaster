@@ -247,11 +247,18 @@ python -m btc_forecaster.research.model_zoo --list
 python -m btc_forecaster.research.model_zoo --train-rows 1000 --output research/runs/a6-model-zoo
 ```
 
+Nothing beat the random walk. Twenty-eight of thirty-nine models are
+significantly different from the naive forecast after Benjamini-Hochberg and all
+twenty-eight are worse; none of the forty is positive in every temporal block;
+mean pairwise error correlation is 0.945. The models that lose hardest are the
+ones with capacity.
+
 **1,000-row A6 results are resource-constrained exploratory evidence and do not
 supersede A2's historical promotion study.** A6 fits every model once on a
 deterministic 1,000-row budget and scores it on one frozen holdout; A2 ran 36
 walk-forward folds. Nothing in A6 is promoted, nothing can be, and the paper
-engine stays fail-closed. See [`docs/model-zoo.md`](docs/model-zoo.md).
+engine stays fail-closed. See [`docs/model-zoo.md`](docs/model-zoo.md) and the
+run evidence in [`research/runs/a6-model-zoo/`](research/runs/a6-model-zoo/).
 
 ---
 
