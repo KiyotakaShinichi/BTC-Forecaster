@@ -52,8 +52,20 @@ from btc_forecaster.research.runner import (
 )
 from btc_forecaster.testing import synthetic_market_frame
 
+
+def available(*model_ids: str) -> list[str]:
+    """Filter to the models this environment can actually build.
+
+    The quant CI job installs `.[dev]` -- numpy, pandas, scipy and statsmodels,
+    but not scikit-learn, arch or xgboost. Hard-coding a model list would make
+    these tests either fail there or be skipped wholesale, and the second is
+    worse: the leakage suite silently not running is exactly the situation it
+    exists to prevent. Filtering keeps whatever is present under test.
+    """
+    return [m for m in model_ids if registry.get(m).is_available()]
+
 #: A cheap subset. The full zoo takes three minutes; the tests must not.
-FAST_MODELS = ["naive_last_value", "random_walk_drift", "ridge", "decision_tree"]
+FAST_MODELS = available("naive_last_value", "random_walk_drift", "ar_p", "ridge")
 
 
 @pytest.fixture(scope="module")
@@ -114,7 +126,7 @@ class TestFailuresAreRecordedNotSwallowed:
         result = run_benchmark(
             frame,
             spec=PartitionSpec(train_rows=150),
-            model_ids=["naive_last_value", "exploding_test_model", "ridge"],
+            model_ids=["naive_last_value", "exploding_test_model", "ar_p"],
         )
         failed = [o for o in result.outcomes if o.status is ModelStatus.FAILED]
         assert [o.model_id for o in failed] == ["exploding_test_model"]
@@ -224,9 +236,9 @@ class TestTheArtifactsAreHonest:
     def test_absent_capabilities_stay_absent_in_the_manifest(self, result) -> None:
         """A blank is a fact; a filled-in default is a fabrication."""
         manifest = build_manifest(result)
-        ridge = next(m for m in manifest["models"] if m["model_id"] == "ridge")
-        assert ridge["scores"]["probabilistic"] is None
-        assert ridge["scores"]["variance"] is None
+        point_only = next(m for m in manifest["models"] if m["model_id"] == "ar_p")
+        assert point_only["scores"]["probabilistic"] is None
+        assert point_only["scores"]["variance"] is None
 
     def test_predictions_are_written_with_their_target_bars(
         self, result, tmp_path: Path

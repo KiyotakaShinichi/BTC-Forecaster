@@ -23,8 +23,21 @@ from btc_forecaster.research import registry
 from btc_forecaster.research.partition import PartitionSpec, build_dataset
 from btc_forecaster.research.synthetic import WORLD_NAMES, build_world
 
+
+def available(*model_ids: str) -> list[str]:
+    """Filter to the models this environment can actually build.
+
+    The quant CI job installs `.[dev]` -- numpy, pandas, scipy and statsmodels,
+    but not scikit-learn, arch or xgboost. Hard-coding a model list would make
+    these tests either fail there or be skipped wholesale, and the second is
+    worse: the leakage suite silently not running is exactly the situation it
+    exists to prevent. Filtering keeps whatever is present under test.
+    """
+    return [m for m in model_ids if registry.get(m).is_available()]
+
+
 #: One cheap model per family. The full zoo on seven worlds would be an hour.
-PROBES = ["naive_last_value", "random_walk_drift", "ar_p", "ridge", "decision_tree"]
+PROBES = available("naive_last_value", "random_walk_drift", "ar_p", "ridge", "decision_tree")
 SPEC = PartitionSpec(train_rows=200)
 
 
@@ -97,7 +110,7 @@ class TestWorldsWithKnownStructure:
 
     def test_nothing_gains_on_a_stationary_series(self) -> None:
         """i.i.d. around zero: the mean is the best available forecast."""
-        for model_id in ("ar_p", "ridge"):
+        for model_id in available("ar_p", "ridge"):
             assert skill_of("STATIONARY", model_id) < 0.05, model_id
 
 
@@ -105,7 +118,7 @@ class TestVolatilityAndDirectionAreSeparate:
     """The world that keeps the two claims apart."""
 
     def test_direction_is_not_predictable(self) -> None:
-        for model_id in ("ar_p", "ridge"):
+        for model_id in available("ar_p", "ridge"):
             assert skill_of("VOLATILITY_CLUSTERING", model_id) < 0.05, model_id
 
     def test_variance_is_predictable(self) -> None:
@@ -141,6 +154,7 @@ class TestNonlinearity:
         Asserted as 'the tree finds something', not as 'the tree beats the
         line' -- a ranking assertion would be encoding an expectation.
         """
+        pytest.importorskip("sklearn")
         assert skill_of("NONLINEAR", "decision_tree") > 0.0
 
 

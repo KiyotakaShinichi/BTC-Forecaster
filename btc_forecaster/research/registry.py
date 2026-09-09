@@ -62,8 +62,20 @@ class ZooRegistration:
             )
 
     def missing_dependency(self) -> str | None:
+        """The first declared dependency this environment cannot provide.
+
+        `find_spec` is wrapped because it can raise as well as return None. A
+        package that is present but broken -- a partial install, an ABI
+        mismatch, a stub on the path -- would otherwise take the entire registry
+        down when something merely asked which models exist. Unusable is
+        unusable; the model is SKIPPED_DEPENDENCY either way.
+        """
         for module in self.requires:
-            if importlib.util.find_spec(module) is None:
+            try:
+                found = importlib.util.find_spec(module)
+            except (ImportError, ValueError):
+                return module
+            if found is None:
                 return module
         return None
 

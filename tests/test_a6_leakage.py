@@ -41,10 +41,23 @@ from btc_forecaster.research.windows import (
 )
 from btc_forecaster.testing import synthetic_market_frame
 
+
+def available(*model_ids: str) -> list[str]:
+    """Filter to the models this environment can actually build.
+
+    The quant CI job installs `.[dev]` -- numpy, pandas, scipy and statsmodels,
+    but not scikit-learn, arch or xgboost. Hard-coding a model list would make
+    these tests either fail there or be skipped wholesale, and the second is
+    worse: the leakage suite silently not running is exactly the situation it
+    exists to prevent. Filtering keeps whatever is present under test.
+    """
+    return [m for m in model_ids if registry.get(m).is_available()]
+
+
 #: One model per mechanism: a constant, a series model, a tabular model, and a
 #: sequence model. Each reaches the data by a different route, so each could
 #: leak differently.
-ADVERSARY_MODELS = ["random_walk_drift", "arima", "ridge", "gru"]
+ADVERSARY_MODELS = available("random_walk_drift", "arima", "ridge", "gru")
 SPEC = PartitionSpec(train_rows=200)
 
 
@@ -136,6 +149,7 @@ class TestTheAdversariesCanActuallyDetectALeak:
     def test_a_tabular_model_reacts_to_its_own_feature_row(self, dataset, fitted) -> None:
         """Ridge has no history: it reads exactly one row. Poisoning bars it
         never looks at would prove nothing, so the row itself is poisoned."""
+        pytest.importorskip("sklearn")
         context = dataset.evaluation_context()
         clean = fitted["ridge"].predict(context).point[0]
         X = context.X.copy()
@@ -182,7 +196,7 @@ class TestFutureTargetsCannotBeRead:
 
 
 class TestSingleValueInjection:
-    @pytest.mark.parametrize("model_id", ["ridge", "gru"])
+    @pytest.mark.parametrize("model_id", available("ridge", "gru"))
     def test_one_poisoned_future_feature_does_not_move_earlier_forecasts(
         self, dataset, fitted, model_id
     ) -> None:
@@ -282,7 +296,7 @@ class TestPartitionOverlap:
 
 
 class TestScalerLeakage:
-    @pytest.mark.parametrize("model_id", ["ridge", "gru"])
+    @pytest.mark.parametrize("model_id", available("ridge", "gru"))
     def test_the_scaler_is_not_refitted_at_predict_time(
         self, dataset, fitted, model_id
     ) -> None:

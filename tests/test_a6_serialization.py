@@ -19,6 +19,7 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+from btc_forecaster.research import registry
 from btc_forecaster.research.cards import SHARED_LIMITATIONS, build_card
 from btc_forecaster.research.contracts import EXPLORATORY, Capability
 from btc_forecaster.research.partition import PartitionSpec
@@ -32,10 +33,23 @@ from btc_forecaster.research.serialization import (
 )
 from btc_forecaster.testing import synthetic_market_frame
 
+
+def available(*model_ids: str) -> list[str]:
+    """Filter to the models this environment can actually build.
+
+    The quant CI job installs `.[dev]` -- numpy, pandas, scipy and statsmodels,
+    but not scikit-learn, arch or xgboost. Hard-coding a model list would make
+    these tests either fail there or be skipped wholesale, and the second is
+    worse: the leakage suite silently not running is exactly the situation it
+    exists to prevent. Filtering keeps whatever is present under test.
+    """
+    return [m for m in model_ids if registry.get(m).is_available()]
+
+
 #: One per family, chosen so every serialization mechanism is exercised:
 #: a constant, a statsmodels result, an arch parameter vector, an sklearn
 #: estimator, a multi-model quantile wrapper, and a numpy network.
-FAMILY_SAMPLE = [
+FAMILY_SAMPLE = available(
     "naive_last_value",
     "arima",
     "garch_11",
@@ -44,7 +58,7 @@ FAMILY_SAMPLE = [
     "quantile_gbr",
     "conformal_ridge",
     "gru",
-]
+)
 
 
 @pytest.fixture(scope="module")
@@ -74,6 +88,7 @@ class TestEveryFamilyRoundTrips:
     def test_the_environment_travels_with_the_artifact(self, result) -> None:
         """A pickle is not a data format. What wrote it has to be recorded, or
         a reload failure years from now is unexplainable."""
+        pytest.importorskip("sklearn")
         environment = serialize(result.models["ridge"]).as_dict()["environment"]
         assert "python" in environment
         assert "numpy" in environment
@@ -81,6 +96,7 @@ class TestEveryFamilyRoundTrips:
     def test_a_tampered_artifact_is_refused(self, result) -> None:
         """Unpickling executes. The hash is the only thing between a swapped
         artifact and arbitrary code, and checking it costs a microsecond."""
+        pytest.importorskip("sklearn")
         artifact = serialize(result.models["ridge"])
         tampered = Artifact(
             model_id=artifact.model_id,
@@ -148,6 +164,7 @@ class TestModelCardsAreGenerated:
 
     def test_a_card_is_derived_not_authored(self, result) -> None:
         """Every number on it comes from the manifest."""
+        pytest.importorskip("sklearn")
         manifest = build_manifest(result)
         model = next(m for m in manifest["models"] if m["model_id"] == "ridge")
         registration = next(
@@ -207,10 +224,13 @@ class TestModelCardsAreGenerated:
     def test_a_card_names_what_the_model_declined_to_produce(self, result) -> None:
         """A blank cell in the table is a fact about the model, and a card that
         omits it invites the reader to assume the number was not computed."""
+        point_only = next(
+            m for m in ("ridge", "ar_p", "naive_last_value") if m in result.models
+        )
         manifest = build_manifest(result)
-        model = next(m for m in manifest["models"] if m["model_id"] == "ridge")
+        model = next(m for m in manifest["models"] if m["model_id"] == point_only)
         registration = next(
-            r for r in manifest["registry_entries"] if r["model_id"] == "ridge"
+            r for r in manifest["registry_entries"] if r["model_id"] == point_only
         )
         card = build_card(model, registration=registration)
         assert "does not" in card
