@@ -122,7 +122,7 @@ target-version = "py311"
 # length and rule set. Excluding them here means each subsystem is checked once,
 # under the contract it was written against, rather than twice under two.
 extend-exclude = [
-    "research",
+    "research/**",
     ".venv",
     "market_intelligence",
     "tests/test_intelligence_*.py",

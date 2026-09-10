@@ -61,3 +61,39 @@ jobs:
           echo "::error title=quantitative core::${detail:-see step summary}"
       - name: C0 fail-closed A2 regression
         run: python -m pytest tests/test_paper_a2_regression.py -q
+
+      # A6 model zoo. The full forty-model benchmark is an explicit research
+      # command, not a CI job: it fits seven neural networks and takes minutes.
+      # What runs here is what protects the zoo -- the registry agreeing with
+      # itself, the leakage adversaries, the synthetic worlds including the
+      # NOISE_ONLY control, and a smoke benchmark small enough to be free.
+      #
+      # This job installs `.[dev]`, so scikit-learn, arch and xgboost are
+      # absent. That is deliberate rather than tolerated: it is the environment
+      # in which the zoo has to degrade to SKIPPED_DEPENDENCY rather than
+      # failing, and the tests filter their model lists so the adversaries keep
+      # running on the families that need nothing beyond the core install.
+      - name: A6 registry is self-consistent
+        run: python -m btc_forecaster.research.model_zoo --list
+
+      - name: A6 smoke benchmark (4 models, no optional dependencies)
+        run: |
+          python - <<'PY'
+          from btc_forecaster.research.partition import PartitionSpec
+          from btc_forecaster.research.runner import assert_nothing_promoted, build_manifest, run_benchmark
+          from btc_forecaster.testing import synthetic_market_frame
+
+          frame = synthetic_market_frame(periods=500, kind="ar1", seed=99)
+          result = run_benchmark(
+              frame,
+              spec=PartitionSpec(train_rows=150),
+              model_ids=["naive_last_value", "random_walk_drift", "ar_p", "mlp"],
+          )
+          manifest = build_manifest(result)
+          assert_nothing_promoted(manifest)
+          scored = len(result.succeeded())
+          assert scored == 4, f"expected 4 scored models, got {scored}"
+          assert manifest["promoted_models"] == []
+          assert manifest["live_trading_enabled"] is False
+          print(f"A6 smoke OK: {scored} models, nothing promoted, trading disabled")
+          PY

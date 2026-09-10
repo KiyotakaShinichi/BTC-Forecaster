@@ -1,0 +1,685 @@
+[
+  {
+    "model_id": "adaboost",
+    "family": "TREE_ENSEMBLE",
+    "resource_class": "LIGHT",
+    "description": "AdaBoost.R2 over depth-3 stumps, 200 rounds at lr=0.05.",
+    "requires": [
+      "sklearn"
+    ],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "Reweights toward hard examples, which on this series are largely noise -- a hypothesis worth testing rather than assuming."
+    ]
+  },
+  {
+    "model_id": "ar_p",
+    "family": "STATISTICAL",
+    "resource_class": "TRIVIAL",
+    "description": "AR(3) on log returns, evaluated by the frozen linear recursion.",
+    "requires": [
+      "statsmodels"
+    ],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "Lag order chosen from {1, 3, 7} on DEV only."
+    ]
+  },
+  {
+    "model_id": "arima",
+    "family": "STATISTICAL",
+    "resource_class": "LIGHT",
+    "description": "ARIMA(1,0,1) with constant on log returns; d=0 because the series is already differenced.",
+    "requires": [
+      "statsmodels"
+    ],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "Order chosen from {(1,0,0), (1,0,1), (2,0,2)} on DEV only."
+    ]
+  },
+  {
+    "model_id": "bayesian_ridge",
+    "family": "LINEAR_ML",
+    "resource_class": "TRIVIAL",
+    "description": "Ridge with the penalty inferred by evidence approximation.",
+    "requires": [
+      "sklearn"
+    ],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "A control on how much the frozen alphas cost the other linear models."
+    ]
+  },
+  {
+    "model_id": "cnn_1d",
+    "family": "DEEP",
+    "resource_class": "MODERATE",
+    "description": "Two causal convolutions (kernel 3) and a mean over time.",
+    "requires": [],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "Fixed five-bar receptive field.",
+      "Trained on the numpy autodiff engine in this repository, whose gradients are checked against central finite differences. torch is not a dependency: the lock is compiled with --all-extras and installed by the fresh-clone CI job, so a torch extra would put a multi-gigabyte CUDA closure in every clean install.",
+      "Budget frozen and shared across all seven: lookback 24, max 60 epochs, batch 64, lr 0.003, patience 8, seed 20260909. Early stopping watches DEV."
+    ]
+  },
+  {
+    "model_id": "conformal_ridge",
+    "family": "PROBABILISTIC",
+    "resource_class": "TRIVIAL",
+    "description": "Ridge with split-conformal intervals calibrated on the DEV block.",
+    "requires": [
+      "sklearn"
+    ],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "The conformal coverage guarantee requires exchangeability, which a volatility-clustered daily return series does not satisfy. The nominal level is reported as nominal and the empirical coverage is measured; the gap between them is the result.",
+      "Calibrated on DEV, never on HOLDOUT -- calibrating on the block it is about to be scored against would guarantee coverage by construction and measure nothing.",
+      "Uses signed residual quantiles rather than absolute ones, so an asymmetric return distribution produces an asymmetric interval."
+    ]
+  },
+  {
+    "model_id": "decision_tree",
+    "family": "TREE_ENSEMBLE",
+    "resource_class": "TRIVIAL",
+    "description": "Single regression tree, max_depth=4, min_samples_leaf=20.",
+    "requires": [
+      "sklearn"
+    ],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "The interpretable control the ensembles are measured against."
+    ]
+  },
+  {
+    "model_id": "egarch_11",
+    "family": "VOLATILITY",
+    "resource_class": "MODERATE",
+    "description": "EGARCH(1,1,1) with Student-t innovations: log-variance with a leverage term.",
+    "requires": [
+      "arch"
+    ],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "Forecasts conditional variance, not direction. Its POINT output is the fitted constant mean and will score like the naive baseline; that is the honest answer, not a failure.",
+      "Quantiles come from the fitted Student-t conditional distribution, so they are the model's own statement rather than a Gaussian assumption added afterwards."
+    ]
+  },
+  {
+    "model_id": "elastic_net",
+    "family": "LINEAR_ML",
+    "resource_class": "TRIVIAL",
+    "description": "L1+L2 penalty at a 0.5 mix ratio.",
+    "requires": [
+      "sklearn"
+    ],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": []
+  },
+  {
+    "model_id": "extra_trees",
+    "family": "TREE_ENSEMBLE",
+    "resource_class": "LIGHT",
+    "description": "300 extremely randomised trees at the shared ceiling.",
+    "requires": [
+      "sklearn"
+    ],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "Random split thresholds: more variance reduction, more bias."
+    ]
+  },
+  {
+    "model_id": "garch_11",
+    "family": "VOLATILITY",
+    "resource_class": "LIGHT",
+    "description": "Symmetric GARCH(1,1) with Student-t innovations on percent log returns.",
+    "requires": [
+      "arch"
+    ],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "Forecasts conditional variance, not direction. Its POINT output is the fitted constant mean and will score like the naive baseline; that is the honest answer, not a failure.",
+      "Quantiles come from the fitted Student-t conditional distribution, so they are the model's own statement rather than a Gaussian assumption added afterwards."
+    ]
+  },
+  {
+    "model_id": "gjr_garch_11",
+    "family": "VOLATILITY",
+    "resource_class": "MODERATE",
+    "description": "GJR-GARCH(1,1,1) with Student-t innovations: threshold asymmetry in levels.",
+    "requires": [
+      "arch"
+    ],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "Forecasts conditional variance, not direction. Its POINT output is the fitted constant mean and will score like the naive baseline; that is the honest answer, not a failure.",
+      "Quantiles come from the fitted Student-t conditional distribution, so they are the model's own statement rather than a Gaussian assumption added afterwards."
+    ]
+  },
+  {
+    "model_id": "gradient_boosting",
+    "family": "TREE_ENSEMBLE",
+    "resource_class": "LIGHT",
+    "description": "Stagewise gradient boosting, 300 rounds at lr=0.03, subsample 0.8.",
+    "requires": [
+      "sklearn"
+    ],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": []
+  },
+  {
+    "model_id": "gru",
+    "family": "DEEP",
+    "resource_class": "MODERATE",
+    "description": "GRU over the 24-step window; last hidden state projected to a scalar.",
+    "requires": [],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "Trained on the numpy autodiff engine in this repository, whose gradients are checked against central finite differences. torch is not a dependency: the lock is compiled with --all-extras and installed by the fresh-clone CI job, so a torch extra would put a multi-gigabyte CUDA closure in every clean install.",
+      "Budget frozen and shared across all seven: lookback 24, max 60 epochs, batch 64, lr 0.003, patience 8, seed 20260909. Early stopping watches DEV."
+    ]
+  },
+  {
+    "model_id": "hist_gradient_boosting",
+    "family": "TREE_ENSEMBLE",
+    "resource_class": "LIGHT",
+    "description": "Histogram-binned gradient boosting, 300 iterations, early stopping off.",
+    "requires": [
+      "sklearn"
+    ],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "Its advantage is speed at large n, which this lab does not have; it is here to check the binning approximation costs nothing at n=1,000."
+    ]
+  },
+  {
+    "model_id": "historical_mean_return",
+    "family": "BASELINE",
+    "resource_class": "TRIVIAL",
+    "description": "log(1 + mean training simple return).",
+    "requires": [],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "Distinct from random_walk_drift by Jensen's inequality: the arithmetic mean of simple returns exceeds the mean log return by approximately half the return variance."
+    ]
+  },
+  {
+    "model_id": "holt_linear_trend",
+    "family": "STATISTICAL",
+    "resource_class": "LIGHT",
+    "description": "Damped Holt linear trend on log price, innovations state-space form.",
+    "requires": [
+      "statsmodels"
+    ],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": []
+  },
+  {
+    "model_id": "holt_winters",
+    "family": "STATISTICAL",
+    "resource_class": "LIGHT",
+    "description": "Holt-Winters additive seasonal exponential smoothing at period 7.",
+    "requires": [
+      "statsmodels"
+    ],
+    "declared_status": "UNSUITABLE_FOR_CONSTRAINED_LAB",
+    "effective_status": "UNSUITABLE_FOR_CONSTRAINED_LAB",
+    "missing_dependency": null,
+    "unsuitable_reason": "no weekly seasonality in the training rows: ACF(7) = -0.018 against a +/-0.062 white-noise band, day-of-week ANOVA p = 0.95, STL seasonal strength 0.065. A seasonal component here would fit noise, and at n=1,000 it would fit it confidently.",
+    "notes": [
+      "Registered rather than omitted: the measurement that excludes it is itself a result, and a missing row is indistinguishable from an oversight."
+    ]
+  },
+  {
+    "model_id": "huber",
+    "family": "LINEAR_ML",
+    "resource_class": "TRIVIAL",
+    "description": "Huber loss: squared inside epsilon, absolute outside.",
+    "requires": [
+      "sklearn"
+    ],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "Included specifically because daily crypto returns carry real outliers."
+    ]
+  },
+  {
+    "model_id": "knn",
+    "family": "KERNEL_LOCAL",
+    "resource_class": "TRIVIAL",
+    "description": "Distance-weighted 25-NN on standardised causal features.",
+    "requires": [
+      "sklearn"
+    ],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "Meaningful because the features are approximately stationary -- lagged returns and rolling statistics, not raw prices -- so Euclidean distance is a defensible statement that two days looked alike.",
+      "Limited by dimensionality: 11 features and 1,000 points is sparse, and 'nearest' begins to mean 'least far'. The distance to the k-th training neighbour is reported so that is visible as a number.",
+      "Limited by temporal correlation: adjacent rows share rolling windows, so a query's neighbours are often its calendar neighbours, which inflates similarity without adding independent evidence.",
+      "Fits nothing and stores everything, so it reports no parameter count rather than reporting the size of the training set."
+    ]
+  },
+  {
+    "model_id": "lasso",
+    "family": "LINEAR_ML",
+    "resource_class": "TRIVIAL",
+    "description": "L1-penalised least squares; reports which features survived.",
+    "requires": [
+      "sklearn"
+    ],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "At n=1,000 which coefficients survive is more informative than the MAE."
+    ]
+  },
+  {
+    "model_id": "linear_svr",
+    "family": "LINEAR_ML",
+    "resource_class": "LIGHT",
+    "description": "Epsilon-insensitive linear SVR.",
+    "requires": [
+      "sklearn"
+    ],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": []
+  },
+  {
+    "model_id": "local_level",
+    "family": "STATISTICAL",
+    "resource_class": "LIGHT",
+    "description": "Stochastic local level on log price; the state-space form of simple exponential smoothing.",
+    "requires": [
+      "statsmodels"
+    ],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "Estimated by maximum likelihood over state variances, via the Kalman filter. Kalman is not registered as a separate model because it is the estimator for this family, not a model."
+    ]
+  },
+  {
+    "model_id": "local_linear_trend",
+    "family": "STATISTICAL",
+    "resource_class": "LIGHT",
+    "description": "Stochastic local linear trend on log price; the state-space form of Holt's method.",
+    "requires": [
+      "statsmodels"
+    ],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "Shares its structure with holt_linear_trend and differs in estimation: variances by likelihood here, smoothing weights there. Two entries, one structure, different forecasts."
+    ]
+  },
+  {
+    "model_id": "lstm",
+    "family": "DEEP",
+    "resource_class": "MODERATE",
+    "description": "LSTM with forget-gate bias initialised to 1.0.",
+    "requires": [],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "Registered beside the GRU because the extra gate is the hypothesis: at 977 sequences the parameters may cost more than the memory buys.",
+      "Trained on the numpy autodiff engine in this repository, whose gradients are checked against central finite differences. torch is not a dependency: the lock is compiled with --all-extras and installed by the fresh-clone CI job, so a torch extra would put a multi-gigabyte CUDA closure in every clean install.",
+      "Budget frozen and shared across all seven: lookback 24, max 60 epochs, batch 64, lr 0.003, patience 8, seed 20260909. Early stopping watches DEV."
+    ]
+  },
+  {
+    "model_id": "mlp",
+    "family": "DEEP",
+    "resource_class": "MODERATE",
+    "description": "Flattened-window MLP: two hidden layers, no temporal structure.",
+    "requires": [],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "The control. If nothing beats a model that cannot tell the order of its own inputs, the finding is about the series, not about architectures.",
+      "Trained on the numpy autodiff engine in this repository, whose gradients are checked against central finite differences. torch is not a dependency: the lock is compiled with --all-extras and installed by the fresh-clone CI job, so a torch extra would put a multi-gigabyte CUDA closure in every clean install.",
+      "Budget frozen and shared across all seven: lookback 24, max 60 epochs, batch 64, lr 0.003, patience 8, seed 20260909. Early stopping watches DEV."
+    ]
+  },
+  {
+    "model_id": "naive_last_value",
+    "family": "BASELINE",
+    "resource_class": "TRIVIAL",
+    "description": "P[T+1] = P[T]; the forecast log return is exactly zero.",
+    "requires": [],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "Zero fitted parameters. Every conditional model in the zoo is measured against this one."
+    ]
+  },
+  {
+    "model_id": "nbeats",
+    "family": "DEEP",
+    "resource_class": "MODERATE",
+    "description": "Two generic residual backcast/forecast blocks.",
+    "requires": [],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "Generic basis rather than trend/seasonality: a seasonal basis would impose a weekly period this series does not have.",
+      "The parameter-heavy outlier by construction: its backcast head projects back to the full flattened window, giving roughly 18 parameters per training sequence against 1-9 for the other six. Left that way on purpose -- the ratio is the finding.",
+      "Trained on the numpy autodiff engine in this repository, whose gradients are checked against central finite differences. torch is not a dependency: the lock is compiled with --all-extras and installed by the fresh-clone CI job, so a torch extra would put a multi-gigabyte CUDA closure in every clean install.",
+      "Budget frozen and shared across all seven: lookback 24, max 60 epochs, batch 64, lr 0.003, patience 8, seed 20260909. Early stopping watches DEV."
+    ]
+  },
+  {
+    "model_id": "pls",
+    "family": "LINEAR_ML",
+    "resource_class": "TRIVIAL",
+    "description": "PLS regression with 2 components.",
+    "requires": [
+      "sklearn"
+    ],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "Eleven features from one price series do not carry eleven directions."
+    ]
+  },
+  {
+    "model_id": "quantile_gbr",
+    "family": "PROBABILISTIC",
+    "resource_class": "MODERATE",
+    "description": "Gradient boosting on pinball loss, one model per quantile level.",
+    "requires": [
+      "sklearn"
+    ],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "Estimates conditional quantiles. Not a confidence interval and it carries no coverage guarantee; calibration is measured, not claimed.",
+      "Its point forecast is the conditional median, because that is what pinball loss at 0.5 estimates. It has no mean to report.",
+      "Independently fitted quantiles can cross; the columns are sorted, which cannot hurt calibration because a crossed pair is a statement the model could not have meant."
+    ]
+  },
+  {
+    "model_id": "quantile_linear",
+    "family": "PROBABILISTIC",
+    "resource_class": "LIGHT",
+    "description": "Koenker-Bassett linear quantile regression, one fit per level.",
+    "requires": [
+      "statsmodels"
+    ],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "The linear control for quantile_gbr: same loss, same levels, no capacity to fit a non-linear conditional distribution."
+    ]
+  },
+  {
+    "model_id": "random_forest",
+    "family": "TREE_ENSEMBLE",
+    "resource_class": "LIGHT",
+    "description": "300 bagged trees at the shared capacity ceiling.",
+    "requires": [
+      "sklearn"
+    ],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "Capacity frozen for n=1,000; an unbounded forest reaches training R^2 ~ 1 and evaluation skill ~ 0, and that gap is the lesson."
+    ]
+  },
+  {
+    "model_id": "random_walk_drift",
+    "family": "BASELINE",
+    "resource_class": "TRIVIAL",
+    "description": "Constant drift: the mean training log return.",
+    "requires": [],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "Mathematically identical to the classical endpoint drift (log P_end - log P_start) / (n - 1), because log returns telescope. Registered once rather than twice.",
+      "A2's strongest model over 36 folds, at MAE skill +0.003957 -- which was still a REJECT."
+    ]
+  },
+  {
+    "model_id": "rbf_svr",
+    "family": "KERNEL_LOCAL",
+    "resource_class": "LIGHT",
+    "description": "RBF-kernel SVR; the only non-linear member of the linear/kernel group.",
+    "requires": [
+      "sklearn"
+    ],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "Quadratic in the sample size, which is affordable only because n=1,000."
+    ]
+  },
+  {
+    "model_id": "ridge",
+    "family": "LINEAR_ML",
+    "resource_class": "TRIVIAL",
+    "description": "L2-penalised least squares on standardised causal features.",
+    "requires": [
+      "sklearn"
+    ],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": []
+  },
+  {
+    "model_id": "ridge_robust_scaled",
+    "family": "LINEAR_ML",
+    "resource_class": "TRIVIAL",
+    "description": "Ridge on median/IQR-scaled features.",
+    "requires": [
+      "sklearn"
+    ],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "Tests whether outliers should set the feature scale, not how much to penalise."
+    ]
+  },
+  {
+    "model_id": "sarima",
+    "family": "STATISTICAL",
+    "resource_class": "MODERATE",
+    "description": "Seasonal ARIMA with a weekly period.",
+    "requires": [
+      "statsmodels"
+    ],
+    "declared_status": "UNSUITABLE_FOR_CONSTRAINED_LAB",
+    "effective_status": "UNSUITABLE_FOR_CONSTRAINED_LAB",
+    "missing_dependency": null,
+    "unsuitable_reason": "no weekly seasonality in the training rows: ACF(7) = -0.018 against a +/-0.062 white-noise band, day-of-week ANOVA p = 0.95, STL seasonal strength 0.065. A seasonal component here would fit noise, and at n=1,000 it would fit it confidently.",
+    "notes": [
+      "Registered rather than omitted: the measurement that excludes it is itself a result, and a missing row is indistinguishable from an oversight."
+    ]
+  },
+  {
+    "model_id": "seasonal_naive_weekly",
+    "family": "STATISTICAL",
+    "resource_class": "TRIVIAL",
+    "description": "Seasonal naive at period 7: the forecast is the return 7 bars ago.",
+    "requires": [
+      "statsmodels"
+    ],
+    "declared_status": "UNSUITABLE_FOR_CONSTRAINED_LAB",
+    "effective_status": "UNSUITABLE_FOR_CONSTRAINED_LAB",
+    "missing_dependency": null,
+    "unsuitable_reason": "no weekly seasonality in the training rows: ACF(7) = -0.018 against a +/-0.062 white-noise band, day-of-week ANOVA p = 0.95, STL seasonal strength 0.065. A seasonal component here would fit noise, and at n=1,000 it would fit it confidently.",
+    "notes": [
+      "Registered rather than omitted: the measurement that excludes it is itself a result, and a missing row is indistinguishable from an oversight."
+    ]
+  },
+  {
+    "model_id": "tcn",
+    "family": "DEEP",
+    "resource_class": "MODERATE",
+    "description": "Dilated residual causal convolutions at dilations 1, 2, 4.",
+    "requires": [],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "Reaches 15 bars against cnn_1d's 5 at the same depth; that is the whole reason both are registered.",
+      "Trained on the numpy autodiff engine in this repository, whose gradients are checked against central finite differences. torch is not a dependency: the lock is compiled with --all-extras and installed by the fresh-clone CI job, so a torch extra would put a multi-gigabyte CUDA closure in every clean install.",
+      "Budget frozen and shared across all seven: lookback 24, max 60 epochs, batch 64, lr 0.003, patience 8, seed 20260909. Early stopping watches DEV."
+    ]
+  },
+  {
+    "model_id": "theta",
+    "family": "STATISTICAL",
+    "resource_class": "LIGHT",
+    "description": "Theta method (theta=2): frozen SES level plus half the fitted drift.",
+    "requires": [
+      "statsmodels"
+    ],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "The forward recursion is written out because ThetaModel has no apply(refit=False), and refitting at every origin would be a different protocol -- one whose parameters have seen the holdout."
+    ]
+  },
+  {
+    "model_id": "transformer",
+    "family": "DEEP",
+    "resource_class": "MODERATE",
+    "description": "One causal self-attention block, two heads, sinusoidal positions.",
+    "requires": [],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "Additive -inf mask before the softmax, so no future position can influence the normalisation.",
+      "Trained on the numpy autodiff engine in this repository, whose gradients are checked against central finite differences. torch is not a dependency: the lock is compiled with --all-extras and installed by the fresh-clone CI job, so a torch extra would put a multi-gigabyte CUDA closure in every clean install.",
+      "Budget frozen and shared across all seven: lookback 24, max 60 epochs, batch 64, lr 0.003, patience 8, seed 20260909. Early stopping watches DEV."
+    ]
+  },
+  {
+    "model_id": "uc_stochastic_cycle",
+    "family": "STATISTICAL",
+    "resource_class": "MODERATE",
+    "description": "Unobserved components: local level plus a stochastic cycle of estimated frequency.",
+    "requires": [
+      "statsmodels"
+    ],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "The honest way to ask 'is there a cycle' when no fixed seasonal period is justified: the frequency is estimated, not imposed."
+    ]
+  },
+  {
+    "model_id": "xgboost",
+    "family": "TREE_ENSEMBLE",
+    "resource_class": "LIGHT",
+    "description": "XGBoost on the causal matrix at the shared capacity ceiling.",
+    "requires": [
+      "xgboost"
+    ],
+    "declared_status": "ACTIVE",
+    "effective_status": "ACTIVE",
+    "missing_dependency": null,
+    "unsuitable_reason": null,
+    "notes": [
+      "NOT comparable to A2's xgboost_causal_retuned, which selected hyperparameters by nested inner validation inside all 36 folds. This one is frozen and fitted once on 1,000 rows."
+    ]
+  }
+]

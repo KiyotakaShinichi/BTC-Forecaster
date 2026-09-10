@@ -62,3 +62,12 @@ research/market_intelligence/b4/cache/
 research/market_intelligence/b4/runs/*/targets.json
 # Generated DuckDB store for the B4.39 feature-matrix demonstration.
 research/market_intelligence/b4/feature_matrix/*.duckdb
+# A6 model-zoo serialized estimators. Forty pickles, tens of megabytes per run.
+# Unpickling executes, so committing them would put forty executable payloads in
+# every clone -- which is why `research/serialization.deserialize` refuses an
+# artifact whose sha256 does not match in the first place. The evidence is that
+# record, not the bytes: each run's `artifacts.json` carries every model's
+# sha256, size and round_trip_exact flag, and the benchmark is deterministic, so
+# regenerating the directory and comparing hashes is the check. Same rule, same
+# reason, as the B4 market-data cache above.
+research/runs/*/artifacts/*.pkl

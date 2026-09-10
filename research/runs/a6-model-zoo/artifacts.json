@@ -1,0 +1,682 @@
+{
+  "adaboost": {
+    "model_id": "adaboost",
+    "sha256": "c84e2f5fc2a5653d89d3550496bea3e7077ca613da6625701bc6e457edf5ef7a",
+    "bytes": 258988,
+    "created_at": "2026-09-10T07:31:46.034487+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "ar_p": {
+    "model_id": "ar_p",
+    "sha256": "c605d273e0e6e761427028f4e8fc84f38ace0c2da96c044079f32dbcb4188911",
+    "bytes": 358,
+    "created_at": "2026-09-10T07:31:46.195882+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "arima": {
+    "model_id": "arima",
+    "sha256": "0b7353ac437108e85c5a62b6688318c56e80db3c98a0df412e4f7cda240c03fd",
+    "bytes": 1452543,
+    "created_at": "2026-09-10T07:31:46.940539+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "bayesian_ridge": {
+    "model_id": "bayesian_ridge",
+    "sha256": "242071b067a2fd1b47263727496d79fdb9e78716fbafba2caf08a79308623d42",
+    "bytes": 2732,
+    "created_at": "2026-09-10T07:31:47.060683+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "cnn_1d": {
+    "model_id": "cnn_1d",
+    "sha256": "254110a86f170480fdf85d88247fa4d7cfc0d8f4e23718cb3ce91edd4c117cba",
+    "bytes": 2095207,
+    "created_at": "2026-09-10T07:31:47.073500+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "conformal_ridge": {
+    "model_id": "conformal_ridge",
+    "sha256": "53185d5d6aef997623af9137e687ea078c359b920d8fdeb512f133d7a3a39e18",
+    "bytes": 1534,
+    "created_at": "2026-09-10T07:31:47.170076+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "decision_tree": {
+    "model_id": "decision_tree",
+    "sha256": "832008f792a2a95d4f502381718703a1b53fd32e4c839849521894f9c9e979ca",
+    "bytes": 3029,
+    "created_at": "2026-09-10T07:31:47.186537+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "egarch_11": {
+    "model_id": "egarch_11",
+    "sha256": "a8054c0c51cbb90d570aa199c3106c4222e76f9d498e8947b8b44392cd2e4e5c",
+    "bytes": 1695,
+    "created_at": "2026-09-10T07:31:47.190542+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "elastic_net": {
+    "model_id": "elastic_net",
+    "sha256": "3f934d935807fa208076498cc6599180dfcbc336ca18284d1c61c93809c4ba77",
+    "bytes": 1434,
+    "created_at": "2026-09-10T07:31:47.238237+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "extra_trees": {
+    "model_id": "extra_trees",
+    "sha256": "3acb57907c6ab2853b3862626ac34681d94944e7a95900c9d8dc0f2bf250665d",
+    "bytes": 522633,
+    "created_at": "2026-09-10T07:31:47.262952+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "garch_11": {
+    "model_id": "garch_11",
+    "sha256": "9eb806a21ce22d203ae649f07ffd161664db5305fa57f865c8edacbe7aa6ad3c",
+    "bytes": 1673,
+    "created_at": "2026-09-10T07:31:47.532022+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "gjr_garch_11": {
+    "model_id": "gjr_garch_11",
+    "sha256": "1716162a0aca1a750b8a2f6fc03616cd91b0812724d03b2687562f57086bb4cf",
+    "bytes": 1697,
+    "created_at": "2026-09-10T07:31:47.567064+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "gradient_boosting": {
+    "model_id": "gradient_boosting",
+    "sha256": "5f835bde2576c39bc1d7a68eb927f660fa522588d1b151d79e8e9181ef618394",
+    "bytes": 306203,
+    "created_at": "2026-09-10T07:31:47.614722+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "gru": {
+    "model_id": "gru",
+    "sha256": "900e750cdf07e9eb1a688d1eec18fcee21c6635aa163d5adac0b98dfa12c4238",
+    "bytes": 2115699,
+    "created_at": "2026-09-10T07:31:47.677420+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "hist_gradient_boosting": {
+    "model_id": "hist_gradient_boosting",
+    "sha256": "261dd014eb01ea35fb856b7217503f11397d79dfef8b58e709c0ad3d86cfbcb0",
+    "bytes": 313685,
+    "created_at": "2026-09-10T07:31:48.088220+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "historical_mean_return": {
+    "model_id": "historical_mean_return",
+    "sha256": "50796088c6ad267fd625cd0e878a37d21383a9fcafedd48b811a4eba5f5287dd",
+    "bytes": 207,
+    "created_at": "2026-09-10T07:31:48.144898+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "holt_linear_trend": {
+    "model_id": "holt_linear_trend",
+    "sha256": "d16ee670f819aeae923a9ac80f871bb9ec1d13d70f08285d42ea011c83c51500",
+    "bytes": 2260007,
+    "created_at": "2026-09-10T07:31:48.166071+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "huber": {
+    "model_id": "huber",
+    "sha256": "892cf91139d1b772e142c30c80be8576f1a66c5f50be37e119169318f227a51f",
+    "bytes": 2424,
+    "created_at": "2026-09-10T07:31:48.296791+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "knn": {
+    "model_id": "knn",
+    "sha256": "e214031aa77e3314fbdc08b264fa6e0706f617c40c6f132a1feed93fdd1f7da8",
+    "bytes": 118919,
+    "created_at": "2026-09-10T07:31:48.303249+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "lasso": {
+    "model_id": "lasso",
+    "sha256": "817afc337816e96b9ff19ddc7677aea8ca143b02efb2397aca5de45f630065bd",
+    "bytes": 1429,
+    "created_at": "2026-09-10T07:31:48.477044+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "linear_svr": {
+    "model_id": "linear_svr",
+    "sha256": "a5c98e37d344fbdb038c9b103d5dc49ee9679c7cc910b4c20bf88c1a2e784a36",
+    "bytes": 1385,
+    "created_at": "2026-09-10T07:31:48.481011+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "local_level": {
+    "model_id": "local_level",
+    "sha256": "4ad08f2dd7f81424131a5ba66eb9b02b754c58bcb7623d0b4c93a4b44fa66af6",
+    "bytes": 731504,
+    "created_at": "2026-09-10T07:31:48.491924+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "local_linear_trend": {
+    "model_id": "local_linear_trend",
+    "sha256": "ab200e713609a5e6928d1f1ded61637ee75f7477491765d796af1716a69d7e1e",
+    "bytes": 1415970,
+    "created_at": "2026-09-10T07:31:48.590905+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "lstm": {
+    "model_id": "lstm",
+    "sha256": "81feca07e2cb63d8187e3476f7d5b4937d9bf6ad3330c5f94efa528a9bd4e16c",
+    "bytes": 2129700,
+    "created_at": "2026-09-10T07:31:48.700912+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "mlp": {
+    "model_id": "mlp",
+    "sha256": "9607410bac2392e7cfec568b4f29201e480ec459a450fcdc11d9ecf925ef712a",
+    "bytes": 2218025,
+    "created_at": "2026-09-10T07:31:49.226730+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "naive_last_value": {
+    "model_id": "naive_last_value",
+    "sha256": "8c0fd3c0eaa2742229f79451188fa3b77486e7f3e8d173c77cad325ef9000ef3",
+    "bytes": 201,
+    "created_at": "2026-09-10T07:31:49.293070+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "nbeats": {
+    "model_id": "nbeats",
+    "sha256": "89b379d1c5ecb996331e8d86e4012ab20b41b388048b741456452ed635adbe14",
+    "bytes": 2363095,
+    "created_at": "2026-09-10T07:31:49.307529+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "pls": {
+    "model_id": "pls",
+    "sha256": "93726ac21861dc69038fa726f9f477579878aceb950f58841eac6ba048218ced",
+    "bytes": 34640,
+    "created_at": "2026-09-10T07:31:49.368662+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "quantile_gbr": {
+    "model_id": "quantile_gbr",
+    "sha256": "5f31c57552454bc42cb3cdf63758d833d135b9c8f992738a6cd20a5f0489f6bb",
+    "bytes": 1450027,
+    "created_at": "2026-09-10T07:31:49.431614+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "quantile_linear": {
+    "model_id": "quantile_linear",
+    "sha256": "d07c97e3947f5e054ea993f5e24a72026a06c2623cf632822aace7b0bbc3ef11",
+    "bytes": 876883,
+    "created_at": "2026-09-10T07:31:50.102899+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "random_forest": {
+    "model_id": "random_forest",
+    "sha256": "03e71d1fd856d57ccc56657408ccd96bc1ef1a7109b3d6fc1ff16b9dc38b1da0",
+    "bytes": 428015,
+    "created_at": "2026-09-10T07:31:50.156906+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "random_walk_drift": {
+    "model_id": "random_walk_drift",
+    "sha256": "012d3566d0eba424e3d51cdf4c8ffc62c55beddd04c7062a64ee81e37d596614",
+    "bytes": 202,
+    "created_at": "2026-09-10T07:31:50.395125+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "rbf_svr": {
+    "model_id": "rbf_svr",
+    "sha256": "79d3d1a956f21ce6b0676134cef5e4ca6ad6b6b63b277ec183f552ed1df90215",
+    "bytes": 101420,
+    "created_at": "2026-09-10T07:31:50.399188+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "ridge": {
+    "model_id": "ridge",
+    "sha256": "07ada3ae10d689299c501fda8b4a7ebe3823215913e9825ca64dc59092e8f152",
+    "bytes": 1350,
+    "created_at": "2026-09-10T07:31:50.611747+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "ridge_robust_scaled": {
+    "model_id": "ridge_robust_scaled",
+    "sha256": "9348d40e66255b20d40cf237e3b7cf81f8dd3424fadd03fb0b061cb251e238a1",
+    "bytes": 1356,
+    "created_at": "2026-09-10T07:31:50.615782+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "tcn": {
+    "model_id": "tcn",
+    "sha256": "7eecf0a0e552099b227ab6399646657f1ccdd06a85d3bb81035638cf881cd56b",
+    "bytes": 2115013,
+    "created_at": "2026-09-10T07:31:50.630527+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "theta": {
+    "model_id": "theta",
+    "sha256": "62d7d270795e4f07904b716a7a731262ef7a806d3a9b25e55dd47a8baed78e5b",
+    "bytes": 236,
+    "created_at": "2026-09-10T07:31:50.841657+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "transformer": {
+    "model_id": "transformer",
+    "sha256": "4a71d776089a5df64df8b1c939c842caf883b618ef9439f4f4849d861ea8ea77",
+    "bytes": 2113936,
+    "created_at": "2026-09-10T07:31:50.862644+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "uc_stochastic_cycle": {
+    "model_id": "uc_stochastic_cycle",
+    "sha256": "04a029245b607315d1b5cada16ecac955a2d94fc4cacc0c712f580d38929ffc5",
+    "bytes": 2422224,
+    "created_at": "2026-09-10T07:31:51.377367+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  },
+  "xgboost": {
+    "model_id": "xgboost",
+    "sha256": "f0a3aa8ff652e2c358252fbe454c0d64b7bec9aabda975479a9254c59a4d060d",
+    "bytes": 369109,
+    "created_at": "2026-09-10T07:31:51.663937+00:00",
+    "environment": {
+      "python": "3.11.4",
+      "numpy": "2.4.3",
+      "sklearn": "1.8.0",
+      "statsmodels": "0.14.6",
+      "arch": "8.0.0",
+      "xgboost": "3.2.0"
+    },
+    "format": "pickle protocol 5",
+    "note": "loadable only by compatible code; the package versions that wrote it are recorded because a pickle is not a data format",
+    "round_trip_exact": true
+  }
+}

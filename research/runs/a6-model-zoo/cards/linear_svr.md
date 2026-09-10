@@ -1,0 +1,71 @@
+# linear_svr
+
+**Family** LINEAR_ML | **Status** ACTIVE | **Scientific status** EXPLORATORY
+
+Epsilon-insensitive linear SVR.
+
+## What it is
+
+- **Capabilities declared**: POINT, SERIALIZE
+- **Preprocessing**: declared per model
+- **Requires**: sklearn
+
+## Training budget
+
+- 1,000 deterministic rows, the contiguous tail of the training partition
+- **Fit time**: 0.675 s
+- **Predict time**: 0.001 s
+- **Parameters**: 12
+- **Training-row fingerprint**: `b7b0666da4280e44`
+
+## What it produces
+
+- point forecast of the next bar's log return
+- **does not** produce quantiles (not declared)
+- **does not** produce direction probability (not declared)
+- **does not** produce variance (not declared)
+
+## Measured
+
+| metric | value |
+|---|---|
+| MAE | 0.017175 |
+| RMSE | 0.023889 |
+| MASE (naive = 1) | 1.047623 |
+| skill vs naive | -0.047623 |
+| forecast bias | -0.005303 |
+| directional accuracy | 0.5035 |
+| balanced accuracy | 0.5029 |
+| MCC | 0.0269 |
+| train-constant null | 0.4993 |
+| beats that null | yes |
+
+The naive baseline's MAE on the same block is 0.016394.
+
+## Against the baseline
+
+- Diebold-Mariano statistic 4.117, p = 0.0000, q = 0.0001 after Benjamini-Hochberg
+- **Verdict**: significantly **worse** than the naive baseline
+
+## Stability
+
+- mean skill across blocks -0.050940
+- worst block -0.097657
+- positive in every block: no
+
+## Residual diagnostics
+
+- n = 705
+- assumptions rejected: arch_lm, jarque_bera, adf, kpss
+- diagnostics describe how a model fails, not whether it is profitable
+
+## Serialization
+
+- 1385 bytes, sha256 `a5c98e37d344fbdb`
+- reload reproduces the forecasts bit-identically
+
+## Limitations
+
+- Fitted on 1,000 training rows and scored on a single holdout block. That is a sample size at which almost nothing is decidable, and one partition is not a distribution.
+- A6 is exploratory. A2's 36-fold walk-forward study remains the authoritative historical evidence, and a result here neither confirms nor overturns it -- the two are not comparable.
+- No model in A6 is PROMOTED, and the paper-trading engine stays fail-closed. Nothing in this card is a recommendation to trade.
