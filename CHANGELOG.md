@@ -19,6 +19,38 @@ what was added describes a project that never learned anything.
 
 ---
 
+## 2026-09-10 — Walk-forward robustness (Track A7)
+
+- **Nothing beats the random walk, from any origin, at any horizon, with any
+  amount of history.** A6's question re-asked from 1,417 daily origins at 1, 3,
+  7 and 30 bars, with rolling windows of 250 to 2,000 rows and an expanding one:
+  0 of 200 configurations significantly better than naive after
+  Benjamini-Hochberg, 103 significantly worse. The largest positive skill,
+  +0.37%, is not significant and loses in the most recent period. Decision
+  `ROBUSTLY_UNINTERESTING`; A8 not proposed.
+- The design, the input hash, the schedule and every gate threshold were
+  committed before the run (`docs/walk-forward.md`, sections 1-11). One gate was
+  relaxed afterwards -- the resource budget, which made the digest depend on
+  machine load -- and the deviation is recorded beside the preregistration with
+  the check that it could not change the decision.
+- The engine was validated on synthetic worlds first: it finds an AR signal and
+  a trend, refuses noise, a signal that stops half way, and a leaky oracle with
+  perfect skill. One preregistered expectation was not met as written: a
+  feature-driven signal was detected but, positive in four of six folds, called
+  fragile rather than a candidate. Recorded, not tuned away.
+- Byte-reproducible output: canonical files carry no timestamps, timings or run
+  ids; the result digest covers them and nothing else; one worker and two give
+  identical bytes. Inputs are hash-pinned, and
+  `python -m btc_forecaster.research.snapshot` refuses a changed one.
+- Series models gained an iterated multi-step forecast -- the only change to A6
+  code; A6's result digest reproduces unchanged. A2's Diebold-Mariano gained an
+  optional HAC lag count; its default is unchanged.
+- Found and fixed while building it: a resource status that moved with machine
+  load inside the digest; the first fold charged for a library import, a defect
+  A6 had fixed in its own runner; a leakage adversary to which the drift
+  baseline is mathematically blind; a partition check that rejected every
+  schedule because it dropped a timezone.
+
 ## 2026-09-08 — Repository reproducibility and maintainability
 
 - `requirements.lock`: the full transitive closure, 83 distributions pinned with

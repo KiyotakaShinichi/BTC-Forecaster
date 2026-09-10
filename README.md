@@ -260,6 +260,42 @@ walk-forward folds. Nothing in A6 is promoted, nothing can be, and the paper
 engine stays fail-closed. See [`docs/model-zoo.md`](docs/model-zoo.md) and the
 run evidence in [`research/runs/a6-model-zoo/`](research/runs/a6-model-zoo/).
 
+## The A7 walk-forward robustness layer
+
+A6's question asked again: from 1,417 daily origins rather than one block, at
+1, 3, 7 and 30 bars, with 250 to 2,000 rows of rolling history and with all of
+it, across early, middle and late periods. Eleven A6 models, their
+configurations frozen, every horizon scored against the random walk at the same
+origins. Preregistered before the run; the input hash-pinned; the output
+byte-reproducible.
+
+```bash
+python -m btc_forecaster.research.walk_forward config    # prints the configuration digest
+python -m btc_forecaster.research.snapshot verify data/snapshots/BTC-USD --expect 39b93e34520a496692ccc2156b8fe5c88c88b31bd9e9903a6fad74f282004bd3
+python -m btc_forecaster.research.walk_forward run --data data/snapshots/BTC-USD \
+    --expect-input 39b93e34520a496692ccc2156b8fe5c88c88b31bd9e9903a6fad74f282004bd3 --output <scratch dir> --workers 4
+python -m btc_forecaster.research.walk_forward verify <scratch dir>
+```
+
+A reproduction is a run whose result digest equals the committed one,
+`b3fba7227e82e13a…`. Verifying the committed directory itself checks its
+9 committed canonical files and names `predictions.csv.gz` as absent: the
+predictions are regenerated from the snapshot, not redistributed.
+
+**Nothing beats the random walk here either.** 0 of 200 configurations are
+significantly better than the naive forecast after Benjamini-Hochberg;
+103 are significantly worse. The largest positive skill is +0.37%, not
+significant, and the best configuration at every horizon loses in the most
+recent period. Decision: `ROBUSTLY_UNINTERESTING`. No model is promoted, no A8
+is proposed, and the paper engine stays fail-closed.
+
+A2, A6 and A7 are different experiments -- a 31-step price path over 36
+folds, next-bar forecasts over one 705-bar holdout after a single 1,000-row
+fit, and a walk-forward over four horizons -- and their numbers are not
+comparable. They agree on the question they share. See
+[`docs/walk-forward.md`](docs/walk-forward.md) and the evidence in
+[`research/runs/a7-walk-forward/`](research/runs/a7-walk-forward/).
+
 ---
 
 ## Models
@@ -353,6 +389,7 @@ A promoted research run without its manifest is an anecdote.
 - [`docs/benchmark.md`](docs/benchmark.md) — what the benchmark measures, how to read it, what it cannot tell you
 - [`docs/seams.md`](docs/seams.md) — where external signals attach (Track B contract)
 - [`docs/model-zoo.md`](docs/model-zoo.md) — Track A6: forty models on a 1,000-row budget, and why it does not supersede A2
+- [`docs/walk-forward.md`](docs/walk-forward.md) — Track A7: A6's question from 1,417 origins at four horizons, preregistered, and why nothing survived
 - [`DEPLOYMENT.md`](DEPLOYMENT.md), [`AWS_BACKEND_API.md`](AWS_BACKEND_API.md) — deployment
 - [`DEPENDENCIES.md`](DEPENDENCIES.md) — the one dependency contract, and why the other files exist
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — how to build it, what CI enforces, and the four rules that are about the science rather than the code

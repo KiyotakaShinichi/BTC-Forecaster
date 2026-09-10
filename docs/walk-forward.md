@@ -302,11 +302,86 @@ fragile, by design.
 
 ## 12. Results
 
-*Pending: filled from `research/runs/a7-walk-forward/` after the run.*
+From the committed run in [`research/runs/a7-walk-forward/`](../research/runs/a7-walk-forward/),
+result digest `b3fba7227e82e13ab2c112cb44169857aeb567cf7cb2a6f375bd7792f0d13790`: 1,417 origins, 200
+gated configurations — 10 models × 4 horizons × 5 windows, each against
+the naive forecast.
+
+**Decision: `ROBUSTLY_UNINTERESTING`.** No configuration cleared the gate, and
+none looked like a signal: not one had positive skill with a one-sided raw
+p-value below 0.05.
+
+| Primary family: 200 comparisons at α = 0.05 | |
+|---|---|
+| raw rejections | 113 — against 10 expected from noise |
+| significant after Benjamini-Hochberg | 103 |
+| of which significantly **better** than naive | **0** |
+| of which significantly **worse** | 103 |
+
+Significantly worse by horizon: 26 at h = 1, 26 at h = 3, 26 at h = 7, 25 at h = 30; the rest
+are indistinguishable from naive.
+
+29 of 200 configurations have positive aggregate skill
+(4 at h = 1, 11 at h = 3, 6 at h = 7, 8 at h = 30). The largest is
++0.37% — `arima`, h = 3, rolling-2000 —
+37% of the one-percent practical floor, and not significant.
+
+The best configuration at each horizon, and where its skill came from:
+
+| h | best | skill | early | middle | late | folds positive |
+|---|---|---|---|---|---|---|
+| 1 | `local_level` rolling-2000 | +0.22% | +0.36% | +0.37% | -0.14% | 8 of 12 |
+| 3 | `arima` rolling-2000 | +0.37% | +0.44% | +0.75% | -0.20% | 6 of 12 |
+| 7 | `ar_p` rolling-2000 | +0.05% | +0.83% | +0.51% | -1.43% | 5 of 12 |
+| 30 | `ar_p` rolling-2000 | +0.20% | +2.23% | +3.61% | -6.64% | 6 of 12 |
+
+Gate failures across the 200 configurations:
+`aggregate_skill` 171, `bh_better` 200, `fold_majority` 193, `late_block` 186, `leakage` 0, `practical` 200, `resources` 0.
+
+**Leakage:** every model passed every adversary that applies to it —
+5 adversaries, 108 applicable checks, at h = 1 and h = 30 on the
+rolling-250 window in the last fold. `valid_past` does not apply to `naive_last_value`, which forecasts a constant by construction.
+
+**Direction** (descriptive; the gate does not test it): the best balanced
+accuracy at each horizon is 0.526, 0.535, 0.526, 0.556,
+and no MCC exceeds +0.14.
+
+**Resources** (non-canonical, `run_info.json`): 2,214 s of wall
+clock on 4 workers of an Intel Core i5-10210U laptop (four cores), and
+6,600 s of fitting and forecasting summed across folds, 80% of it LSTM.
+No fold overran its A6 budget under parallel load, and no deep-model fold hit A6's 300 s
+training cap, so no forecast depends on machine speed.
 
 ## 13. Negative findings
 
-*Pending.*
+- **Nothing beats the random walk.** 0 of 200
+  configurations are significantly better; 103 are
+  significantly worse. At no horizon and in no window.
+- **The small positive skills belong to the random walk's neighbours** — local
+  level, AR, ARIMA and drift, whose forecasts sit close to zero; 21 of the
+  29 are on the two longest windows. The largest is +0.37%.
+- **Every horizon's best configuration loses in the late block**
+  (2025-04-23 → 2026-08-07) after positive early and middle
+  blocks. Whatever edge exists belongs to a period. Of the 29 positive
+  configurations, 17 fail the late-block gate and 22 fail fold majority.
+- **Capacity hurts at every horizon.** MLP, LSTM, XGBoost and ridge are worse than
+  naive in all 80 of their configurations and, averaged across windows,
+  worse at every longer horizon: MLP from -29.1% at h = 1
+  to -110.2% at h = 30. Ridge and XGBoost do best with all
+  the history there is — the expanding window is their best at every horizon —
+  and still never reach zero. The networks show no consistent benefit from more
+  history.
+- **One pattern is consistent, and negligible.** Local level at h = 3 is
+  positive in all five windows (+0.09% to +0.14%) — at
+  most 14% of the practical floor, and not significant.
+- **Theta loses everywhere**, from -0.6% to
+  -44.7%, and its average loss grows with every
+  longer horizon: its forecast function extrapolates a trend in returns, which
+  compounds.
+- **Drift needs a long history.** It beats naive only at h ≥ 3 and only on the
+  two longest windows (at most +0.29%), and loses on both short
+  windows at every horizon: BTC's drift is real on average and too noisy to
+  estimate from a year or two of data.
 
 ## 14. Comparison with A2
 
@@ -333,7 +408,31 @@ qualitative comparison is in section 17.
 
 ## 15. Comparison with A6
 
-*Pending.*
+Same input bytes, and at h = 1 the same target. The closest A7 configuration to
+A6's design is h = 1 on the 1,000-row rolling window — but scored at 1,417
+origins with twelve refits instead of one block with one fit:
+
+| model | A6 skill, one block | A7 skill, h = 1, `rolling-1000` | A7 q |
+|---|---|---|---|
+| `random_walk_drift` | -0.19% | -0.32% | 0.036 |
+| `ar_p` | -0.13% | -0.41% | 0.18 |
+| `arima` | -0.16% | -0.20% | 0.46 |
+| `theta` | -3.18% | -1.40% | 0.00087 |
+| `local_level` | +0.00% | +0.12% | 0.46 |
+| `local_linear_trend` | -0.45% | -0.31% | 0.31 |
+| `xgboost` | -22.65% | -7.82% | 1.6e-08 |
+| `ridge` | -16.03% | -2.10% | 0.00063 |
+| `mlp` | -65.32% | -32.14% | 7.8e-14 |
+| `lstm` | -29.24% | -10.44% | 9.2e-12 |
+
+**`CONSISTENT`.** The ordering is essentially A6's: the two networks are the
+worst in both, then gradient boosting and ridge, with the statistical models
+near zero. Refitting on recent data every 118 origins leaves the learned
+models with 13% to 49% of their A6 losses —
+and none of them crosses zero. The near-zero models move by fractions of a
+percent, in both directions. A6's one-block, n = 1,000 conclusion survives many origins and
+refits at h = 1, and A7 extends it to 3, 7 and 30 bars and to four more amounts
+of history.
 
 ## 16. Limitations
 
@@ -381,4 +480,24 @@ These hold whatever the result.
 
 ## 17. Decision
 
-*Pending.*
+**`ROBUSTLY_UNINTERESTING`.**
+
+- **Against the random walk:** 0 of 200 configurations
+  better, 103 worse. The best, +0.37%, is not significant,
+  is 37% of the practical floor, and is negative in the late block.
+- **Candidate signals:** none. **Fragile signals:** none — nothing reached even a
+  raw one-sided p < 0.05 with positive skill.
+- **What failed stability:** every positive configuration failed significance
+  and the practical floor; 17 of 29 also failed the late block,
+  22 fold majority.
+- **A2, A6 and A7 agree** on the question they share — nothing beats the random
+  walk — across three designs whose numbers are not comparable: 0 of 8 promoted,
+  0 of 39 better, 0 of 200 better.
+- **A8 is not proposed.** A7's stop condition applies: the random walk remains
+  dominant, and no concrete question survived the framework. Another model
+  family on the same eleven price and volume features is exactly what this
+  result argues against. If there is a future quantitative track, the only
+  defensible starting point is a new, preregistered source of information — and
+  that is a decision for its own proposal, not a conclusion of this one.
+- **Nothing is promoted. Live trading remains disabled**, and A7 has no state
+  that could change that.
