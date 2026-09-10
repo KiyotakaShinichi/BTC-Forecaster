@@ -53,6 +53,7 @@ from .manifest import (
     canonical_csv,
     canonical_json,
     deterministic_gzip,
+    digest_of_hashes,
     result_digest,
     sha256_hex,
 )
@@ -91,6 +92,10 @@ CANONICAL_FILES: tuple[str, ...] = (
     "leakage.json",
     "folds.json",
 )
+
+#: Canonical parts a committed run may leave out, because `run` regenerates them
+#: byte-for-byte from the pinned snapshot. Every other part must be present.
+REGENERABLE_FILES: tuple[str, ...] = ("predictions.csv",)
 
 #: Models whose runtime dominates. Submitted first so a pool finishes sooner;
 #: submission order cannot affect results, which are assembled by key.
@@ -409,17 +414,32 @@ def verify_run(directory: Path | str) -> dict:
     digest cannot be recomputed without all of them, so the run is not verified.
     A clone of the committed BTC run is in exactly that state -- its predictions
     are regenerated from the pinned snapshot, not redistributed.
+
+    ``committed_files_verified`` is the check such a clone *can* make: every
+    present file matches the manifest, the only absent parts are regenerable
+    ones, and the present files' own hashes -- with the manifest's recorded hash
+    standing in for each absent part -- reproduce the recorded result digest. It
+    vouches for the committed files. It cannot vouch for predictions nobody has
+    regenerated, and ``verified`` stays false until somebody does.
     """
     out = Path(directory)
     manifest = json.loads((out / "manifest.json").read_text(encoding="utf-8"))
+    recorded = manifest["files"]
     parts = read_canonical_parts(out, missing_ok=True)
     absent = [name for name in CANONICAL_FILES if name not in parts]
-    mismatched = [
-        name for name in sorted(parts) if sha256_hex(parts[name]) != manifest["files"].get(name)
-    ]
+    mismatched = [name for name in sorted(parts) if sha256_hex(parts[name]) != recorded.get(name)]
     digest = None if absent else result_digest(parts)
+    hashes = {name: sha256_hex(data) for name, data in parts.items()}
+    hashes.update({name: recorded[name] for name in absent if name in recorded})
+    committed = (
+        not mismatched
+        and set(absent) <= set(REGENERABLE_FILES)
+        and set(hashes) == set(CANONICAL_FILES)
+        and digest_of_hashes(hashes) == manifest["result_digest"]
+    )
     return {
         "absent_files": absent,
+        "committed_files_verified": committed,
         "result_digest_recorded": manifest["result_digest"],
         "result_digest_recomputed": digest,
         "mismatched_files": mismatched,
@@ -445,6 +465,7 @@ def clean_statuses(outcome: BenchmarkOutcome) -> dict[str, int]:
 
 __all__ = [
     "CANONICAL_FILES",
+    "REGENERABLE_FILES",
     "RUN_KIND",
     "SINGLE_THREAD_ENV",
     "BenchmarkOutcome",

@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import gzip
 import json
+from pathlib import Path
 
 import pandas as pd
 import pytest
@@ -34,6 +35,7 @@ from btc_forecaster.research.walk_forward.config import (
 from btc_forecaster.research.walk_forward.manifest import input_manifest
 from btc_forecaster.research.walk_forward.runner import (
     CANONICAL_FILES,
+    REGENERABLE_FILES,
     attack_plan,
     canonical_contents,
     job_specs,
@@ -169,6 +171,45 @@ class TestTheWrittenRun:
         metrics.write_text(metrics.read_text().replace("0", "1", 1))
         assert verify_run(tmp_path)["mismatched_files"] == ["metrics.json"]
 
+    def test_committed_files_verify_without_the_regenerable_predictions(self, tmp_path, one_worker) -> None:
+        write_run(one_worker, tmp_path, input_manifest=MANIFEST)
+        (tmp_path / "predictions.csv.gz").unlink()
+        result = verify_run(tmp_path)
+        assert result["committed_files_verified"] and not result["verified"]
+
+    def test_committed_verification_catches_a_tampered_file(self, tmp_path, one_worker) -> None:
+        write_run(one_worker, tmp_path, input_manifest=MANIFEST)
+        (tmp_path / "predictions.csv.gz").unlink()
+        metrics = tmp_path / "metrics.json"
+        metrics.write_text(metrics.read_text().replace("0", "1", 1))
+        assert not verify_run(tmp_path)["committed_files_verified"]
+
+    def test_committed_verification_catches_a_rewritten_prediction_hash(self, tmp_path, one_worker) -> None:
+        """The absent part's hash comes from the manifest, so the digest has to agree with it."""
+        write_run(one_worker, tmp_path, input_manifest=MANIFEST)
+        (tmp_path / "predictions.csv.gz").unlink()
+        manifest = json.loads((tmp_path / "manifest.json").read_text())
+        manifest["files"]["predictions.csv"] = "0" * 64
+        (tmp_path / "manifest.json").write_text(json.dumps(manifest))
+        assert not verify_run(tmp_path)["committed_files_verified"]
+
+    def test_only_regenerable_files_may_be_absent(self, tmp_path, one_worker) -> None:
+        write_run(one_worker, tmp_path, input_manifest=MANIFEST)
+        (tmp_path / "metrics.json").unlink()
+        result = verify_run(tmp_path)
+        assert result["absent_files"] == ["metrics.json"] and not result["committed_files_verified"]
+
+
+class TestTheCommittedBtcRun:
+    """The committed A7 evidence, checked the way a fresh clone can check it."""
+
+    RUN = Path("research/runs/a7-walk-forward")
+
+    def test_its_committed_files_reproduce_the_recorded_digest(self) -> None:
+        result = verify_run(self.RUN)
+        assert result["committed_files_verified"], result
+        assert set(result["absent_files"]) <= set(REGENERABLE_FILES)
+
 
 class TestTheCommand:
     def test_config_prints_the_digest(self, capsys) -> None:
@@ -198,3 +239,17 @@ class TestTheCommand:
         captured = capsys.readouterr()
         assert json.loads(captured.out)["absent_files"] == ["predictions.csv"]
         assert "predictions.csv.gz is not in" in captured.err and "Regenerate" in captured.err
+
+    def test_committed_verification_passes_and_says_what_it_did_not_check(self, tmp_path, capsys, one_worker) -> None:
+        write_run(one_worker, tmp_path, input_manifest=MANIFEST)
+        (tmp_path / "predictions.csv.gz").unlink()
+        assert main(["verify", "--committed", str(tmp_path)]) == EXIT_OK
+        err = capsys.readouterr().err
+        assert "committed files verified" in err and "itself is not verified" in err
+
+    def test_committed_verification_refuses_a_tampered_file(self, tmp_path, one_worker) -> None:
+        write_run(one_worker, tmp_path, input_manifest=MANIFEST)
+        (tmp_path / "predictions.csv.gz").unlink()
+        metrics = tmp_path / "metrics.json"
+        metrics.write_text(metrics.read_text().replace("0", "1", 1))
+        assert main(["verify", "--committed", str(tmp_path)]) == EXIT_INTEGRITY

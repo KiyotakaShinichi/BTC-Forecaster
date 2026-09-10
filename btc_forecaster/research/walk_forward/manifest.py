@@ -123,14 +123,23 @@ def sha256_hex(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def digest_of_hashes(hashes: dict[str, str]) -> str:
+    """The result digest from each named part's sha256 rather than its bytes.
+
+    The same function as :func:`result_digest`, for when a part is not on disk
+    and only its recorded hash is known.
+    """
+    lines = [f"{name}\0{hashes[name]}" for name in sorted(hashes)]
+    return sha256_hex("\n".join(lines).encode("utf-8"))
+
+
 def result_digest(parts: dict[str, bytes]) -> str:
     """One hash over named canonical contents, independent of insertion order.
 
     Each part contributes ``name`` and the hash of its **uncompressed** bytes, so
     a compressor upgrade cannot change a result digest.
     """
-    lines = [f"{name}\0{sha256_hex(parts[name])}" for name in sorted(parts)]
-    return sha256_hex("\n".join(lines).encode("utf-8"))
+    return digest_of_hashes({name: sha256_hex(data) for name, data in parts.items()})
 
 
 # -- the input --------------------------------------------------------------
@@ -266,6 +275,7 @@ __all__ = [
     "canonical_float",
     "canonical_json",
     "deterministic_gzip",
+    "digest_of_hashes",
     "input_manifest",
     "input_status",
     "load_snapshot",

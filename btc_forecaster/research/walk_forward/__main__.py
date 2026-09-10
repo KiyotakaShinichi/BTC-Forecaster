@@ -5,6 +5,15 @@
         --data data/snapshots/BTC-USD --output research/runs/a7-walk-forward --workers 4
     python -m btc_forecaster.research.walk_forward run --world NOISE --smoke --output out/a7-smoke
     python -m btc_forecaster.research.walk_forward verify research/runs/a7-walk-forward
+    python -m btc_forecaster.research.walk_forward verify --committed research/runs/a7-walk-forward
+
+``verify`` passes only when every canonical file is on disk and the result digest
+recomputes. A clone of the committed BTC run lacks the predictions, which are
+regenerated rather than redistributed, so plain ``verify`` names them as absent
+and fails. ``verify --committed`` is the check that clone can pass: every
+committed file matches its manifest and, with the recorded hash of the absent
+predictions, reproduces the recorded digest. It says so, and says what it did
+not check.
 
 ``--data`` takes a hash-manifested snapshot directory and verifies it on load.
 ``--world`` builds one of the synthetic worlds instead, so the whole pipeline can
@@ -81,6 +90,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     verify = commands.add_parser("verify", help="recompute every hash of a written run")
     verify.add_argument("path")
+    verify.add_argument(
+        "--committed",
+        action="store_true",
+        help="check the committed files of a run whose regenerable predictions are absent",
+    )
     return parser
 
 
@@ -124,6 +138,20 @@ def main(argv: list[str] | None = None) -> int:
             print(f"error: {exc}", file=sys.stderr)
             return EXIT_INTEGRITY
         print(json.dumps(result, indent=2, sort_keys=True))
+        if args.committed:
+            if not result["committed_files_verified"]:
+                print("committed files NOT verified: see mismatched_files and absent_files", file=sys.stderr)
+                return EXIT_INTEGRITY
+            if result["absent_files"]:
+                absent = ", ".join(stored_name(name) for name in result["absent_files"])
+                print(
+                    "committed files verified: each matches the manifest and, with the recorded "
+                    f"hash of {absent}, they reproduce the result digest. {absent} itself is not "
+                    "verified: regenerate the run from the pinned snapshot with `run`, then "
+                    "verify it without --committed.",
+                    file=sys.stderr,
+                )
+            return EXIT_OK
         for name in result["absent_files"]:
             print(
                 f"not verified: {stored_name(name)} is not in {args.path}. Regenerate the run "

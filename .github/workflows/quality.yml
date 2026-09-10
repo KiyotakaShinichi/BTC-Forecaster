@@ -191,6 +191,14 @@ jobs:
           python btc-intel.py --db /tmp/smoke.duckdb corpus-status --json --entities SEC > /dev/null
           echo "both CLIs answer"
 
+      # A7's predictions are regenerated from the pinned snapshot, not committed,
+      # so a clone cannot recompute the whole result digest. What it can check,
+      # in well under a second, is that every committed canonical file matches its
+      # manifest and -- with the recorded hash of the absent predictions --
+      # reproduces the recorded digest.
+      - name: Committed A7 evidence verifies from the clone
+        run: python -m btc_forecaster.research.walk_forward verify --committed research/runs/a7-walk-forward
+
       # The whole suite in one environment. The subsystem jobs run these under
       # narrower installs and enforce the coverage floors; this proves they pass
       # together, from the closure a deployment would actually get.
