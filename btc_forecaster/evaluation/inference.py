@@ -415,6 +415,7 @@ def diebold_mariano(
     loss: str = "absolute",
     small_sample: bool = True,
     nested: bool | None = None,
+    hac_lags: int | None = None,
 ) -> DieboldMarianoResult:
     """Diebold-Mariano test of equal predictive accuracy.
 
@@ -434,10 +435,25 @@ def diebold_mariano(
       such comparisons are flagged ``nested`` and marked unusable rather than
       reported as if valid.
 
+    ``hac_lags`` overrides the Newey-West lag count. By default it is
+    ``horizon - 1``, the minimum overlapping forecasts require. A caller
+    may ask for more -- a loss differential can be serially correlated for
+    reasons other than overlap, volatility clustering among them -- but not
+    for fewer: a count below ``horizon - 1`` is refused. The small-sample
+    correction always uses the true ``horizon``.
+
     ``small_sample`` applies the Harvey-Leybourne-Newbold (1997) correction,
     which matters here: a walk-forward study on daily BTC yields tens of
     origins, not thousands, and the uncorrected statistic over-rejects.
     """
+    minimum_lags = max(0, horizon - 1)
+    if hac_lags is not None and hac_lags < minimum_lags:
+        raise ValueError(
+            f"hac_lags={hac_lags} is below horizon - 1 = {minimum_lags}; overlapping "
+            "forecasts need at least that many"
+        )
+    lags = minimum_lags if hac_lags is None else int(hac_lags)
+
     a = np.asarray(loss_a, dtype=float)
     b = np.asarray(loss_b, dtype=float)
     if len(a) != len(b):
@@ -471,7 +487,7 @@ def diebold_mariano(
             p_value=float("nan"),
             n_observations=n,
             horizon=horizon,
-            hac_lags=max(0, horizon - 1),
+            hac_lags=lags,
             loss=loss,
             small_sample_corrected=small_sample,
             nested=nested_flag,
@@ -480,8 +496,7 @@ def diebold_mariano(
 
     from scipy.stats import t as student_t
 
-    hac_lags = max(0, horizon - 1)
-    variance = _hac_variance(differences, hac_lags)
+    variance = _hac_variance(differences, lags)
 
     if variance <= 0:
         caveats.append("Non-positive HAC variance; the differential is degenerate.")
@@ -493,7 +508,7 @@ def diebold_mariano(
             p_value=float("nan"),
             n_observations=n,
             horizon=horizon,
-            hac_lags=hac_lags,
+            hac_lags=lags,
             loss=loss,
             small_sample_corrected=small_sample,
             nested=nested_flag,
@@ -517,7 +532,7 @@ def diebold_mariano(
         p_value=p_value,
         n_observations=n,
         horizon=horizon,
-        hac_lags=hac_lags,
+        hac_lags=lags,
         loss=loss,
         small_sample_corrected=small_sample,
         nested=nested_flag,
