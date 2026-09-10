@@ -44,6 +44,7 @@ import pandas as pd
 
 from ..contracts import (
     Capability,
+    CapabilityNotSupported,
     EvaluationContext,
     Family,
     ModelFitError,
@@ -75,6 +76,26 @@ def _quiet_fit(fit: Any) -> Any:
         return fit()
 
 
+def _time_invariant(matrix: Any, model_id: str) -> np.ndarray:
+    """A state-space system matrix with its time axis removed.
+
+    statsmodels stores these with a trailing time dimension. It is length one
+    for a time-invariant system; ARIMA with a constant stores its intercept
+    repeated over time. Anything that genuinely varies over time would make
+    the h-step propagation below wrong, so it is refused rather than
+    flattened.
+    """
+    values = np.asarray(matrix, dtype=float)
+    if values.shape[-1] == 1:
+        return values[..., 0]
+    if not np.allclose(values, values[..., :1]):
+        raise CapabilityNotSupported(
+            f"{model_id} has time-varying system matrices; its h-step forecast is not "
+            "a fixed propagation"
+        )
+    return values[..., 0]
+
+
 class _SeriesModel(ZooModel):
     """Shared plumbing: estimate on the training series, roll forward on realised.
 
@@ -84,7 +105,7 @@ class _SeriesModel(ZooModel):
 
     family = Family.STATISTICAL
     preprocessing = Preprocessing.MODEL_NATIVE
-    capabilities = frozenset({Capability.POINT, Capability.SERIALIZE})
+    capabilities = frozenset({Capability.POINT, Capability.SERIALIZE, Capability.MULTI_STEP})
     requires = ("statsmodels",)
 
     #: Which series the model is estimated on. Log price for level/trend models,
@@ -158,6 +179,44 @@ class StateSpaceModel(_SeriesModel):
             forecast_of_bar - full.shift(1) if self.on_log_price else forecast_of_bar
         )
         return np.asarray(implied.reindex(context.target_bars).to_numpy(), dtype=float)
+
+    def _predict_cumulative(self, context: EvaluationContext, horizon: int) -> np.ndarray:
+        """Propagate the filtered state ``horizon`` bars with frozen parameters.
+
+        One ``apply`` over the realised series, then for every origin ``t`` the
+        one-step predicted state ``a[t+1|t]`` is pushed through the model's own
+        system matrices -- ``y = d + Z a``, ``a' = c + T a`` -- which is exactly
+        what statsmodels' ``forecast`` computes from the end of a sample, done
+        for every origin at once. ``a[t+1|t]`` depends on data through ``t``
+        only, so realised bars after an origin cannot reach its forecast.
+
+        Return models sum the step forecasts. Log-price models take the
+        forecast log price ``h`` bars ahead minus the log price at the origin.
+        """
+        full = self._endog(context.series, context.close).dropna()
+        try:
+            applied = _quiet_fit(lambda: self._result.apply(self._positional(full), refit=False))
+        except Exception as exc:  # noqa: BLE001
+            raise ModelFitError(f"{self.model_id} failed to roll forward: {exc}") from exc
+        filtered = applied.filter_results
+        design = _time_invariant(filtered.design, self.model_id)
+        transition = _time_invariant(filtered.transition, self.model_id)
+        obs_intercept = _time_invariant(filtered.obs_intercept, self.model_id)
+        state_intercept = _time_invariant(filtered.state_intercept, self.model_id)
+
+        positions = full.index.get_indexer(context.origins)
+        if (positions < 0).any():
+            raise ModelFitError(f"{self.model_id}: an origin is missing from its series")
+        state = np.asarray(filtered.predicted_state, dtype=float)[:, positions + 1]
+        total = np.zeros(len(positions))
+        step = np.zeros(len(positions))
+        for _ in range(horizon):
+            step = (obs_intercept[:, None] + design @ state)[0]
+            total += step
+            state = state_intercept[:, None] + transition @ state
+        if self.on_log_price:
+            return step - full.to_numpy(dtype=float)[positions]
+        return total
 
     def parameter_count(self) -> int | None:
         if self._result is None:
@@ -303,6 +362,25 @@ class AutoRegressive(_SeriesModel):
             out[i] = self._const + float(np.dot(self._coefficients, recent))
         return out
 
+    def _predict_cumulative(self, context: EvaluationContext, horizon: int) -> np.ndarray:
+        # The same recursion, iterated: each forecast becomes the most recent
+        # lag for the next step. Realised values after the origin never enter.
+        out = np.empty(len(context), dtype=float)
+        for i in range(len(context)):
+            history = context.history_at(i).to_numpy(dtype=float)
+            recent = history[-self.lags :][::-1]
+            if len(recent) < self.lags:
+                out[i] = self._const * horizon
+                continue
+            lags = np.array(recent, dtype=float)
+            total = 0.0
+            for _ in range(horizon):
+                forecast = self._const + float(np.dot(self._coefficients, lags))
+                total += forecast
+                lags = np.concatenate([[forecast], lags[:-1]])
+            out[i] = total
+        return out
+
     def parameter_count(self) -> int | None:
         return int(len(self._coefficients) + 1)
 
@@ -373,6 +451,15 @@ class ThetaMethod(_SeriesModel):
         levels = pd.Series(self._ses_levels(series.to_numpy(dtype=float)), index=series.index)
         at_origin = levels.reindex(context.origins)
         return np.asarray(at_origin.to_numpy() + self._drift, dtype=float)
+
+    def _predict_cumulative(self, context: EvaluationContext, horizon: int) -> np.ndarray:
+        # The theta forecast function: a flat SES level plus a drift that
+        # accrues one increment per step. A6's one-step form takes that
+        # increment as `_drift`, so step k is `level + k * _drift` and h steps
+        # sum to `h * level + _drift * h(h+1)/2` -- which is the one-step
+        # forecast when h = 1.
+        level = self._predict_point(context) - self._drift
+        return horizon * level + self._drift * horizon * (horizon + 1) / 2.0
 
     def parameter_count(self) -> int | None:
         return 2

@@ -46,7 +46,7 @@ class ConstantForecast(ZooModel):
     family = Family.BASELINE
     resource_class = ResourceClass.TRIVIAL
     preprocessing = Preprocessing.NONE
-    capabilities = frozenset({Capability.POINT, Capability.SERIALIZE})
+    capabilities = frozenset({Capability.POINT, Capability.SERIALIZE, Capability.MULTI_STEP})
 
     def __init__(self) -> None:
         super().__init__()
@@ -57,6 +57,11 @@ class ConstantForecast(ZooModel):
 
     def _predict_point(self, context: EvaluationContext) -> np.ndarray:
         return np.full(len(context), self._value, dtype=float)
+
+    def _predict_cumulative(self, context: EvaluationContext, horizon: int) -> np.ndarray:
+        # A constant log return per bar is h of them over h bars: the naive
+        # forecast stays zero, the drift forecast is h times the mean.
+        return np.full(len(context), self._value * horizon, dtype=float)
 
     def _constant(self, train: TrainingSet) -> float:  # pragma: no cover - abstract
         raise NotImplementedError

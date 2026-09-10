@@ -98,6 +98,11 @@ class Capability(str, Enum):
     DIRECTION_PROBABILITY = "DIRECTION_PROBABILITY"
     VARIANCE = "VARIANCE"
     SERIALIZE = "SERIALIZE"
+    #: An h-bar cumulative forecast by iterating the model's own one-step
+    #: recursion with frozen parameters. Declared by series models; a tabular
+    #: or sequence model is evaluated at longer horizons by direct training
+    #: on the h-bar target instead, and does not declare it.
+    MULTI_STEP = "MULTI_STEP"
 
 
 class ModelStatus(str, Enum):
@@ -443,6 +448,30 @@ class ZooModel(ABC):
         self._require(Capability.VARIANCE)
         return self._predict_variance(context)
 
+    def predict_cumulative(self, context: EvaluationContext, horizon: int) -> np.ndarray:
+        """The ``horizon``-bar cumulative log return forecast from each origin.
+
+        ``context`` is a one-bar context: row ``i`` has origin
+        ``feature_bar[i]``, and the forecast is for ``ln(close[t+h] / close[t])``
+        from that origin. It iterates the model's own recursion with the
+        parameters frozen at fitting, feeding forecasts -- never realised
+        values -- forward. At ``horizon == 1`` it equals ``predict(context).point``,
+        which the tests assert for every model that declares it.
+        """
+        self._require(Capability.MULTI_STEP)
+        if not self._fitted:
+            raise ModelFitError(f"{self.model_id} has not been fitted")
+        if horizon < 1:
+            raise ValueError(f"horizon must be >= 1, got {horizon}")
+        values = np.asarray(self._predict_cumulative(context, horizon), dtype=float)
+        if len(values) != len(context):
+            raise ValueError(
+                f"{self.model_id} returned {len(values)} forecasts for {len(context)} origins"
+            )
+        if not np.isfinite(values).all():
+            raise ModelFitError(f"{self.model_id} produced a non-finite cumulative forecast")
+        return values
+
     # -- description -----------------------------------------------------
 
     def describe(self) -> dict:
@@ -483,6 +512,9 @@ class ZooModel(ABC):
         raise CapabilityNotSupported(
             f"{self.model_id} declared DIRECTION_PROBABILITY but did not implement it"
         )
+
+    def _predict_cumulative(self, context: EvaluationContext, horizon: int) -> np.ndarray:
+        raise CapabilityNotSupported(f"{self.model_id} does not forecast multiple steps")
 
     def _predict_variance(self, context: EvaluationContext) -> np.ndarray:
         raise CapabilityNotSupported(f"{self.model_id} declared VARIANCE but did not implement it")
