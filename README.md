@@ -304,6 +304,20 @@ comparable. They agree on the question they share. See
 [`docs/walk-forward.md`](docs/walk-forward.md) and the evidence in
 [`research/runs/a7-walk-forward/`](research/runs/a7-walk-forward/).
 
+## Quantitative research is frozen
+
+**`QUANT_RESEARCH_FROZEN`.** A2, A6 and A7 asked one question three ways and got
+one answer: no tested model beats the naive forecast. The project does not
+currently possess validated evidence of a tradable predictive edge. That is a
+claim about these models under these designs, not about whether BTC can ever
+be forecast. No model is promoted until it clears `NO_MODEL_PROMOTION_UNTIL`,
+live trading stays disabled, and `tests/test_quant_freeze.py` enforces both.
+
+[`docs/quant-research-status.md`](docs/quant-research-status.md) is the record:
+lineage, digests, policy and provenance.
+[`docs/quant-research-handoff.md`](docs/quant-research-handoff.md) is what was
+learned, where the evidence stops, and what would justify reopening.
+
 ---
 
 ## Models
@@ -399,6 +413,7 @@ A promoted research run without its manifest is an anecdote.
 - [`docs/model-zoo.md`](docs/model-zoo.md) — Track A6: forty models on a 1,000-row budget, and why it does not supersede A2
 - [`docs/walk-forward.md`](docs/walk-forward.md) — Track A7: A6's question from 1,417 origins at four horizons, preregistered, and why nothing survived
 - [`docs/quant-research-status.md`](docs/quant-research-status.md) — the quantitative freeze: A2 → A6 → A7 lineage, the promotion policy, the live-trading gate, the provenance audit
+- [`docs/quant-research-handoff.md`](docs/quant-research-handoff.md) — what the quant research established, where its evidence stops, and what would justify reopening it
 - [`DEPLOYMENT.md`](DEPLOYMENT.md), [`AWS_BACKEND_API.md`](AWS_BACKEND_API.md) — deployment
 - [`DEPENDENCIES.md`](DEPENDENCIES.md) — the one dependency contract, and why the other files exist
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — how to build it, what CI enforces, and the four rules that are about the science rather than the code

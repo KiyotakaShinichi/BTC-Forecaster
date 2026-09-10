@@ -19,6 +19,37 @@ what was added describes a project that never learned anything.
 
 ---
 
+## 2026-09-11 — Quantitative research frozen (Track A7.1)
+
+- **`QUANT_RESEARCH_FROZEN`.** A2, A6 and A7 each found, under its own design,
+  that no model beats the naive forecast. The project does not currently possess
+  validated evidence of a tradable predictive edge. No model is promoted until it
+  clears `NO_MODEL_PROMOTION_UNTIL` — eight criteria, from out-of-sample skill
+  after multiple-testing correction to an independent, preregistered
+  justification. No A8.
+- A6 and A7 reach `main` by fast-forward, their history unchanged.
+- `docs/quant-research-status.md` records the lineage as three results, not a
+  leaderboard: three designs, three targets, no combined score.
+  `docs/quant-research-handoff.md` says what was learned, where the evidence
+  stops, and what would justify reopening — and that the next direction, if any,
+  is a market-intelligence question with enough point-in-time evidence, not
+  another model family.
+- The freeze is enforced. `tests/test_quant_freeze.py` fails if live trading
+  becomes eligible, a research module can reach the paper engine, A7 gains a
+  promoting decision, or a committed A6 or A7 result changes. A6's results table
+  is now recomputed from its committed CSV, at full float precision: pandas'
+  default parser is not exact, and re-serialising what it reads changes the
+  bytes.
+- A fresh clone can verify the committed A7 evidence with `walk_forward verify
+  --committed`, and the fresh-clone CI job does. Reproducing the whole run still
+  needs the pinned snapshot, which is not redistributed.
+- Provenance audit: five committed files carry realised values derived from
+  Yahoo Finance data — four already on `main` (two legacy runs and A2), and A6's
+  predictions arriving with this integration. The repository's no-redistribution
+  position is recorded as an unreviewed operating rule, not a legal
+  determination. Nothing was deleted or rewritten; the question is left to the
+  maintainer.
+
 ## 2026-09-10 — Walk-forward robustness (Track A7)
 
 - **Nothing beats the random walk, from any origin, at any horizon, with any

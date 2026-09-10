@@ -134,3 +134,11 @@ class TestTheFreezeIsDeclared:
         assert "**`QUANT_RESEARCH_FROZEN`**" in text and "`NO_MODEL_PROMOTION_UNTIL`" in text
         assert _json(A7_RUN / "manifest.json")["result_digest"] in text
         assert _json(A6_RUN / "manifest.json")["results_table_sha256"] in text
+
+    def test_the_handoff_states_the_conclusion_in_full(self) -> None:
+        text = (ROOT / "docs" / "quant-research-handoff.md").read_text(encoding="utf-8")
+        flat = " ".join(text.replace(">", " ").replace("**", "").split())
+        conclusion = "The project does not currently possess validated evidence of a tradable predictive edge."
+        assert conclusion in flat
+        assert "`QUANT_RESEARCH_FROZEN`" in text
+        assert all(f"\n## {n}. " in text for n in range(1, 10)), "a handoff section is missing"
