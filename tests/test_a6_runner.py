@@ -18,7 +18,9 @@ finished; a crash halfway through must leave artifacts without it.
 
 from __future__ import annotations
 
+import ast
 import json
+import sys
 from pathlib import Path
 
 import numpy as np
@@ -27,6 +29,7 @@ import pytest
 from btc_forecaster.research import registry
 from btc_forecaster.research.contracts import (
     EXPLORATORY,
+    RESOURCE_BUDGET_SECONDS,
     EvaluationContext,
     Family,
     ModelStatus,
@@ -46,9 +49,11 @@ from btc_forecaster.research.registry import ZooRegistration, register
 from btc_forecaster.research.runner import (
     BENCHMARK_KIND,
     TIMING_COLUMNS,
+    WARM_IMPORTS,
     assert_nothing_promoted,
     build_manifest,
     run_benchmark,
+    warm_imports,
     write_run,
 )
 from btc_forecaster.testing import synthetic_market_frame
@@ -135,6 +140,109 @@ class TestTheRunIsDeterministic:
             for model in manifest["models"]
             if model["status"] == "ACTIVE"
         )
+
+
+class TestImportCostIsNotChargedToAModel:
+    """A library's one-time import belongs to the process, not to whichever
+    model happens to touch it first.
+
+    Before the warm-up, `ar_p` was RESOURCE_LIMIT in the CI smoke benchmark --
+    6.5s against a 5s TRIVIAL budget -- and took 0.1s once statsmodels was
+    already loaded. Its status depended on which model ran before it, and a
+    benchmark whose verdicts depend on execution order is measuring the order.
+    """
+
+    ADAPTERS = Path(__file__).resolve().parents[1] / "btc_forecaster" / "research" / "adapters"
+
+    def test_every_lazy_import_is_warmed(self) -> None:
+        """A new model with a new lazy import must fail here rather than quietly
+        charge the import to its own budget -- which is how this was found."""
+        found: list[str] = []
+        for path in sorted(self.ADAPTERS.glob("*.py")):
+            tree = ast.parse(path.read_text(encoding="utf-8"))
+            for function in ast.walk(tree):
+                if not isinstance(function, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    continue
+                for node in ast.walk(function):
+                    if isinstance(node, ast.ImportFrom) and node.module:
+                        modules = [node.module]
+                    elif isinstance(node, ast.Import):
+                        modules = [alias.name for alias in node.names]
+                    else:
+                        continue
+                    for module in modules:
+                        package = module.split(".")[0]
+                        if package in WARM_IMPORTS:
+                            found.append(module)
+                            assert module in WARM_IMPORTS[package], (
+                                f"{path.name} lazily imports {module}; add it to WARM_IMPORTS"
+                            )
+        # Guard the guard: a walker that finds nothing would pass vacuously.
+        assert len(found) >= 20, found
+
+    def test_a_slow_import_does_not_trip_a_budget(self, frame, tmp_path, monkeypatch) -> None:
+        """The regression, reproduced deterministically: a dependency that takes
+        0.4s to import, a budget of 0.3s, and a model whose own work is free.
+        Charged for the import it is RESOURCE_LIMIT; warmed first it is ACTIVE."""
+        probe = tmp_path / "a6_slow_import_probe"
+        probe.mkdir()
+        (probe / "__init__.py").write_text("import time\ntime.sleep(0.4)\n", encoding="utf-8")
+        monkeypatch.syspath_prepend(str(tmp_path))
+        monkeypatch.delitem(sys.modules, "a6_slow_import_probe", raising=False)
+        monkeypatch.setitem(WARM_IMPORTS, "a6_slow_import_probe", ("a6_slow_import_probe",))
+        monkeypatch.setitem(RESOURCE_BUDGET_SECONDS, ResourceClass.TRIVIAL, 0.3)
+
+        class SlowImport(ZooModel):
+            model_id = "slow_import_probe_model"
+            family = Family.BASELINE
+
+            def _fit(self, train: TrainingSet) -> None:
+                import a6_slow_import_probe  # noqa: F401
+
+            def _predict_point(self, context: EvaluationContext) -> np.ndarray:
+                return np.zeros(len(context))
+
+        # Through monkeypatch rather than `register`, so the probe is removed
+        # afterwards and cannot leak into tests that count the registry.
+        registry.get("naive_last_value")  # load the adapters first
+        monkeypatch.setitem(
+            registry._REGISTRY,
+            "slow_import_probe_model",
+            ZooRegistration(
+                model_id="slow_import_probe_model",
+                factory=SlowImport,
+                family=Family.BASELINE,
+                resource_class=ResourceClass.TRIVIAL,
+                description="imports a module that takes 0.4s to load",
+                requires=("a6_slow_import_probe",),
+            ),
+        )
+        result = run_benchmark(
+            frame, spec=PartitionSpec(train_rows=150), model_ids=["slow_import_probe_model"]
+        )
+        outcome = result.outcomes[0]
+        assert outcome.status is ModelStatus.ACTIVE, outcome.failure
+        assert result.import_seconds["a6_slow_import_probe"] >= 0.4
+        # Recorded, not hidden: the cost appears in the manifest.
+        assert build_manifest(result)["import_seconds"]["a6_slow_import_probe"] >= 0.4
+
+    def test_a_missing_dependency_is_left_skipped(self, monkeypatch) -> None:
+        """Warming must not turn a recorded SKIPPED_DEPENDENCY into a crash."""
+        monkeypatch.setitem(WARM_IMPORTS, "a6_absent_package", ("a6_absent_package",))
+        registry.get("naive_last_value")
+        monkeypatch.setitem(
+            registry._REGISTRY,
+            "absent_dependency_probe_model",
+            ZooRegistration(
+                model_id="absent_dependency_probe_model",
+                factory=lambda: None,
+                family=Family.BASELINE,
+                resource_class=ResourceClass.TRIVIAL,
+                description="requires a package that does not exist",
+                requires=("a6_absent_package",),
+            ),
+        )
+        assert warm_imports(["absent_dependency_probe_model"]) == {}
 
 
 class TestFailuresAreRecordedNotSwallowed:

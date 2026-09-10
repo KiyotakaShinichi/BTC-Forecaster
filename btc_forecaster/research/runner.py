@@ -26,10 +26,12 @@ asserts it, and a `promoted` field does not exist to be set.
 from __future__ import annotations
 
 import hashlib
+import importlib
 import json
 import platform
 import time
 import traceback
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
@@ -66,6 +68,68 @@ BENCHMARK_KIND = "RESOURCE_CONSTRAINED_EXPLORATORY"
 #: reproducibility into a timestamp that always disagrees. Found exactly that
 #: way -- two runs with bit-identical metrics and different digests.
 TIMING_COLUMNS = ("fit_seconds", "total_seconds")
+
+#: Everything the adapters import lazily, imported once before any model's clock
+#: starts. Without it the first model to touch a library was charged for loading
+#: it -- about six seconds for statsmodels.tsa in a cold Windows process, against
+#: a TRIVIAL budget of five -- so `ar_p` came out RESOURCE_LIMIT in the CI smoke
+#: run and ACTIVE in the full one, depending only on what ran before it. The same
+#: effect put sklearn's import into `adaboost`'s fit time and arch's into
+#: `egarch_11`'s. A status that depends on execution order is not a property of
+#: the model. `tests/test_a6_runner.py` parses the adapters and fails if a lazy
+#: import appears that is not listed here.
+WARM_IMPORTS: dict[str, tuple[str, ...]] = {
+    "statsmodels": (
+        "statsmodels.api",
+        "statsmodels.tsa.ar_model",
+        "statsmodels.tsa.arima.model",
+        "statsmodels.tsa.forecasting.theta",
+        "statsmodels.tsa.statespace.exponential_smoothing",
+        "statsmodels.tsa.statespace.structural",
+    ),
+    "sklearn": (
+        "sklearn.cross_decomposition",
+        "sklearn.ensemble",
+        "sklearn.linear_model",
+        "sklearn.neighbors",
+        "sklearn.svm",
+        "sklearn.tree",
+    ),
+    "arch": ("arch",),
+    "xgboost": ("xgboost",),
+}
+
+
+def warm_imports(model_ids: Iterable[str]) -> dict[str, float | str]:
+    """Import the libraries the runnable models need, and record what it cost.
+
+    Returns seconds per package, recorded rather than hidden: the cost is real,
+    it just belongs to the process rather than to whichever model came first.
+    Only models that can run here are considered, so a missing dependency stays
+    a recorded SKIPPED_DEPENDENCY instead of becoming a crash. A package that is
+    present but fails to import is recorded as the error, and the model that
+    needs it then fails on its own, where the runner already records failures.
+    """
+    needed: list[str] = []
+    for model_id in model_ids:
+        registration = registry.get(model_id)
+        if registration.effective_status() is not ModelStatus.ACTIVE:
+            continue
+        for package in registration.requires:
+            if package in WARM_IMPORTS and package not in needed:
+                needed.append(package)
+
+    seconds: dict[str, float | str] = {}
+    for package in needed:
+        started = time.perf_counter()
+        try:
+            for module in WARM_IMPORTS[package]:
+                importlib.import_module(module)
+        except Exception as exc:  # noqa: BLE001 -- recorded; the model fails on its own
+            seconds[package] = f"{type(exc).__name__}: {exc}"[:300]
+            continue
+        seconds[package] = round(time.perf_counter() - started, 3)
+    return seconds
 
 
 @dataclass
@@ -124,6 +188,8 @@ class BenchmarkResult:
     naive_mae: float
     seconds: float
     data_fingerprint: str
+    #: One-time library imports, paid before any model's clock started.
+    import_seconds: dict[str, float | str] = field(default_factory=dict)
 
     def succeeded(self) -> list[ModelOutcome]:
         return [o for o in self.outcomes if o.status is ModelStatus.ACTIVE and o.scores]
@@ -303,6 +369,8 @@ def run_benchmark(
     naive_mae = float(np.mean(np.abs(actual)))
 
     wanted = model_ids if model_ids is not None else registry.model_ids()
+    # Before any model's clock starts, so no model pays for a library's import.
+    imports = warm_imports(wanted)
     started = time.perf_counter()
     outcomes: list[ModelOutcome] = []
     forecasts: dict[str, ZooForecast] = {}
@@ -328,6 +396,7 @@ def run_benchmark(
         naive_mae=naive_mae,
         seconds=time.perf_counter() - started,
         data_fingerprint=_frame_fingerprint(frame),
+        import_seconds=imports,
     )
 
 
@@ -387,6 +456,7 @@ def build_manifest(result: BenchmarkResult, *, extra: dict | None = None) -> dic
         "best_by_family": result.best_by_family(),
         "models": [outcome.as_dict() for outcome in result.outcomes],
         "wall_clock_seconds": round(result.seconds, 2),
+        "import_seconds": result.import_seconds,
         "environment": _environment(),
         "promoted_models": [],
         "live_trading_enabled": False,
@@ -530,6 +600,8 @@ def assert_nothing_promoted(manifest: dict) -> None:
 __all__ = [
     "BENCHMARK_KIND",
     "TIMING_COLUMNS",
+    "WARM_IMPORTS",
+    "warm_imports",
     "analyse",
     "BenchmarkResult",
     "ModelOutcome",
