@@ -13,8 +13,8 @@ Flattened-window MLP: two hidden layers, no temporal structure.
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 0.321 s
-- **Predict time**: 0.009 s
+- **Fit time**: 1.619 s
+- **Predict time**: 0.034 s
 - **Parameters**: 9025
 - **Training-row fingerprint**: `b7b0666da4280e44`
 
@@ -61,7 +61,7 @@ The naive baseline's MAE on the same block is 0.016394.
 
 ## Serialization
 
-- 2218025 bytes, sha256 `568a6124029928dc`
+- 2218025 bytes, sha256 `0eeb5e496a2fe94b`
 - reload reproduces the forecasts bit-identically
 
 ## Notes

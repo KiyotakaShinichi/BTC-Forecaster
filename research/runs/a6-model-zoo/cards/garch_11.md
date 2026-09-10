@@ -13,8 +13,8 @@ Symmetric GARCH(1,1) with Student-t innovations on percent log returns.
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 0.088 s
-- **Predict time**: 0.015 s
+- **Fit time**: 0.233 s
+- **Predict time**: 0.029 s
 - **Parameters**: 5
 - **Training-row fingerprint**: `b7b0666da4280e44`
 
@@ -61,7 +61,7 @@ The naive baseline's MAE on the same block is 0.016394.
 
 ## Serialization
 
-- 1672 bytes, sha256 `2c333e7077173bbc`
+- 1672 bytes, sha256 `eee920f359eb9e4d`
 - reload reproduces the forecasts bit-identically
 
 ## Notes

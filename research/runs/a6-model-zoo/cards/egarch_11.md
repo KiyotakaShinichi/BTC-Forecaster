@@ -13,8 +13,8 @@ EGARCH(1,1,1) with Student-t innovations: log-variance with a leverage term.
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 1.398 s
-- **Predict time**: 0.023 s
+- **Fit time**: 0.226 s
+- **Predict time**: 0.038 s
 - **Parameters**: 6
 - **Training-row fingerprint**: `b7b0666da4280e44`
 
@@ -61,7 +61,7 @@ The naive baseline's MAE on the same block is 0.016394.
 
 ## Serialization
 
-- 1695 bytes, sha256 `59ce451b8de711e7`
+- 1694 bytes, sha256 `dac1a1f50acb468b`
 - reload reproduces the forecasts bit-identically
 
 ## Notes

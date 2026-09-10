@@ -13,8 +13,8 @@ Histogram-binned gradient boosting, 300 iterations, early stopping off.
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 0.452 s
-- **Predict time**: 0.020 s
+- **Fit time**: 2.722 s
+- **Predict time**: 0.115 s
 - **Parameters**: not reported
 - **Training-row fingerprint**: `b7b0666da4280e44`
 

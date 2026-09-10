@@ -13,8 +13,8 @@ Damped Holt linear trend on log price, innovations state-space form.
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 0.902 s
-- **Predict time**: 0.045 s
+- **Fit time**: 2.936 s
+- **Predict time**: 0.468 s
 - **Parameters**: 5
 - **Training-row fingerprint**: `b7b0666da4280e44`
 

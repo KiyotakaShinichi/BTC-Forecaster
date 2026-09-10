@@ -13,7 +13,7 @@ L1+L2 penalty at a 0.5 mix ratio.
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 0.005 s
+- **Fit time**: 0.009 s
 - **Predict time**: 0.001 s
 - **Parameters**: 12
 - **Training-row fingerprint**: `b7b0666da4280e44`

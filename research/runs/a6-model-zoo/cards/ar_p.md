@@ -13,8 +13,8 @@ AR(3) on log returns, evaluated by the frozen linear recursion.
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 0.426 s
-- **Predict time**: 0.324 s
+- **Fit time**: 0.008 s
+- **Predict time**: 1.025 s
 - **Parameters**: 4
 - **Training-row fingerprint**: `b7b0666da4280e44`
 

@@ -13,8 +13,8 @@ Gradient boosting on pinball loss, one model per quantile level.
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 11.888 s
-- **Predict time**: 0.061 s
+- **Fit time**: 26.789 s
+- **Predict time**: 0.195 s
 - **Parameters**: not reported
 - **Training-row fingerprint**: `b7b0666da4280e44`
 

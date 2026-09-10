@@ -13,8 +13,8 @@ ARIMA(1,0,1) with constant on log returns; d=0 because the series is already dif
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 0.933 s
-- **Predict time**: 0.078 s
+- **Fit time**: 1.828 s
+- **Predict time**: 0.160 s
 - **Parameters**: 4
 - **Training-row fingerprint**: `b7b0666da4280e44`
 
@@ -61,7 +61,7 @@ The naive baseline's MAE on the same block is 0.016394.
 
 ## Serialization
 
-- 3304140 bytes, sha256 `d951a6a17c79d0d2`
+- 3304140 bytes, sha256 `acbeda0216f84f54`
 - reload reproduces the forecasts bit-identically
 
 ## Notes

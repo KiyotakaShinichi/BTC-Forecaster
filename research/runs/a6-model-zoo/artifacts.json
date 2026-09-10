@@ -3,7 +3,7 @@
     "model_id": "adaboost",
     "sha256": "c84e2f5fc2a5653d89d3550496bea3e7077ca613da6625701bc6e457edf5ef7a",
     "bytes": 258988,
-    "created_at": "2026-09-09T03:26:54.671240+00:00",
+    "created_at": "2026-09-10T07:03:29.868138+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -20,7 +20,7 @@
     "model_id": "ar_p",
     "sha256": "c605d273e0e6e761427028f4e8fc84f38ace0c2da96c044079f32dbcb4188911",
     "bytes": 358,
-    "created_at": "2026-09-09T03:26:54.802904+00:00",
+    "created_at": "2026-09-10T07:03:30.360204+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -35,9 +35,9 @@
   },
   "arima": {
     "model_id": "arima",
-    "sha256": "d951a6a17c79d0d2d6218c5e259690d3e3b91aec3259d1cf3c1fe5beba84b7f5",
+    "sha256": "acbeda0216f84f546cf205493558900276b88abbe3a6dd7ac0e96dfa104ee9d2",
     "bytes": 3304140,
-    "created_at": "2026-09-09T03:26:55.549384+00:00",
+    "created_at": "2026-09-10T07:03:32.090202+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -54,7 +54,7 @@
     "model_id": "bayesian_ridge",
     "sha256": "242071b067a2fd1b47263727496d79fdb9e78716fbafba2caf08a79308623d42",
     "bytes": 2732,
-    "created_at": "2026-09-09T03:26:55.694903+00:00",
+    "created_at": "2026-09-10T07:03:32.317770+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -69,9 +69,9 @@
   },
   "cnn_1d": {
     "model_id": "cnn_1d",
-    "sha256": "37e388458b111807b4431044cf7bd7d4fc836408d0041022ef96706bc7358645",
+    "sha256": "ae7cb7dac0d33511ab76d0bcd0f10105ca2fd56dad568e53840d1b8e21b30973",
     "bytes": 2095207,
-    "created_at": "2026-09-09T03:26:55.709757+00:00",
+    "created_at": "2026-09-10T07:03:32.342521+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -88,7 +88,7 @@
     "model_id": "conformal_ridge",
     "sha256": "53185d5d6aef997623af9137e687ea078c359b920d8fdeb512f133d7a3a39e18",
     "bytes": 1534,
-    "created_at": "2026-09-09T03:26:55.813620+00:00",
+    "created_at": "2026-09-10T07:03:32.498695+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -105,7 +105,7 @@
     "model_id": "decision_tree",
     "sha256": "832008f792a2a95d4f502381718703a1b53fd32e4c839849521894f9c9e979ca",
     "bytes": 3029,
-    "created_at": "2026-09-09T03:26:55.828004+00:00",
+    "created_at": "2026-09-10T07:03:32.527566+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -120,9 +120,9 @@
   },
   "egarch_11": {
     "model_id": "egarch_11",
-    "sha256": "59ce451b8de711e70a7e60b147d5d7f8b2edb77ce75fad9543dd72cffb657b62",
-    "bytes": 1695,
-    "created_at": "2026-09-09T03:26:55.833092+00:00",
+    "sha256": "dac1a1f50acb468bb06d46136ac866de355f1b70cd47ce23e6906aebc7f422f1",
+    "bytes": 1694,
+    "created_at": "2026-09-10T07:03:32.541279+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -139,7 +139,7 @@
     "model_id": "elastic_net",
     "sha256": "3f934d935807fa208076498cc6599180dfcbc336ca18284d1c61c93809c4ba77",
     "bytes": 1434,
-    "created_at": "2026-09-09T03:26:55.869736+00:00",
+    "created_at": "2026-09-10T07:03:32.623795+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -156,7 +156,7 @@
     "model_id": "extra_trees",
     "sha256": "3acb57907c6ab2853b3862626ac34681d94944e7a95900c9d8dc0f2bf250665d",
     "bytes": 522633,
-    "created_at": "2026-09-09T03:26:55.890781+00:00",
+    "created_at": "2026-09-10T07:03:32.675665+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -171,9 +171,9 @@
   },
   "garch_11": {
     "model_id": "garch_11",
-    "sha256": "2c333e7077173bbc88a8dfee68b039ca18add859c7164759327902a0a4add736",
+    "sha256": "eee920f359eb9e4d3da5e2d5154f6b007e71183c6ddd052be9b12b1030c54448",
     "bytes": 1672,
-    "created_at": "2026-09-09T03:26:56.143523+00:00",
+    "created_at": "2026-09-10T07:03:33.377932+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -188,9 +188,9 @@
   },
   "gjr_garch_11": {
     "model_id": "gjr_garch_11",
-    "sha256": "a1329bd4edfbae005cfe2cf55807df99183528c81f2e1a08e0ff4e3b5cc62955",
-    "bytes": 1698,
-    "created_at": "2026-09-09T03:26:56.178995+00:00",
+    "sha256": "5b4fa6d76342e6c3216384218e022f8369322415cf76ac7d5e67858218ecfc2b",
+    "bytes": 1695,
+    "created_at": "2026-09-10T07:03:33.488386+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -207,7 +207,7 @@
     "model_id": "gradient_boosting",
     "sha256": "5f835bde2576c39bc1d7a68eb927f660fa522588d1b151d79e8e9181ef618394",
     "bytes": 306203,
-    "created_at": "2026-09-09T03:26:56.221299+00:00",
+    "created_at": "2026-09-10T07:03:33.592109+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -222,9 +222,9 @@
   },
   "gru": {
     "model_id": "gru",
-    "sha256": "1e0d0327f062d5726247c39c65d5cc8815a73a89b26a305f9137a725486255de",
+    "sha256": "31d115de2c6392680367886d1686470ab183ae5b5e5f531571e34ab048eda267",
     "bytes": 2115699,
-    "created_at": "2026-09-09T03:26:56.275183+00:00",
+    "created_at": "2026-09-10T07:03:33.712963+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -241,7 +241,7 @@
     "model_id": "hist_gradient_boosting",
     "sha256": "261dd014eb01ea35fb856b7217503f11397d79dfef8b58e709c0ad3d86cfbcb0",
     "bytes": 313685,
-    "created_at": "2026-09-09T03:26:56.805774+00:00",
+    "created_at": "2026-09-10T07:03:34.527632+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -258,7 +258,7 @@
     "model_id": "historical_mean_return",
     "sha256": "50796088c6ad267fd625cd0e878a37d21383a9fcafedd48b811a4eba5f5287dd",
     "bytes": 207,
-    "created_at": "2026-09-09T03:26:56.865980+00:00",
+    "created_at": "2026-09-10T07:03:34.625472+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -275,7 +275,7 @@
     "model_id": "holt_linear_trend",
     "sha256": "4841b4d479cc4a13b6be70ff25bfbec883644849032eb2455fcaaafb59710a35",
     "bytes": 5167143,
-    "created_at": "2026-09-09T03:26:56.904276+00:00",
+    "created_at": "2026-09-10T07:03:34.692800+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -292,7 +292,7 @@
     "model_id": "huber",
     "sha256": "892cf91139d1b772e142c30c80be8576f1a66c5f50be37e119169318f227a51f",
     "bytes": 2424,
-    "created_at": "2026-09-09T03:26:57.072516+00:00",
+    "created_at": "2026-09-10T07:03:34.934003+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -309,7 +309,7 @@
     "model_id": "knn",
     "sha256": "e214031aa77e3314fbdc08b264fa6e0706f617c40c6f132a1feed93fdd1f7da8",
     "bytes": 118919,
-    "created_at": "2026-09-09T03:26:57.077927+00:00",
+    "created_at": "2026-09-10T07:03:34.943022+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -326,7 +326,7 @@
     "model_id": "lasso",
     "sha256": "817afc337816e96b9ff19ddc7677aea8ca143b02efb2397aca5de45f630065bd",
     "bytes": 1429,
-    "created_at": "2026-09-09T03:26:57.256838+00:00",
+    "created_at": "2026-09-10T07:03:35.264970+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -343,7 +343,7 @@
     "model_id": "linear_svr",
     "sha256": "a5c98e37d344fbdb038c9b103d5dc49ee9679c7cc910b4c20bf88c1a2e784a36",
     "bytes": 1385,
-    "created_at": "2026-09-09T03:26:57.260958+00:00",
+    "created_at": "2026-09-10T07:03:35.278229+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -360,7 +360,7 @@
     "model_id": "local_level",
     "sha256": "ac53a7ca5040257037babd3214656bac1ebbf7dac9b6e75ef661eb1fb129406d",
     "bytes": 1655439,
-    "created_at": "2026-09-09T03:26:57.278761+00:00",
+    "created_at": "2026-09-10T07:03:35.316270+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -377,7 +377,7 @@
     "model_id": "local_linear_trend",
     "sha256": "31e8c7cbde125684a09d5ee50a311a366bb461fb5f5c69914e5b099ec546d79c",
     "bytes": 3227302,
-    "created_at": "2026-09-09T03:26:57.400411+00:00",
+    "created_at": "2026-09-10T07:03:35.576685+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -392,9 +392,9 @@
   },
   "lstm": {
     "model_id": "lstm",
-    "sha256": "0b8d09679d788b6a391a10baebc1e3fa594cfe34ac07a6373696ea2ffc072b5a",
+    "sha256": "ed3354c7bb0f02c11c017e2107dd7e5198acd4fa5b47b1cd061d417dc0027823",
     "bytes": 2129700,
-    "created_at": "2026-09-09T03:26:57.552857+00:00",
+    "created_at": "2026-09-10T07:03:35.820588+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -409,9 +409,9 @@
   },
   "mlp": {
     "model_id": "mlp",
-    "sha256": "568a6124029928dccbcad7faa1c84ccaf71a39f5a71b44bf073d3abcfdef0da5",
+    "sha256": "0eeb5e496a2fe94b80fef15038dfa27d771e2add571bd2ea3d97119a6acf9ab6",
     "bytes": 2218025,
-    "created_at": "2026-09-09T03:26:58.141867+00:00",
+    "created_at": "2026-09-10T07:03:36.790790+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -428,7 +428,7 @@
     "model_id": "naive_last_value",
     "sha256": "8c0fd3c0eaa2742229f79451188fa3b77486e7f3e8d173c77cad325ef9000ef3",
     "bytes": 201,
-    "created_at": "2026-09-09T03:26:58.203702+00:00",
+    "created_at": "2026-09-10T07:03:36.891467+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -443,9 +443,9 @@
   },
   "nbeats": {
     "model_id": "nbeats",
-    "sha256": "114f2d8b88738086d9feb2bca8fc3cbb7401fabcbaed9cdb697ab4425f7d75d5",
+    "sha256": "652a0dbf27a0750620dd4c2472e5f681700c076b0f2df6cb8134ad3f2e14e64d",
     "bytes": 2363095,
-    "created_at": "2026-09-09T03:26:58.217970+00:00",
+    "created_at": "2026-09-10T07:03:36.912494+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -462,7 +462,7 @@
     "model_id": "pls",
     "sha256": "93726ac21861dc69038fa726f9f477579878aceb950f58841eac6ba048218ced",
     "bytes": 34640,
-    "created_at": "2026-09-09T03:26:58.278264+00:00",
+    "created_at": "2026-09-10T07:03:37.006495+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -479,7 +479,7 @@
     "model_id": "quantile_gbr",
     "sha256": "5f31c57552454bc42cb3cdf63758d833d135b9c8f992738a6cd20a5f0489f6bb",
     "bytes": 1450027,
-    "created_at": "2026-09-09T03:26:58.339028+00:00",
+    "created_at": "2026-09-10T07:03:37.145142+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -496,7 +496,7 @@
     "model_id": "quantile_linear",
     "sha256": "d07c97e3947f5e054ea993f5e24a72026a06c2623cf632822aace7b0bbc3ef11",
     "bytes": 876883,
-    "created_at": "2026-09-09T03:26:58.896855+00:00",
+    "created_at": "2026-09-10T07:03:38.541963+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -513,7 +513,7 @@
     "model_id": "random_forest",
     "sha256": "03e71d1fd856d57ccc56657408ccd96bc1ef1a7109b3d6fc1ff16b9dc38b1da0",
     "bytes": 428015,
-    "created_at": "2026-09-09T03:26:58.951656+00:00",
+    "created_at": "2026-09-10T07:03:38.642223+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -530,7 +530,7 @@
     "model_id": "random_walk_drift",
     "sha256": "012d3566d0eba424e3d51cdf4c8ffc62c55beddd04c7062a64ee81e37d596614",
     "bytes": 202,
-    "created_at": "2026-09-09T03:26:59.198769+00:00",
+    "created_at": "2026-09-10T07:03:39.216294+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -547,7 +547,7 @@
     "model_id": "rbf_svr",
     "sha256": "79d3d1a956f21ce6b0676134cef5e4ca6ad6b6b63b277ec183f552ed1df90215",
     "bytes": 101420,
-    "created_at": "2026-09-09T03:26:59.201790+00:00",
+    "created_at": "2026-09-10T07:03:39.223562+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -564,7 +564,7 @@
     "model_id": "ridge",
     "sha256": "07ada3ae10d689299c501fda8b4a7ebe3823215913e9825ca64dc59092e8f152",
     "bytes": 1350,
-    "created_at": "2026-09-09T03:26:59.416403+00:00",
+    "created_at": "2026-09-10T07:03:39.633971+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -581,7 +581,7 @@
     "model_id": "ridge_robust_scaled",
     "sha256": "9348d40e66255b20d40cf237e3b7cf81f8dd3424fadd03fb0b061cb251e238a1",
     "bytes": 1356,
-    "created_at": "2026-09-09T03:26:59.420393+00:00",
+    "created_at": "2026-09-10T07:03:39.642468+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -596,9 +596,9 @@
   },
   "tcn": {
     "model_id": "tcn",
-    "sha256": "855a8f0deaa940433d54d8e5aa39fb044fdea59a8d3ca4fe1f540598e132b437",
+    "sha256": "7301eda4696a36e8fd612c504e717e734bd67729eeebcffc28bed9d4b524d027",
     "bytes": 2115013,
-    "created_at": "2026-09-09T03:26:59.442499+00:00",
+    "created_at": "2026-09-10T07:03:39.668917+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -615,7 +615,7 @@
     "model_id": "theta",
     "sha256": "62d7d270795e4f07904b716a7a731262ef7a806d3a9b25e55dd47a8baed78e5b",
     "bytes": 236,
-    "created_at": "2026-09-09T03:26:59.626742+00:00",
+    "created_at": "2026-09-10T07:03:40.061880+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -630,9 +630,9 @@
   },
   "transformer": {
     "model_id": "transformer",
-    "sha256": "ffff96c9dadaf4a3b6e00eb2a9b9d98302df623bd6060cea0f6399c73ea3b884",
+    "sha256": "c1f17130af6e0511c5919c28b06e5b2ef6f114c1c3bfbf25b4292484bc6c3677",
     "bytes": 2113936,
-    "created_at": "2026-09-09T03:26:59.644846+00:00",
+    "created_at": "2026-09-10T07:03:40.114200+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -649,7 +649,7 @@
     "model_id": "uc_stochastic_cycle",
     "sha256": "461e5fbb656963feeb4fd158f30ca8962a3319cb716d9f6348a219a0dd4a3332",
     "bytes": 5537840,
-    "created_at": "2026-09-09T03:27:00.048666+00:00",
+    "created_at": "2026-09-10T07:03:41.092384+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",
@@ -666,7 +666,7 @@
     "model_id": "xgboost",
     "sha256": "f0a3aa8ff652e2c358252fbe454c0d64b7bec9aabda975479a9254c59a4d060d",
     "bytes": 369109,
-    "created_at": "2026-09-09T03:27:00.352315+00:00",
+    "created_at": "2026-09-10T07:03:41.435923+00:00",
     "environment": {
       "python": "3.11.4",
       "numpy": "2.4.3",

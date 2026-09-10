@@ -13,8 +13,8 @@ Two generic residual backcast/forecast blocks.
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 1.117 s
-- **Predict time**: 0.025 s
+- **Fit time**: 2.063 s
+- **Predict time**: 0.028 s
 - **Parameters**: 18034
 - **Training-row fingerprint**: `b7b0666da4280e44`
 
@@ -61,7 +61,7 @@ The naive baseline's MAE on the same block is 0.016394.
 
 ## Serialization
 
-- 2363095 bytes, sha256 `114f2d8b88738086`
+- 2363095 bytes, sha256 `652a0dbf27a07506`
 - reload reproduces the forecasts bit-identically
 
 ## Notes

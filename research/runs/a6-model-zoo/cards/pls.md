@@ -13,7 +13,7 @@ PLS regression with 2 components.
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 0.010 s
+- **Fit time**: 0.006 s
 - **Predict time**: 0.001 s
 - **Parameters**: 12
 - **Training-row fingerprint**: `b7b0666da4280e44`

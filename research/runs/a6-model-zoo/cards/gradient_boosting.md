@@ -13,8 +13,8 @@ Stagewise gradient boosting, 300 rounds at lr=0.03, subsample 0.8.
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 2.067 s
-- **Predict time**: 0.015 s
+- **Fit time**: 3.326 s
+- **Predict time**: 0.012 s
 - **Parameters**: not reported
 - **Training-row fingerprint**: `b7b0666da4280e44`
 

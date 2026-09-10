@@ -13,8 +13,8 @@ One causal self-attention block, two heads, sinusoidal positions.
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 7.684 s
-- **Predict time**: 0.238 s
+- **Fit time**: 15.009 s
+- **Predict time**: 0.841 s
 - **Parameters**: 2433
 - **Training-row fingerprint**: `b7b0666da4280e44`
 
@@ -61,7 +61,7 @@ The naive baseline's MAE on the same block is 0.016394.
 
 ## Serialization
 
-- 2113936 bytes, sha256 `ffff96c9dadaf4a3`
+- 2113936 bytes, sha256 `c1f17130af6e0511`
 - reload reproduces the forecasts bit-identically
 
 ## Notes

@@ -13,8 +13,8 @@ RBF-kernel SVR; the only non-linear member of the linear/kernel group.
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 0.108 s
-- **Predict time**: 0.105 s
+- **Fit time**: 0.302 s
+- **Predict time**: 0.331 s
 - **Parameters**: not reported
 - **Training-row fingerprint**: `b7b0666da4280e44`
 

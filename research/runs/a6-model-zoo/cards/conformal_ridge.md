@@ -14,7 +14,7 @@ Ridge with split-conformal intervals calibrated on the DEV block.
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
 - **Fit time**: 0.015 s
-- **Predict time**: 0.015 s
+- **Predict time**: 0.013 s
 - **Parameters**: 12
 - **Training-row fingerprint**: `b7b0666da4280e44`
 

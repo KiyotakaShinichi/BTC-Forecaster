@@ -13,8 +13,8 @@ AdaBoost.R2 over depth-3 stumps, 200 rounds at lr=0.05.
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 4.656 s
-- **Predict time**: 0.061 s
+- **Fit time**: 2.619 s
+- **Predict time**: 0.092 s
 - **Parameters**: not reported
 - **Training-row fingerprint**: `b7b0666da4280e44`
 

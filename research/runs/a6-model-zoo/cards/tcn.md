@@ -13,8 +13,8 @@ Dilated residual causal convolutions at dilations 1, 2, 4.
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 9.873 s
-- **Predict time**: 0.161 s
+- **Fit time**: 20.524 s
+- **Predict time**: 0.203 s
 - **Parameters**: 2561
 - **Training-row fingerprint**: `b7b0666da4280e44`
 
@@ -61,7 +61,7 @@ The naive baseline's MAE on the same block is 0.016394.
 
 ## Serialization
 
-- 2115013 bytes, sha256 `855a8f0deaa94043`
+- 2115013 bytes, sha256 `7301eda4696a36e8`
 - reload reproduces the forecasts bit-identically
 
 ## Notes

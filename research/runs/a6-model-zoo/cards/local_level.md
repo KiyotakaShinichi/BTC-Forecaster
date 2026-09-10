@@ -13,8 +13,8 @@ Stochastic local level on log price; the state-space form of simple exponential 
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 0.415 s
-- **Predict time**: 0.041 s
+- **Fit time**: 0.714 s
+- **Predict time**: 0.063 s
 - **Parameters**: 2
 - **Training-row fingerprint**: `b7b0666da4280e44`
 

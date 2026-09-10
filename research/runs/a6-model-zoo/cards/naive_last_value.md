@@ -13,7 +13,7 @@ P[T+1] = P[T]; the forecast log return is exactly zero.
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 0.001 s
+- **Fit time**: 0.003 s
 - **Predict time**: 0.000 s
 - **Parameters**: 0
 - **Training-row fingerprint**: `b7b0666da4280e44`

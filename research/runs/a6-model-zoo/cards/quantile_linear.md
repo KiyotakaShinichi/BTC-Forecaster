@@ -13,8 +13,8 @@ Koenker-Bassett linear quantile regression, one fit per level.
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 0.923 s
-- **Predict time**: 0.007 s
+- **Fit time**: 1.542 s
+- **Predict time**: 0.016 s
 - **Parameters**: 84
 - **Training-row fingerprint**: `b7b0666da4280e44`
 

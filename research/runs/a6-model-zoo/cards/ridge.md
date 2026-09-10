@@ -13,7 +13,7 @@ L2-penalised least squares on standardised causal features.
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 0.003 s
+- **Fit time**: 0.006 s
 - **Predict time**: 0.001 s
 - **Parameters**: 12
 - **Training-row fingerprint**: `b7b0666da4280e44`

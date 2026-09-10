@@ -13,8 +13,8 @@ Unobserved components: local level plus a stochastic cycle of estimated frequenc
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 1.755 s
-- **Predict time**: 0.053 s
+- **Fit time**: 4.840 s
+- **Predict time**: 0.141 s
 - **Parameters**: 4
 - **Training-row fingerprint**: `b7b0666da4280e44`
 

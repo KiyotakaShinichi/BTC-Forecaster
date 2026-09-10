@@ -13,8 +13,8 @@ Stochastic local linear trend on log price; the state-space form of Holt's metho
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 1.346 s
-- **Predict time**: 0.079 s
+- **Fit time**: 2.369 s
+- **Predict time**: 0.068 s
 - **Parameters**: 3
 - **Training-row fingerprint**: `b7b0666da4280e44`
 

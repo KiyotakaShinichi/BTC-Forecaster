@@ -13,7 +13,7 @@ Constant drift: the mean training log return.
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 0.001 s
+- **Fit time**: 0.002 s
 - **Predict time**: 0.000 s
 - **Parameters**: 1
 - **Training-row fingerprint**: `b7b0666da4280e44`

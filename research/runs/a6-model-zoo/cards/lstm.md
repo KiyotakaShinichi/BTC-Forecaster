@@ -13,8 +13,8 @@ LSTM with forget-gate bias initialised to 1.0.
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 12.705 s
-- **Predict time**: 0.214 s
+- **Fit time**: 22.675 s
+- **Predict time**: 0.385 s
 - **Parameters**: 3481
 - **Training-row fingerprint**: `b7b0666da4280e44`
 
@@ -61,7 +61,7 @@ The naive baseline's MAE on the same block is 0.016394.
 
 ## Serialization
 
-- 2129700 bytes, sha256 `0b8d09679d788b6a`
+- 2129700 bytes, sha256 `ed3354c7bb0f02c1`
 - reload reproduces the forecasts bit-identically
 
 ## Notes
