@@ -13,8 +13,8 @@ Unobserved components: local level plus a stochastic cycle of estimated frequenc
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 4.840 s
-- **Predict time**: 0.141 s
+- **Fit time**: 3.237 s
+- **Predict time**: 0.176 s
 - **Parameters**: 4
 - **Training-row fingerprint**: `b7b0666da4280e44`
 
@@ -29,28 +29,28 @@ Unobserved components: local level plus a stochastic cycle of estimated frequenc
 
 | metric | value |
 |---|---|
-| MAE | 0.016451 |
-| RMSE | 0.023373 |
-| MASE (naive = 1) | 1.003494 |
-| skill vs naive | -0.003494 |
-| forecast bias | -0.000399 |
-| directional accuracy | 0.4596 |
-| balanced accuracy | 0.4596 |
-| MCC | -0.0809 |
+| MAE | 0.016382 |
+| RMSE | 0.023353 |
+| MASE (naive = 1) | 0.999284 |
+| skill vs naive | 0.000716 |
+| forecast bias | -0.000396 |
+| directional accuracy | 0.5149 |
+| balanced accuracy | 0.5149 |
+| MCC | 0.0298 |
 | train-constant null | 0.4993 |
-| beats that null | no |
+| beats that null | yes |
 
 The naive baseline's MAE on the same block is 0.016394.
 
 ## Against the baseline
 
-- Diebold-Mariano statistic 1.705, p = 0.0886, q = 0.1191 after Benjamini-Hochberg
+- Diebold-Mariano statistic -0.662, p = 0.5081, q = 0.5662 after Benjamini-Hochberg
 - **Verdict**: not distinguishable from the naive baseline
 
 ## Stability
 
-- mean skill across blocks -0.003538
-- worst block -0.007093
+- mean skill across blocks 0.000601
+- worst block -0.000608
 - positive in every block: no
 
 ## Residual diagnostics
@@ -61,7 +61,7 @@ The naive baseline's MAE on the same block is 0.016394.
 
 ## Serialization
 
-- 5537840 bytes, sha256 `461e5fbb656963fe`
+- 2422224 bytes, sha256 `04a029245b607315`
 - reload reproduces the forecasts bit-identically
 
 ## Notes

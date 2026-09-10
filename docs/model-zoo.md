@@ -18,8 +18,9 @@ questions it should be able to answer:
 - Does *anything* beat a random walk on this series when you try forty things
   rather than eight? **No.** Twenty-eight of thirty-nine models are
   significantly different from the naive forecast after Benjamini-Hochberg, and
-  all twenty-eight are worse. Zero are better. The two with positive raw skill
-  sit at q = 0.88.
+  all twenty-eight are worse. Zero are better. The three with positive raw
+  skill -- all state-space models -- are indistinguishable from naive
+  (q ≥ 0.57).
 - Do different model families make different mistakes, or the same ones? **The
   same ones.** Mean pairwise error correlation across the forty is 0.945.
 - How much data does each architecture need before it stops being noise? **More
@@ -99,8 +100,8 @@ Every A6 claim is classified against A2's frozen evidence using four labels:
 | Nothing beat the random walk | 0 of 8 promoted | 0 of 40 significantly better | `CONSISTENT` |
 | Gradient boosting loses to naive | `xgboost_causal_retuned` −0.080081 | `xgboost` −0.226512 (q < 0.0001) | `CONSISTENT` |
 | High-capacity models lose hardest | Prophet hybrid −1.405653, worst of 8 | MLP DM +15.4, TCN +11.4, LSTM +9.9 — the worst of 40 | `CONSISTENT` |
-| ARIMA sits just under naive | −0.002062 | −0.002729 (q = 0.51) | `CONSISTENT` |
-| `holt_linear_trend` best at +0.000464 | not in A2's model set | q = 0.8836 | `EXPLORATORY_ONLY` |
+| ARIMA sits just under naive | −0.002062 | −0.001580 (q = 0.58) | `CONSISTENT` |
+| `uc_stochastic_cycle` best at +0.000716 | not in A2's model set | q = 0.5662 | `EXPLORATORY_ONLY` |
 | Three seasonal models excluded on measured absence of weekly seasonality | not tested | ACF(7) = −0.018 vs ±0.062 band, day-of-week ANOVA p = 0.946, STL strength 0.065 — TRAIN only | `EXPLORATORY_ONLY` |
 | Deep architectures on a numpy autodiff engine | no deep family | 7 models, gradient-checked | `EXPLORATORY_ONLY` |
 | No model is positive in every temporal block | per-fold stability reported | 0 of 40 | `INTERESTING_FOR_FUTURE_VALIDATION` |
@@ -185,6 +186,11 @@ list to update.
   poisons future rows, future targets and single future cells and asserts
   nothing moves — with companion assertions that poisoning the *past* does move
   it, because a leakage test that cannot detect a leak is decoration.
+- **The budget.** `TrainingSet` refuses a `series` or `close` that is not
+  aligned with its rows, and `tests/test_a6_budget.py` checks that every
+  state-space model estimates on exactly its budget and that every non-deep
+  model's forecasts move when the budget does. The guard exists because the
+  bound was once not enforced -- see the correction below.
 - **The NOISE_ONLY control.** A synthetic world with no structure. A model that
   beats the mean on it has found something that is not there, and the finding is
   a bug report. Every other claim depends on that control finding nothing.
@@ -200,6 +206,36 @@ list to update.
 - **Nothing promotes.** There is no `promoted` field. Every result carries
   `EXPLORATORY`, `assert_nothing_promoted` refuses a manifest that says
   otherwise, and the paper-trading engine stays fail-closed.
+
+## Correction
+
+An earlier version of this run, committed as `76927fd` and `83b8925`, did not
+enforce the training budget on five models. `arima`, `local_level`,
+`holt_linear_trend`, `local_linear_trend` and `uc_stochastic_cycle` estimated on
+all 2,302 returns up to the end of TRAIN instead of the 1,000-row budget. Not
+leakage -- nothing after TRAIN was seen -- but 2.3 times the data the other
+thirty-five models were given, while the recorded training fingerprint said
+1,000. It showed up as ARIMA scoring identically at budgets of 250, 500 and
+1,000, where any model that estimates something should move.
+
+Fixed in `ef0f730`: the dataset now hands over only the budget's bars and
+`TrainingSet` refuses anything else. The run in this directory is the corrected
+one. Only those five models' numbers moved, and none crossed a significance
+threshold:
+
+| model | before | after | q after |
+|---|---|---|---|
+| `arima` | −0.002729 | −0.001580 | 0.5778 |
+| `local_level` | +0.000170 | +0.000000 (rounds to zero) | 0.6554 |
+| `holt_linear_trend` | +0.000464 | +0.000277 | 0.9214 |
+| `local_linear_trend` | −0.003109 | −0.004547 | 0.3098 |
+| `uc_stochastic_cycle` | −0.003494 | +0.000716 | 0.5662 |
+
+The headline did not change: twenty-eight of thirty-nine significantly worse than
+naive, none better, none positive in every temporal block, mean pairwise error
+correlation 0.945. The commit messages of the two superseded evidence commits
+quote the old figures, and history is not rewritten; this section is the record
+of which figures changed and why.
 
 ## Limitations, stated once
 

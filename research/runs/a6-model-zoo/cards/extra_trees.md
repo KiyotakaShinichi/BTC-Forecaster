@@ -13,8 +13,8 @@
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 1.197 s
-- **Predict time**: 0.286 s
+- **Fit time**: 0.376 s
+- **Predict time**: 0.148 s
 - **Parameters**: not reported
 - **Training-row fingerprint**: `b7b0666da4280e44`
 

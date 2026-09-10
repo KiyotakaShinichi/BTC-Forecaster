@@ -13,8 +13,8 @@ Stochastic local level on log price; the state-space form of simple exponential 
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 0.714 s
-- **Predict time**: 0.063 s
+- **Fit time**: 0.488 s
+- **Predict time**: 0.048 s
 - **Parameters**: 2
 - **Training-row fingerprint**: `b7b0666da4280e44`
 
@@ -29,14 +29,14 @@ Stochastic local level on log price; the state-space form of simple exponential 
 
 | metric | value |
 |---|---|
-| MAE | 0.016391 |
-| RMSE | 0.023352 |
-| MASE (naive = 1) | 0.999830 |
-| skill vs naive | 0.000170 |
-| forecast bias | -0.000398 |
-| directional accuracy | 0.4979 |
-| balanced accuracy | 0.4979 |
-| MCC | -0.0043 |
+| MAE | 0.016394 |
+| RMSE | 0.023364 |
+| MASE (naive = 1) | 1.000000 |
+| skill vs naive | 0.000000 |
+| forecast bias | -0.000391 |
+| directional accuracy | 0.4950 |
+| balanced accuracy | 0.4950 |
+| MCC | -0.0099 |
 | train-constant null | 0.4993 |
 | beats that null | no |
 
@@ -44,13 +44,13 @@ The naive baseline's MAE on the same block is 0.016394.
 
 ## Against the baseline
 
-- Diebold-Mariano statistic -0.146, p = 0.8836, q = 0.8836 after Benjamini-Hochberg
+- Diebold-Mariano statistic -0.470, p = 0.6386, q = 0.6554 after Benjamini-Hochberg
 - **Verdict**: not distinguishable from the naive baseline
 
 ## Stability
 
-- mean skill across blocks 0.000001
-- worst block -0.001823
+- mean skill across blocks 0.000000
+- worst block -0.000000
 - positive in every block: no
 
 ## Residual diagnostics
@@ -61,7 +61,7 @@ The naive baseline's MAE on the same block is 0.016394.
 
 ## Serialization
 
-- 1655439 bytes, sha256 `ac53a7ca50402570`
+- 731504 bytes, sha256 `4ad08f2dd7f81424`
 - reload reproduces the forecasts bit-identically
 
 ## Notes

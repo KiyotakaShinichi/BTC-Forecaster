@@ -13,8 +13,8 @@ Huber loss: squared inside epsilon, absolute outside.
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 0.131 s
-- **Predict time**: 0.004 s
+- **Fit time**: 0.075 s
+- **Predict time**: 0.001 s
 - **Parameters**: 12
 - **Training-row fingerprint**: `b7b0666da4280e44`
 

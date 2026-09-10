@@ -13,8 +13,8 @@ AR(3) on log returns, evaluated by the frozen linear recursion.
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 0.008 s
-- **Predict time**: 1.025 s
+- **Fit time**: 0.004 s
+- **Predict time**: 0.205 s
 - **Parameters**: 4
 - **Training-row fingerprint**: `b7b0666da4280e44`
 
@@ -44,7 +44,7 @@ The naive baseline's MAE on the same block is 0.016394.
 
 ## Against the baseline
 
-- Diebold-Mariano statistic 0.472, p = 0.6373, q = 0.6717 after Benjamini-Hochberg
+- Diebold-Mariano statistic 0.472, p = 0.6373, q = 0.6554 after Benjamini-Hochberg
 - **Verdict**: not distinguishable from the naive baseline
 
 ## Stability

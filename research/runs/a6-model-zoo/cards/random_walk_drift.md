@@ -13,7 +13,7 @@ Constant drift: the mean training log return.
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 0.002 s
+- **Fit time**: 0.001 s
 - **Predict time**: 0.000 s
 - **Parameters**: 1
 - **Training-row fingerprint**: `b7b0666da4280e44`
@@ -44,7 +44,7 @@ The naive baseline's MAE on the same block is 0.016394.
 
 ## Against the baseline
 
-- Diebold-Mariano statistic 0.814, p = 0.4159, q = 0.4634 after Benjamini-Hochberg
+- Diebold-Mariano statistic 0.814, p = 0.4159, q = 0.4770 after Benjamini-Hochberg
 - **Verdict**: not distinguishable from the naive baseline
 
 ## Stability

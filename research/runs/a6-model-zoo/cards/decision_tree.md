@@ -13,8 +13,8 @@ Single regression tree, max_depth=4, min_samples_leaf=20.
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 0.019 s
-- **Predict time**: 0.002 s
+- **Fit time**: 0.009 s
+- **Predict time**: 0.001 s
 - **Parameters**: not reported
 - **Training-row fingerprint**: `b7b0666da4280e44`
 

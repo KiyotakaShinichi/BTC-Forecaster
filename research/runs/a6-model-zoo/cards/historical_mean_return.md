@@ -44,7 +44,7 @@ The naive baseline's MAE on the same block is 0.016394.
 
 ## Against the baseline
 
-- Diebold-Mariano statistic 1.398, p = 0.1624, q = 0.2112 after Benjamini-Hochberg
+- Diebold-Mariano statistic 1.398, p = 0.1624, q = 0.2185 after Benjamini-Hochberg
 - **Verdict**: not distinguishable from the naive baseline
 
 ## Stability

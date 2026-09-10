@@ -13,8 +13,8 @@ GRU over the 24-step window; last hidden state projected to a scalar.
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 22.311 s
-- **Predict time**: 0.651 s
+- **Fit time**: 13.745 s
+- **Predict time**: 0.187 s
 - **Parameters**: 2617
 - **Training-row fingerprint**: `b7b0666da4280e44`
 
@@ -61,7 +61,7 @@ The naive baseline's MAE on the same block is 0.016394.
 
 ## Serialization
 
-- 2115699 bytes, sha256 `31d115de2c639268`
+- 2115699 bytes, sha256 `900e750cdf07e9eb`
 - reload reproduces the forecasts bit-identically
 
 ## Notes

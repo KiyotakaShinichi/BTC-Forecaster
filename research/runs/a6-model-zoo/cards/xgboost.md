@@ -13,8 +13,8 @@ XGBoost on the causal matrix at the shared capacity ceiling.
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 0.594 s
-- **Predict time**: 0.016 s
+- **Fit time**: 0.782 s
+- **Predict time**: 0.013 s
 - **Parameters**: not reported
 - **Training-row fingerprint**: `b7b0666da4280e44`
 

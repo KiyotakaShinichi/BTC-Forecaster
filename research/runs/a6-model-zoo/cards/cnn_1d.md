@@ -13,8 +13,8 @@ Two causal convolutions (kernel 3) and a mean over time.
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 5.409 s
-- **Predict time**: 0.142 s
+- **Fit time**: 1.687 s
+- **Predict time**: 0.035 s
 - **Parameters**: 1345
 - **Training-row fingerprint**: `b7b0666da4280e44`
 
@@ -61,7 +61,7 @@ The naive baseline's MAE on the same block is 0.016394.
 
 ## Serialization
 
-- 2095207 bytes, sha256 `ae7cb7dac0d33511`
+- 2095207 bytes, sha256 `254110a86f170480`
 - reload reproduces the forecasts bit-identically
 
 ## Notes

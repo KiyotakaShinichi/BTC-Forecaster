@@ -13,8 +13,8 @@ Distance-weighted 25-NN on standardised causal features.
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 0.013 s
-- **Predict time**: 0.228 s
+- **Fit time**: 0.007 s
+- **Predict time**: 0.144 s
 - **Parameters**: not reported
 - **Training-row fingerprint**: `b7b0666da4280e44`
 

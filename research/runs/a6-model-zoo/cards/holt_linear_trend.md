@@ -13,8 +13,8 @@ Damped Holt linear trend on log price, innovations state-space form.
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 2.936 s
-- **Predict time**: 0.468 s
+- **Fit time**: 2.219 s
+- **Predict time**: 0.459 s
 - **Parameters**: 5
 - **Training-row fingerprint**: `b7b0666da4280e44`
 
@@ -29,14 +29,14 @@ Damped Holt linear trend on log price, innovations state-space form.
 
 | metric | value |
 |---|---|
-| MAE | 0.016386 |
-| RMSE | 0.023343 |
-| MASE (naive = 1) | 0.999536 |
-| skill vs naive | 0.000464 |
-| forecast bias | -0.000334 |
-| directional accuracy | 0.4950 |
-| balanced accuracy | 0.4951 |
-| MCC | -0.0099 |
+| MAE | 0.016390 |
+| RMSE | 0.023345 |
+| MASE (naive = 1) | 0.999723 |
+| skill vs naive | 0.000277 |
+| forecast bias | -0.000327 |
+| directional accuracy | 0.4865 |
+| balanced accuracy | 0.4866 |
+| MCC | -0.0269 |
 | train-constant null | 0.4993 |
 | beats that null | no |
 
@@ -44,13 +44,13 @@ The naive baseline's MAE on the same block is 0.016394.
 
 ## Against the baseline
 
-- Diebold-Mariano statistic -0.172, p = 0.8632, q = 0.8836 after Benjamini-Hochberg
+- Diebold-Mariano statistic -0.099, p = 0.9214, q = 0.9214 after Benjamini-Hochberg
 - **Verdict**: not distinguishable from the naive baseline
 
 ## Stability
 
-- mean skill across blocks 0.000119
-- worst block -0.004340
+- mean skill across blocks -0.000049
+- worst block -0.004397
 - positive in every block: no
 
 ## Residual diagnostics
@@ -61,7 +61,7 @@ The naive baseline's MAE on the same block is 0.016394.
 
 ## Serialization
 
-- 5167143 bytes, sha256 `4841b4d479cc4a13`
+- 2260007 bytes, sha256 `d16ee670f819aeae`
 - reload reproduces the forecasts bit-identically
 
 ## Limitations

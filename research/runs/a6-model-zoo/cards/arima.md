@@ -13,8 +13,8 @@ ARIMA(1,0,1) with constant on log returns; d=0 because the series is already dif
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 1.828 s
-- **Predict time**: 0.160 s
+- **Fit time**: 0.097 s
+- **Predict time**: 0.041 s
 - **Parameters**: 4
 - **Training-row fingerprint**: `b7b0666da4280e44`
 
@@ -29,14 +29,14 @@ ARIMA(1,0,1) with constant on log returns; d=0 because the series is already dif
 
 | metric | value |
 |---|---|
-| MAE | 0.016439 |
-| RMSE | 0.023368 |
-| MASE (naive = 1) | 1.002729 |
-| skill vs naive | -0.002729 |
-| forecast bias | 0.001074 |
-| directional accuracy | 0.5064 |
-| balanced accuracy | 0.5070 |
-| MCC | 0.0381 |
+| MAE | 0.016420 |
+| RMSE | 0.023359 |
+| MASE (naive = 1) | 1.001580 |
+| skill vs naive | -0.001580 |
+| forecast bias | 0.000651 |
+| directional accuracy | 0.5035 |
+| balanced accuracy | 0.5042 |
+| MCC | 0.0342 |
 | train-constant null | 0.4993 |
 | beats that null | yes |
 
@@ -44,13 +44,13 @@ The naive baseline's MAE on the same block is 0.016394.
 
 ## Against the baseline
 
-- Diebold-Mariano statistic 0.725, p = 0.4684, q = 0.5074 after Benjamini-Hochberg
+- Diebold-Mariano statistic 0.623, p = 0.5334, q = 0.5778 after Benjamini-Hochberg
 - **Verdict**: not distinguishable from the naive baseline
 
 ## Stability
 
-- mean skill across blocks -0.003284
-- worst block -0.007905
+- mean skill across blocks -0.001820
+- worst block -0.004054
 - positive in every block: no
 
 ## Residual diagnostics
@@ -61,7 +61,7 @@ The naive baseline's MAE on the same block is 0.016394.
 
 ## Serialization
 
-- 3304140 bytes, sha256 `acbeda0216f84f54`
+- 1452543 bytes, sha256 `0b7353ac437108e8`
 - reload reproduces the forecasts bit-identically
 
 ## Notes

@@ -13,8 +13,8 @@ Theta method (theta=2): frozen SES level plus half the fitted drift.
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 0.122 s
-- **Predict time**: 0.007 s
+- **Fit time**: 0.041 s
+- **Predict time**: 0.003 s
 - **Parameters**: 2
 - **Training-row fingerprint**: `b7b0666da4280e44`
 

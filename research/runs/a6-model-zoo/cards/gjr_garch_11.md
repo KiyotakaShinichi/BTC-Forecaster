@@ -13,8 +13,8 @@ GJR-GARCH(1,1,1) with Student-t innovations: threshold asymmetry in levels.
 ## Training budget
 
 - 1,000 deterministic rows, the contiguous tail of the training partition
-- **Fit time**: 0.179 s
-- **Predict time**: 0.021 s
+- **Fit time**: 0.070 s
+- **Predict time**: 0.009 s
 - **Parameters**: 6
 - **Training-row fingerprint**: `b7b0666da4280e44`
 
@@ -61,7 +61,7 @@ The naive baseline's MAE on the same block is 0.016394.
 
 ## Serialization
 
-- 1695 bytes, sha256 `5b4fa6d76342e6c3`
+- 1697 bytes, sha256 `1716162a0aca1a75`
 - reload reproduces the forecasts bit-identically
 
 ## Notes
