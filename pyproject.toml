@@ -63,7 +63,7 @@ dev = [
     # fastapi.testclient needs httpx; the API tests skip without it.
     "httpx>=0.27,<1",
     "ruff>=0.6,<1",
-    "mypy>=1.10,<2",
+    "mypy>=1.10,<3",
 ]
 # Everything needed to run the full pipeline end to end.
 all = [
