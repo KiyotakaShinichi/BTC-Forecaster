@@ -147,6 +147,11 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     print(f"  folds   {clean_statuses(outcome)}")
+    print(
+        f"  timing  {len(outcome.timings['over_budget_folds'])} fold(s) over budget, "
+        f"{len(outcome.timings['training_time_capped_folds'])} training-time-capped "
+        "(run_info.json; not part of the result)"
+    )
     print(f"  leakage {outcome.leakage}")
     print(f"  decision {outcome.decision['decision']}")
     print(f"  digest  {written['result_digest']}")

@@ -26,9 +26,17 @@ an optional hook on the prediction context -- so what the adversaries test is
 the code path the results came from, not a copy of it.
 
 Failures are recorded, never dropped. A fold whose fit raises is ``FAILED``
-with its exception; a fold that costs more than the model's A6 resource class
-allows is ``RESOURCE_LIMIT``, and its forecasts are kept, because both facts
-belong in the record. The gate later refuses any configuration with either.
+with its exception, and the gate refuses any configuration with one.
+
+A fold that costs more than the model's A6 resource class allows is recorded
+too -- in the timings, not in the canonical result. Whether a fold overran its
+budget depends on how many processes shared the machine: the first canonical
+BTC run marked fifteen LSTM folds over their 120 s budget at 121-240 s under
+four-way parallel load, folds that take about 48 s alone. A status that moves
+with machine load cannot sit inside a digest that claims byte-identical
+reproduction, so it is reported beside it. So is any deep-model fold that hit
+A6's own training time cap, the one case in which the forecasts themselves
+would depend on timing.
 """
 
 from __future__ import annotations
@@ -124,6 +132,9 @@ class FoldForecast:
     train_direction_up: bool
     fit_seconds: float
     predict_seconds: float
+    #: A6's deep models stop training at a wall-clock cap. If one did, this
+    #: fold's forecasts depend on machine speed, and the run says so.
+    hit_training_time_cap: bool = False
 
 
 def forecast_fold(
@@ -179,6 +190,9 @@ def forecast_fold(
         train_direction_up=up,
         fit_seconds=fit_seconds,
         predict_seconds=predict_seconds,
+        hit_training_time_cap=bool(
+            (model.hyperparameters().get("training") or {}).get("hit_time_budget", False)
+        ),
     )
 
 
@@ -197,6 +211,10 @@ class FoldOutcome:
     fit_seconds: float = 0.0
     predict_seconds: float = 0.0
     failure: dict | None = None
+    #: Timing facts: reported in run_info.json, never in the canonical result.
+    over_budget: bool = False
+    budget_seconds: float | None = None
+    hit_training_time_cap: bool = False
 
     @property
     def total_seconds(self) -> float:
@@ -216,6 +234,9 @@ class FoldOutcome:
             "fold": self.fold,
             "fit_seconds": round(self.fit_seconds, 4),
             "predict_seconds": round(self.predict_seconds, 4),
+            "budget_seconds": self.budget_seconds,
+            "over_budget": self.over_budget,
+            "hit_training_time_cap": self.hit_training_time_cap,
         }
 
 
@@ -232,7 +253,7 @@ class JobResult:
 
     @property
     def clean(self) -> bool:
-        """Every fold ran and stayed within its declared resource class."""
+        """Every fold completed. Deterministic: wall-clock overruns are not part of it."""
         return bool(self.folds) and all(s == ModelStatus.ACTIVE.value for s in self.statuses)
 
 
@@ -316,24 +337,17 @@ def run_job(
             )
             continue
 
-        over_budget = result.fit_seconds + result.predict_seconds > budget
         outcomes.append(
             FoldOutcome(
                 fold=fold.index,
-                status=(ModelStatus.RESOURCE_LIMIT if over_budget else ModelStatus.ACTIVE).value,
+                status=ModelStatus.ACTIVE.value,
                 train_rows=result.train_rows,
                 train_fingerprint=result.train_fingerprint,
                 fit_seconds=result.fit_seconds,
                 predict_seconds=result.predict_seconds,
-                failure=(
-                    {
-                        "reason": "exceeded the declared resource budget",
-                        "resource_class": registration.resource_class.value,
-                        "budget_seconds": budget,
-                    }
-                    if over_budget
-                    else None
-                ),
+                over_budget=result.fit_seconds + result.predict_seconds > budget,
+                budget_seconds=budget,
+                hit_training_time_cap=result.hit_training_time_cap,
             )
         )
         frames.append(

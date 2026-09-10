@@ -221,6 +221,32 @@ The benchmark reaches one decision:
 There is no fourth state. The thresholds are part of the configuration digest,
 so a threshold moved after seeing a result makes a different run.
 
+### Deviation from this preregistration: the `resources` gate
+
+*Recorded after the first canonical BTC run.*
+
+The table above says every fold must run "within its A6 resource class". The
+first canonical run showed that this made the canonical result depend on
+machine load. Fifteen LSTM folds — `h = 1` on the expanding and 2,000-row
+windows, `h = 3` on the expanding window — took 121–240 s against a 120 s
+budget while four worker processes shared four cores; the same kind of fold
+takes about 48 s alone. A status that moves with load cannot sit inside a
+digest that claims byte-identical reproduction: a rerun with fewer workers
+would have produced a different digest for reasons unrelated to the result.
+
+So `resources` now means **every fold completed**, which is deterministic.
+Budget overruns are reported in full in `run_info.json`, outside the digest,
+together with any deep-model fold that hit A6's own 300 s training cap — the
+one case in which the forecasts themselves would depend on timing.
+
+This **relaxes** a gate after a result existed, which is why it is recorded
+here rather than folded into the table. It cannot have changed the decision,
+and that was checked from the first run's files before the change was made:
+no configuration had a raw signal or a Benjamini-Hochberg-significant
+improvement, and none failed the `resources` gate alone. The first run is kept
+outside the repository as the record of the defect; the committed run is the
+rerun under the corrected code.
+
 ## Engine validation
 
 A benchmark reporting "nothing works" on BTC is indistinguishable from a broken
@@ -284,7 +310,26 @@ fragile, by design.
 
 ## 14. Comparison with A2
 
-*Pending.*
+| | A2 | A7 |
+|---|---|---|
+| What is forecast | a 30-step **price path** | one **log return** over `h` bars |
+| Where it is scored | the price at step 31 (after a one-bar embargo) | `ln(C[t+h] / C[t])` at every origin |
+| Units | USD | dimensionless |
+| Origins | 36 widely spaced folds | 1,417 consecutive daily origins, 12 refits |
+| Models | 8, A2's adapters | 11, A6's registry |
+| Outcome | 0 of 8 promoted | *see section 17* |
+
+**The numbers are not comparable, including at `h = 30`.** A7's 30-bar horizon
+is the nearest thing to A2's 31-step path, and it is still a different
+measurement. A2's MAE is the dollar error of a price level, dominated by
+wherever the price happened to be. A7's is the error of a scale-free return, at
+every daily origin rather than 36 spaced ones. A2's best model, drift at
++0.003957, and any A7 number are in different units and cannot be set side by
+side.
+
+What the two share is a question — *does anything beat the random walk?* — and
+the answer can agree or disagree without the numbers being comparable. That
+qualitative comparison is in section 17.
 
 ## 15. Comparison with A6
 
@@ -292,7 +337,47 @@ fragile, by design.
 
 ## 16. Limitations
 
-*Pending.*
+These hold whatever the result.
+
+- **One instrument, one bar frequency, one source.** Daily BTC-USD from yfinance,
+  which revises history silently. The input hash pins the bytes used; it cannot
+  make the provider stable.
+- **Eleven models, A6's configurations, no tuning.** Deliberate. Tuning across
+  220 configurations would manufacture edges, which is what A7 exists to
+  prevent. A model that needs tuning to work shows here at its A6 setting.
+- **Parameters are frozen within each fold** of about 118 origins. A model
+  refitted every day could behave differently.
+- **A6's eleven causal price and volume features, nothing exogenous.** Adding
+  intelligence signals to quant models is out of scope by rule.
+- **The fold gate trades power for robustness.** Engine validation showed it: a
+  genuine effect of about 3% skill, significant after correction, was classified
+  `FRAGILE_SIGNAL` because it was positive in four of six folds. On BTC a small
+  but real effect that is not consistent across twelve folds is reported as
+  fragile, not as a candidate. This is by design, and it is still a limitation.
+- **Diebold-Mariano assumes a covariance-stationary loss differential.** At
+  `h = 30` consecutive origins share 29 of 30 bars, so the effective sample is
+  far smaller than 1,417. The HAC lags account for the overlap; they cannot
+  create information.
+- **The primary family is large.** About 220 comparisons under one
+  Benjamini-Hochberg correction makes significance hard to reach. The
+  per-horizon families are reported and do not gate.
+- **Configurations are not independent.** Windows overlap in information,
+  horizons share origins, models share features. The gate's counts describe the
+  table, not independent experiments.
+- **Absolute loss only.** No transaction costs, no position sizing, no economic
+  evaluation. Direction is reported against the constant-direction null. No
+  curated model declares a distribution, so nothing probabilistic is scored.
+- **A6's deep models stop training at 300 s of wall time.** If a fold ever hit
+  that cap, its forecasts would depend on machine speed. `run_info.json` lists
+  every fold that did; the committed run's count is in section 12.
+- **The resource budget is reported, not gated.** Whether a fold overran it
+  depends on how many processes shared the machine, so overruns are recorded
+  outside the result — see the deviation after section 11.
+- **Byte identity is asserted for one environment.** The canonical text is fixed
+  at twelve significant digits; different CPUs or BLAS builds may still differ
+  in the last bits. The manifest records the environment.
+- **The data and predictions are not committed.** A reproduction needs the same
+  snapshot bytes. The hash says whether you have them.
 
 ## 17. Decision
 

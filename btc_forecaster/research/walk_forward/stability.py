@@ -11,7 +11,9 @@ result existed:
 ``fold_majority``     positive in at least the preregistered share of folds
 ``practical``         skill at least the practical floor
 ``leakage``           the model passed the walk-forward adversaries
-``resources``         every fold ran, within its declared resource class
+``resources``         every fold completed. Deterministic on purpose: wall-clock
+                      overruns depend on machine load and are reported in
+                      run_info.json, outside the result
 
 A leakage check that was not run is a failure, not a pass: an unchecked model
 has not shown it cannot see the future.

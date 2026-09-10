@@ -258,6 +258,23 @@ def run_benchmark(frame: pd.DataFrame, config: WalkForwardConfig, *, workers: in
             "wall_clock_seconds": round(time.perf_counter() - started, 2),
             "jobs_and_adversaries_seconds": round(jobs_seconds, 2),
             "workers": workers,
+            "over_budget_folds": [
+                {
+                    "job": "|".join(str(k) for k in j.spec.key),
+                    "fold": f.fold,
+                    "seconds": round(f.total_seconds, 1),
+                    "budget_seconds": f.budget_seconds,
+                }
+                for j in jobs
+                for f in j.folds
+                if f.over_budget
+            ],
+            "training_time_capped_folds": [
+                {"job": "|".join(str(k) for k in j.spec.key), "fold": f.fold}
+                for j in jobs
+                for f in j.folds
+                if f.hit_training_time_cap
+            ],
             "jobs": {
                 "|".join(str(k) for k in j.spec.key): [f.timing() for f in j.folds] for j in jobs
             },

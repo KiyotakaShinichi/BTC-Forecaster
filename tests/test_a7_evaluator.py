@@ -183,12 +183,22 @@ class TestFailuresAreRecordedNotDropped:
         assert job.folds[0].failure["exception"] == "ValueError"
         assert job.records.empty and not job.clean
 
-    def test_a_fold_over_budget_is_flagged_and_kept(self, monkeypatch, cache) -> None:
+    def test_a_fold_over_budget_is_reported_outside_the_result(self, monkeypatch, cache) -> None:
+        """Whether a fold overran its budget depends on machine load. The first
+        canonical BTC run showed it: fifteen LSTM folds over budget under four
+        workers that take a third of the time alone. So an overrun is reported in
+        the timings and never changes the canonical outcome -- the same job with
+        a starved budget must produce the same records and fold records."""
+        normal = run_job(JobSpec("ar_p", 1, ROLL), SCHEDULE, CONFIG, cache)
         monkeypatch.setitem(RESOURCE_BUDGET_SECONDS, ResourceClass.TRIVIAL, 0.0)
-        job = run_job(JobSpec("ar_p", 1, ROLL), SCHEDULE, CONFIG, cache)
-        assert set(job.statuses) == {ModelStatus.RESOURCE_LIMIT.value}
-        assert len(job.records) == len(SCHEDULE.origins)
-        assert not job.clean
+        starved = run_job(JobSpec("ar_p", 1, ROLL), SCHEDULE, CONFIG, cache)
+        assert all(f.over_budget for f in starved.folds)
+        assert not any(f.over_budget for f in normal.folds)
+        assert [f.canonical() for f in starved.folds] == [f.canonical() for f in normal.folds]
+        pd.testing.assert_frame_equal(starved.records, normal.records)
+        assert starved.clean and normal.clean
+        assert starved.folds[0].timing()["over_budget"] is True
+        assert "over_budget" not in starved.folds[0].canonical()
 
     def test_a_missing_dependency_is_skipped_for_every_fold(self, monkeypatch, cache) -> None:
         register_probe(
