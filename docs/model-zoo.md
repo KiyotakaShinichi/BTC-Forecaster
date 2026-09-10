@@ -145,10 +145,14 @@ It needs a hash-verified market snapshot, which is **not committed** — Yahoo's
 terms do not grant redistribution. Run `btc-forecast snapshot` first, or pass
 `--data` to an existing one.
 
-Fitting and scoring the forty models takes about 75 seconds -- the manifest
-records it as `wall_clock_seconds` -- and the full command, with the
-sample-efficiency subset and forty serialized artifacts written and hash-checked,
-takes a few minutes. It is deliberately **not** a CI job. CI runs the registry
+On the Windows laptop used for this track, fitting and scoring the forty models
+took between about 75 and 155 seconds across runs of identical code -- a
+two-fold spread from machine load alone, visible in every model including the
+numpy networks that import nothing. The manifest records each run's figure as
+`wall_clock_seconds`, and one-time library imports separately as
+`import_seconds`, so neither is charged to a model. The full command, with the
+sample-efficiency subset and forty serialized artifacts written and
+hash-checked, takes a few minutes. It is deliberately **not** a CI job. CI runs the registry
 check, the leakage adversaries, the synthetic worlds and a four-model smoke
 benchmark; the complete run is an explicit research command.
 
