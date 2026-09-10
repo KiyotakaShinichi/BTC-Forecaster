@@ -188,11 +188,16 @@ class ZooDataset:
         return TrainingSet(
             X=self.X.loc[index],
             y=self.y.loc[index],
-            # The series is handed whole to series models, which slice it
-            # themselves at their own training end; the TrainingSet's own index
-            # is what bounds estimation.
-            series=self.series.loc[self.series.index <= index.max()],
-            close=self.close.loc[self.close.index <= index.max()],
+            # Exactly the budget's bars, in both representations. This used to
+            # hand series models every bar from 2017 up to the budget's end, on
+            # the stated assumption that they would slice it themselves; the
+            # state-space adapters clipped only the upper end, so ARIMA and the
+            # four structural models estimated on ~2,300 rows at every budget
+            # while the fingerprint recorded 1,000. `TrainingSet` now refuses
+            # a series that is not aligned with X, so the bound is enforced
+            # where the rows are handed over rather than trusted downstream.
+            series=self.series.loc[index],
+            close=self.close.loc[index],
             feature_bar=self.feature_bar.loc[index],
         )
 

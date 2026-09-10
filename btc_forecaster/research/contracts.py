@@ -139,7 +139,13 @@ class TrainingSet:
     * ``X`` / ``y`` -- the causal design matrix, where row ``t`` holds features
       computed at bar ``t`` and ``y[t]`` is the log return of bar ``t+1``;
     * ``series`` -- the log-return series itself, for models that estimate on a
-      series rather than a design matrix.
+      series rather than a design matrix; ``series`` equals ``y``, and ``close``
+      holds the closes of the same bars.
+
+    Same rows is enforced, not assumed. A series reaching back before the budget
+    lets a series model estimate on more data than the budget grants while the
+    fingerprint -- computed from ``X`` and ``y`` -- says otherwise; that is how
+    ARIMA and the structural models once trained on ~2,300 rows at every budget.
 
     ``feature_bar`` records which bar each predictor row came from, so the
     alignment is auditable rather than an unstated assumption about a shift.
@@ -158,6 +164,14 @@ class TrainingSet:
             raise ValueError("training set is empty")
         if self.X.isna().to_numpy().any():
             raise ValueError("training features contain NaN; the builder should have dropped them")
+        for name, other in (("series", self.series), ("close", self.close)):
+            if not other.index.equals(self.X.index):
+                raise ValueError(
+                    f"training {name} covers {len(other)} bars "
+                    f"({other.index.min()} -> {other.index.max()}) but the budget is "
+                    f"{len(self.X)} ({self.X.index.min()} -> {self.X.index.max()}); "
+                    "a model must not estimate on rows the budget does not grant"
+                )
         # The whole point-in-time claim in one assertion: the bar a row's
         # predictors came from is strictly before the bar it predicts.
         if bool((pd.DatetimeIndex(self.feature_bar) >= self.X.index).any()):
