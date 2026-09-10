@@ -71,3 +71,13 @@ research/market_intelligence/b4/feature_matrix/*.duckdb
 # regenerating the directory and comparing hashes is the check. Same rule, same
 # reason, as the B4 market-data cache above.
 research/runs/*/artifacts/*.pkl
+
+# A7 walk-forward row-level predictions: about 300,000 rows and 35 MB (6 MB
+# gzipped) per run, regenerable byte-for-byte from the pinned snapshot. The run's
+# manifest records the sha256 of their uncompressed bytes, so a regenerated file
+# is checked against the committed digest (`walk_forward verify` names it as
+# absent until then). Their `actual` column would also republish almost four
+# years of Yahoo's daily returns, which its terms do not grant. A6's 705-row
+# predictions.csv predates this rule and is protected evidence: it stays tracked,
+# unchanged. Scoped to the gzipped form so that it does.
+research/runs/*/predictions.csv.gz

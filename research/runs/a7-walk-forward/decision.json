@@ -1,0 +1,1 @@
+{"candidates":[],"configurations_evaluated":200,"decision":"ROBUSTLY_UNINTERESTING","fragile_signals":[],"gate_failure_counts":{"aggregate_skill":171,"bh_better":200,"fold_majority":193,"late_block":186,"leakage":0,"practical":200,"resources":0},"live_trading_enabled":false,"practically_useful":0,"promoted_models":[],"statistically_better":0,"statistically_different":103}
