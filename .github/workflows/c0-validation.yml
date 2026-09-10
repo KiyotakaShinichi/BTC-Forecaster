@@ -97,3 +97,54 @@ jobs:
           assert manifest["live_trading_enabled"] is False
           print(f"A6 smoke OK: {scored} models, nothing promoted, trading disabled")
           PY
+
+      # A7 walk-forward robustness. The full benchmark -- 220 jobs, twelve
+      # refits each, four horizons, five windows -- is an explicit research
+      # command, not a CI job. What runs here protects it: the snapshot
+      # fingerprint and its refusal of a changed input, and a smoke benchmark
+      # run twice on a synthetic world -- once with two workers, once with one
+      # -- whose canonical result digests must agree byte for byte. The A7 test
+      # files (synthetic worlds, leakage adversaries, hashing, the registry)
+      # already ran in the pytest step above.
+      - name: A7 snapshot fingerprint refuses a changed input
+        run: |
+          python - <<'PY'
+          import pandas as pd
+          from btc_forecaster.data.snapshot import MarketSnapshot
+          from btc_forecaster.testing import synthetic_market_frame
+
+          snapshot = MarketSnapshot.build(
+              synthetic_market_frame(periods=400, seed=5),
+              ticker="CI-SYNTHETIC",
+              provider="synthetic",
+              retrieved_at=pd.Timestamp("2000-01-01", tz="UTC"),
+          )
+          snapshot.save(".ci-a7-snapshot")
+          with open(".ci-a7-expected.sha", "w") as handle:
+              handle.write(snapshot.manifest.sha256)
+          PY
+          python -m btc_forecaster.research.snapshot fingerprint .ci-a7-snapshot
+          python -m btc_forecaster.research.snapshot verify .ci-a7-snapshot --expect "$(cat .ci-a7-expected.sha)"
+          set +e
+          python -m btc_forecaster.research.snapshot verify .ci-a7-snapshot --expect "$(printf '0%.0s' $(seq 64))"
+          code=$?
+          set -e
+          test "$code" -eq 3 || { echo "::error title=A7::a changed input was not refused (exit $code)"; exit 1; }
+
+      - name: A7 smoke benchmark is byte-reproducible across worker counts
+        run: |
+          python -m btc_forecaster.research.walk_forward run --world NOISE --smoke --workers 2 --output .ci-a7-first
+          python -m btc_forecaster.research.walk_forward run --world NOISE --smoke --workers 1 --output .ci-a7-second
+          python -m btc_forecaster.research.walk_forward verify .ci-a7-first
+          python -m btc_forecaster.research.walk_forward verify .ci-a7-second
+          python - <<'PY'
+          import json
+          import pathlib
+
+          first = json.loads(pathlib.Path(".ci-a7-first/manifest.json").read_text())
+          second = json.loads(pathlib.Path(".ci-a7-second/manifest.json").read_text())
+          assert first["result_digest"] == second["result_digest"], "two runs of one config disagree"
+          assert first["promoted_models"] == [] and first["live_trading_enabled"] is False
+          assert first["decision"] != "ROBUST_RESEARCH_CANDIDATE", "pure noise produced a candidate"
+          print("A7 smoke OK:", first["decision"], first["result_digest"][:16])
+          PY
