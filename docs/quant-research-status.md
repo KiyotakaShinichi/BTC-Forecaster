@@ -200,6 +200,24 @@ future snapshots of the default branch, and what licence the repository adopts
 before any release, are open questions for the maintainer. They need their own
 commit and their own reasoning, not a side effect of an integration.
 
+### A6's results digest and the platform's line ending
+
+`b266a50d…` is taken over A6's results table as CSV text. Until A7.1 that text
+ended its lines with the operating system's `os.linesep`, because pandas does
+unless told otherwise. The canonical A6 run was produced on Windows, so the
+recorded digest covers CRLF line endings, and the same table hashes to
+`c7d1aa18…` with LF: a faithful A6 rerun anywhere but Windows could not match its
+own published digest. CI found it when `tests/test_quant_freeze.py` recomputed
+the digest on Linux.
+
+The fix pins the line ending to the recorded CRLF form
+(`RESULTS_DIGEST_LINETERMINATOR` in `btc_forecaster/research/runner.py`), so
+every platform computes `b266a50d…` from the committed table, and on Windows
+nothing changes. The committed evidence is untouched, and A6's numbers were
+never affected — only the bytes the hash was taken over. A7 does not share the
+defect: its canonical CSV and the snapshot digest both pin `\n`, and CI verifies
+the committed A7 files on Linux.
+
 ## Reproducing from a fresh clone
 
 1. **Install**, exactly as the fresh-clone CI job does:

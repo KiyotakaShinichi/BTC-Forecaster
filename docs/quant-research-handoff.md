@@ -80,8 +80,10 @@ history, and nothing else.
 - **Provenance failed more often than modelling did.** yfinance silently revised
   history between A2's and A6's pulls. Wall-clock timings leaked into a results
   digest twice, once in A6 and once in A7, and a library's first import was once
-  charged to one model's time budget. Each made a result depend on the machine,
-  and each was found only because the digest was expected to reproduce.
+  charged to one model's time budget. And A6's results digest depended on the
+  operating system's line ending, which nobody saw until CI recomputed it on
+  Linux during A7.1. Each made a result depend on the machine, and each was
+  found only because the digest was expected to reproduce.
 
 ## 3. What did not work
 

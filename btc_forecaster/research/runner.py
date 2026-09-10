@@ -69,6 +69,15 @@ BENCHMARK_KIND = "RESOURCE_CONSTRAINED_EXPLORATORY"
 #: way -- two runs with bit-identical metrics and different digests.
 TIMING_COLUMNS = ("fit_seconds", "total_seconds")
 
+#: The line ending the results digest is taken over. pandas ends CSV lines with
+#: ``os.linesep`` unless told otherwise, so the digest used to depend on the
+#: operating system: the canonical run was produced on Windows and recorded the
+#: CRLF form, and the same table hashed differently on Linux. Found in A7.1, when
+#: CI recomputed the committed digest on Linux. Pinned to the recorded form, so
+#: every platform computes the committed digest from the same table -- and on
+#: Windows nothing changes.
+RESULTS_DIGEST_LINETERMINATOR = "\r\n"
+
 #: Everything the adapters import lazily, imported once before any model's clock
 #: starts. Without it the first model to touch a library was charged for loading
 #: it -- about six seconds for statsmodels.tsa in a cold Windows process, against
@@ -400,6 +409,13 @@ def run_benchmark(
     )
 
 
+def results_table_digest(frame: pd.DataFrame) -> tuple[str, list[str]]:
+    """The results digest, and the columns it covers: every column but the timings."""
+    scientific = frame.drop(columns=list(TIMING_COLUMNS), errors="ignore")
+    text = scientific.to_csv(index=False, lineterminator=RESULTS_DIGEST_LINETERMINATOR)
+    return hashlib.sha256(text.encode()).hexdigest(), list(scientific.columns)
+
+
 def _frame_fingerprint(frame: pd.DataFrame) -> str:
     payload = frame.to_numpy(dtype=float).tobytes()
     digest = hashlib.sha256(payload)
@@ -462,11 +478,9 @@ def build_manifest(result: BenchmarkResult, *, extra: dict | None = None) -> dic
         "live_trading_enabled": False,
     }
     if len(frame):
-        scientific = frame.drop(columns=list(TIMING_COLUMNS), errors="ignore")
-        manifest["results_table_sha256"] = hashlib.sha256(
-            scientific.to_csv(index=False).encode()
-        ).hexdigest()
-        manifest["results_table_hashed_columns"] = list(scientific.columns)
+        digest, columns = results_table_digest(frame)
+        manifest["results_table_sha256"] = digest
+        manifest["results_table_hashed_columns"] = columns
     if extra:
         manifest.update(extra)
     return manifest
@@ -598,6 +612,8 @@ def assert_nothing_promoted(manifest: dict) -> None:
 
 
 __all__ = [
+    "RESULTS_DIGEST_LINETERMINATOR",
+    "results_table_digest",
     "BENCHMARK_KIND",
     "TIMING_COLUMNS",
     "WARM_IMPORTS",

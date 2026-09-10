@@ -43,6 +43,12 @@ what was added describes a project that never learned anything.
 - A fresh clone can verify the committed A7 evidence with `walk_forward verify
   --committed`, and the fresh-clone CI job does. Reproducing the whole run still
   needs the pinned snapshot, which is not redistributed.
+- Found during integration: A6's results digest depended on the platform's line
+  ending. pandas ends CSV lines with `os.linesep`; the canonical run was produced
+  on Windows, so a faithful rerun on Linux hashed to `c7d1aa18…` instead of the
+  recorded `b266a50d…`. The digest is now taken over the recorded CRLF form on
+  every platform. Nothing committed changed, and on Windows nothing computed
+  changes either. A7 pins its line endings and never had the defect.
 - Provenance audit: five committed files carry realised values derived from
   Yahoo Finance data — four already on `main` (two legacy runs and A2), and A6's
   predictions arriving with this integration. The repository's no-redistribution

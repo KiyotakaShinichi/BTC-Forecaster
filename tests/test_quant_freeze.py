@@ -20,15 +20,15 @@ reasoning, and -- per the status document -- a study that meets
 from __future__ import annotations
 
 import ast
-import hashlib
 import json
+import os
 from pathlib import Path
 
 import pandas as pd
 
 from btc_forecaster.paper.a2 import current_live_permission
 from btc_forecaster.paper.decision import LIVE_TRADING_ELIGIBLE
-from btc_forecaster.research.runner import TIMING_COLUMNS
+from btc_forecaster.research.runner import results_table_digest
 from btc_forecaster.research.walk_forward.stability import (
     DECISIONS,
     FRAGILE_SIGNAL,
@@ -107,10 +107,19 @@ class TestTheNegativeResultsAreAsRecorded:
         re-serialising what it reads changes the bytes the digest was taken over."""
         manifest = _json(A6_RUN / "manifest.json")
         frame = pd.read_csv(A6_RUN / "results.csv", float_precision="round_trip")
-        scientific = frame.drop(columns=list(TIMING_COLUMNS), errors="ignore")
-        assert list(scientific.columns) == manifest["results_table_hashed_columns"]
-        digest = hashlib.sha256(scientific.to_csv(index=False).encode()).hexdigest()
+        digest, columns = results_table_digest(frame)
+        assert columns == manifest["results_table_hashed_columns"]
         assert digest == manifest["results_table_sha256"]
+
+    def test_the_a6_digest_does_not_depend_on_the_platform(self, monkeypatch) -> None:
+        """pandas ends CSV lines with os.linesep unless told otherwise. The committed
+        digest was recorded on Windows; CI recomputes it on Linux. Both must agree."""
+        frame = pd.read_csv(A6_RUN / "results.csv", float_precision="round_trip")
+        digests = set()
+        for linesep in ("\n", "\r\n"):
+            monkeypatch.setattr(os, "linesep", linesep)
+            digests.add(results_table_digest(frame)[0])
+        assert digests == {_json(A6_RUN / "manifest.json")["results_table_sha256"]}
 
     def test_nothing_in_a6_was_significantly_better_than_naive(self) -> None:
         results = _json(A6_RUN / "manifest.json")["analysis"]["comparison"]["results"]
