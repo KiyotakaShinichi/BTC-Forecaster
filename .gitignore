@@ -76,8 +76,10 @@ research/runs/*/artifacts/*.pkl
 # gzipped) per run, regenerable byte-for-byte from the pinned snapshot. The run's
 # manifest records the sha256 of their uncompressed bytes, so a regenerated file
 # is checked against the committed digest (`walk_forward verify` names it as
-# absent until then). Their `actual` column would also republish almost four
-# years of Yahoo's daily returns, which its terms do not grant. A6's 705-row
-# predictions.csv predates this rule and is protected evidence: it stays tracked,
-# unchanged. Scoped to the gzipped form so that it does.
+# absent until then; `verify --committed` checks everything else). Their `actual`
+# column would also republish almost four years of returns derived from Yahoo
+# Finance data, which the repository's data policy does not redistribute -- see
+# docs/quant-research-status.md, which also records the committed files that
+# predate the policy. A6's 705-row predictions.csv is one: protected evidence, so
+# it stays tracked and unchanged. Scoped to the gzipped form so that it does.
 research/runs/*/predictions.csv.gz

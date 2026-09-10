@@ -278,9 +278,17 @@ python -m btc_forecaster.research.walk_forward verify <scratch dir>
 ```
 
 A reproduction is a run whose result digest equals the committed one,
-`b3fba7227e82e13a…`. Verifying the committed directory itself checks its
-9 committed canonical files and names `predictions.csv.gz` as absent: the
-predictions are regenerated from the snapshot, not redistributed.
+`b3fba7227e82e13a…`, and it needs the pinned snapshot, which is not committed.
+A fresh clone checks the committed evidence instead:
+
+```bash
+python -m btc_forecaster.research.walk_forward verify --committed research/runs/a7-walk-forward
+```
+
+That checks every committed canonical file against its manifest and — with the
+recorded hash of the predictions it does not have — against the result digest.
+Plain `verify` names `predictions.csv.gz` as absent: the predictions are
+regenerated from the snapshot, not redistributed.
 
 **Nothing beats the random walk here either.** 0 of 200 configurations are
 significantly better than the naive forecast after Benjamini-Hochberg;
@@ -390,6 +398,7 @@ A promoted research run without its manifest is an anecdote.
 - [`docs/seams.md`](docs/seams.md) — where external signals attach (Track B contract)
 - [`docs/model-zoo.md`](docs/model-zoo.md) — Track A6: forty models on a 1,000-row budget, and why it does not supersede A2
 - [`docs/walk-forward.md`](docs/walk-forward.md) — Track A7: A6's question from 1,417 origins at four horizons, preregistered, and why nothing survived
+- [`docs/quant-research-status.md`](docs/quant-research-status.md) — the quantitative freeze: A2 → A6 → A7 lineage, the promotion policy, the live-trading gate, the provenance audit
 - [`DEPLOYMENT.md`](DEPLOYMENT.md), [`AWS_BACKEND_API.md`](AWS_BACKEND_API.md) — deployment
 - [`DEPENDENCIES.md`](DEPENDENCIES.md) — the one dependency contract, and why the other files exist
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — how to build it, what CI enforces, and the four rules that are about the science rather than the code
