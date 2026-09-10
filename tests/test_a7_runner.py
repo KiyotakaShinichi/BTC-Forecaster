@@ -7,7 +7,7 @@ Three properties, each pinned:
 * **The canonical files carry no run identity.** No timestamps, no timings, no
   run ids -- those live in ``run_info.json``, outside the digest.
 * **A written run can be checked.** ``verify_run`` recomputes every hash from
-  disk and names the file that was touched.
+  disk and names the file that was touched, or that is not there.
 """
 
 from __future__ import annotations
@@ -158,6 +158,17 @@ class TestTheWrittenRun:
         (tmp_path / "predictions.csv.gz").write_bytes(gzip.compress(raw, mtime=0))
         assert verify_run(tmp_path)["mismatched_files"] == ["predictions.csv"]
 
+    def test_an_absent_file_is_named_and_the_rest_are_still_checked(self, tmp_path, one_worker) -> None:
+        write_run(one_worker, tmp_path, input_manifest=MANIFEST)
+        (tmp_path / "predictions.csv.gz").unlink()
+        result = verify_run(tmp_path)
+        assert result["absent_files"] == ["predictions.csv"]
+        assert result["mismatched_files"] == [] and result["result_digest_recomputed"] is None
+        assert not result["verified"]
+        metrics = tmp_path / "metrics.json"
+        metrics.write_text(metrics.read_text().replace("0", "1", 1))
+        assert verify_run(tmp_path)["mismatched_files"] == ["metrics.json"]
+
 
 class TestTheCommand:
     def test_config_prints_the_digest(self, capsys) -> None:
@@ -179,3 +190,11 @@ class TestTheCommand:
 
     def test_verifying_nothing_is_an_integrity_failure(self, tmp_path) -> None:
         assert main(["verify", str(tmp_path / "absent")]) == EXIT_INTEGRITY
+
+    def test_a_run_without_its_predictions_is_not_verified_and_says_why(self, tmp_path, capsys, one_worker) -> None:
+        write_run(one_worker, tmp_path, input_manifest=MANIFEST)
+        (tmp_path / "predictions.csv.gz").unlink()
+        assert main(["verify", str(tmp_path)]) == EXIT_INTEGRITY
+        captured = capsys.readouterr()
+        assert json.loads(captured.out)["absent_files"] == ["predictions.csv"]
+        assert "predictions.csv.gz is not in" in captured.err and "Regenerate" in captured.err

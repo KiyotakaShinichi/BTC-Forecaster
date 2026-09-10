@@ -383,31 +383,47 @@ def write_run(
     return manifest
 
 
-def read_canonical_parts(directory: Path | str) -> dict[str, bytes]:
+def stored_name(name: str) -> str:
+    """The file a canonical part is stored in: predictions are gzipped on disk."""
+    return "predictions.csv.gz" if name == "predictions.csv" else name
+
+
+def read_canonical_parts(directory: Path | str, *, missing_ok: bool = False) -> dict[str, bytes]:
+    """Every canonical part, uncompressed. With ``missing_ok``, absent ones are left out."""
     out = Path(directory)
     parts: dict[str, bytes] = {}
     for name in CANONICAL_FILES:
-        if name == "predictions.csv":
-            parts[name] = gzip.decompress((out / "predictions.csv.gz").read_bytes())
-        else:
-            parts[name] = (out / name).read_bytes()
+        path = out / stored_name(name)
+        if missing_ok and not path.exists():
+            continue
+        data = path.read_bytes()
+        parts[name] = gzip.decompress(data) if name == "predictions.csv" else data
     return parts
 
 
 def verify_run(directory: Path | str) -> dict:
-    """Recompute every canonical hash and the result digest from disk."""
+    """Recompute every canonical hash and the result digest from disk.
+
+    A canonical file that is not on disk is named, not skipped silently: the files
+    that are present are still checked against the manifest, but the result
+    digest cannot be recomputed without all of them, so the run is not verified.
+    A clone of the committed BTC run is in exactly that state -- its predictions
+    are regenerated from the pinned snapshot, not redistributed.
+    """
     out = Path(directory)
     manifest = json.loads((out / "manifest.json").read_text(encoding="utf-8"))
-    parts = read_canonical_parts(out)
+    parts = read_canonical_parts(out, missing_ok=True)
+    absent = [name for name in CANONICAL_FILES if name not in parts]
     mismatched = [
         name for name in sorted(parts) if sha256_hex(parts[name]) != manifest["files"].get(name)
     ]
-    digest = result_digest(parts)
+    digest = None if absent else result_digest(parts)
     return {
+        "absent_files": absent,
         "result_digest_recorded": manifest["result_digest"],
         "result_digest_recomputed": digest,
         "mismatched_files": mismatched,
-        "verified": not mismatched and digest == manifest["result_digest"],
+        "verified": not absent and not mismatched and digest == manifest["result_digest"],
     }
 
 

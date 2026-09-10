@@ -28,7 +28,14 @@ from ...features.spec import default_specs
 from .config import PREPROCESSING_VERSION, WalkForwardConfig, WindowSpec
 from .manifest import InputChangedError, input_manifest, load_snapshot, require_recorded_input
 from .report import readme_builder
-from .runner import assert_nothing_promoted, clean_statuses, run_benchmark, verify_run, write_run
+from .runner import (
+    assert_nothing_promoted,
+    clean_statuses,
+    run_benchmark,
+    stored_name,
+    verify_run,
+    write_run,
+)
 from .targets import TARGET_DEFINITION
 from .worlds import WORLDS
 from .worlds import build as build_world
@@ -117,6 +124,12 @@ def main(argv: list[str] | None = None) -> int:
             print(f"error: {exc}", file=sys.stderr)
             return EXIT_INTEGRITY
         print(json.dumps(result, indent=2, sort_keys=True))
+        for name in result["absent_files"]:
+            print(
+                f"not verified: {stored_name(name)} is not in {args.path}. Regenerate the run "
+                "from the pinned snapshot with `run`, then verify it.",
+                file=sys.stderr,
+            )
         return EXIT_OK if result["verified"] else EXIT_INTEGRITY
 
     try:
