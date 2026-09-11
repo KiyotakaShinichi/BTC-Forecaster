@@ -16,7 +16,8 @@ and "what was known at the time" always have an answer.
 
 Nothing here re-derives what the collector already defines. Eligibility is the
 store's correction view, clusters are B4.1.14's, family adequacy is the readiness
-gate's `assess_family` and coverage its `coverage_fraction`. B5 adds what those
+gate's `assess_family` and coverage is collection/coverage.py's, the one definition
+corpus-status reads too. B5 adds what those
 do not measure -- timestamp source and precision, impossible timestamps, the
 quality funnel -- and the decision.
 """
@@ -26,7 +27,7 @@ from __future__ import annotations
 import hashlib
 import statistics
 from collections import Counter
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Iterable, Sequence
@@ -36,17 +37,14 @@ from pydantic import BaseModel, ConfigDict
 
 from ..collection.clustering import EventCluster, cluster_events, effective_non_overlapping
 from ..collection.corpus import membership_hash
-from ..collection.readiness import FamilyReadiness, Readiness, assess_family, coverage_fraction
+from ..collection.coverage import CollectionCoverage, collection_coverage, span_coverage, successful_days, utc_day
+from ..collection.readiness import FamilyReadiness, Readiness, assess_family
 from ..corrections import CorrectionStatus, EventCorrection, resolve
 from ..errors import StorageError
 from ..models import DisclosureStream, Document, EventSignal, EventType
-from ..operations import RunStatus
 from ..storage import queries
 from ..storage.schema import SCHEMA_VERSION, schema_version
 from .contracts import DEFAULT_SUFFICIENCY, Decision, SufficiencyPolicy, canonical_json, study_families
-
-#: A run that finished in any state but FAILED collected something that day.
-COMPLETED_RUN_STATUSES = frozenset({RunStatus.SUCCESS, RunStatus.PARTIAL_SUCCESS, RunStatus.DEGRADED})
 
 
 class Exclusion(str, Enum):
@@ -172,6 +170,9 @@ class CorpusAudit(BaseModel):
     first_collection: datetime | None
     last_collection: datetime | None
     days_since_last_collection: int | None
+    #: The canonical collection record (collection/coverage.py), shared with corpus-status.
+    #: None only in an audit written before B5.1.
+    collection_coverage: CollectionCoverage | None = None
     # adequacy, per family, including the empty ones
     families: tuple[FamilyReadiness, ...]
 
@@ -346,12 +347,15 @@ def _median_per_day(moments: Sequence[datetime]) -> float:
     return float(statistics.median(days.get(first + timedelta(days=offset), 0) for offset in range(span)))
 
 
-def _family_coverage(clusters: Sequence[EventCluster], run_days: Sequence[datetime]) -> float:
-    """B4.1.23, per family: days with a completed run over days in the family's span."""
+def _family_coverage(clusters: Sequence[EventCluster], success: Sequence[date]) -> float | None:
+    """B4.1.23, per family, from the one definition in collection/coverage.py.
+
+    None for a family with no events: it has no span to be covered.
+    """
     if not clusters:
-        return 0.0
+        return None
     starts = sorted(cluster.first_available_at for cluster in clusters)
-    return coverage_fraction(run_days, starts[0], starts[-1])
+    return span_coverage(success, utc_day(starts[0]), utc_day(starts[-1]))
 
 
 def content_fingerprint(documents: Sequence[Document], events: Sequence[EventSignal], corrections: Sequence[EventCorrection], as_of: datetime) -> str:
@@ -420,7 +424,8 @@ def audit_corpus(
     )
 
     runs = [(_utc(started), manifest) for started, manifest in queries.runs_up_to(connection, as_of)]
-    run_days = [started for started, manifest in runs if manifest.status in COMPLETED_RUN_STATUSES]
+    success = successful_days(connection, as_of=as_of)
+    collection = collection_coverage(connection, as_of=as_of)
 
     family_of_cluster = {cluster.cluster_id: judged[cluster.event_ids[0]].family for cluster in study_clusters}
     families = tuple(
@@ -428,7 +433,7 @@ def audit_corpus(
             name,
             members,
             policy=policy.adequacy,
-            coverage_fraction=_family_coverage(members, run_days),
+            coverage_fraction=_family_coverage(members, success),
         )
         for name in study_families()
         for members in [[c for c in study_clusters if family_of_cluster[c.cluster_id] == name]]
@@ -447,7 +452,6 @@ def audit_corpus(
     pit_valid = [record for record in resolved_live if not record.pit_violations]
     lags = sorted(record.retrieval_lag_hours for record in resolved_live)
     live_records = [record for record in catalog if Exclusion.INVALIDATED not in record.exclusions]
-    last_collection = max(run_days, default=None)
 
     audit = CorpusAudit(
         as_of=as_of,
@@ -502,10 +506,11 @@ def audit_corpus(
         funnel=_funnel(catalog, study_clusters, policy),
         collection_runs=len(runs),
         run_statuses=_counts(manifest.status.value for _, manifest in runs),
-        collection_days=len({started.date() for started in run_days}),
-        first_collection=min(run_days, default=None),
-        last_collection=last_collection,
-        days_since_last_collection=(as_of.date() - last_collection.date()).days if last_collection else None,
+        collection_days=len(success),
+        first_collection=collection.first_success,
+        last_collection=collection.last_success,
+        days_since_last_collection=collection.days_since_last_success,
+        collection_coverage=collection,
         families=families,
     )
     return AuditResult(audit=audit, catalog=catalog, gate=decide(audit, policy))
@@ -579,7 +584,6 @@ def decide(audit: CorpusAudit, policy: SufficiencyPolicy = DEFAULT_SUFFICIENCY) 
 
 
 __all__ = [
-    "COMPLETED_RUN_STATUSES",
     "AuditResult",
     "Clause",
     "CorpusAudit",

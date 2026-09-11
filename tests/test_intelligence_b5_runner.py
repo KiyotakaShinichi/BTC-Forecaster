@@ -26,6 +26,7 @@ from market_intelligence.b5.runner import CANONICAL_FILES, verify_run, write_run
 from market_intelligence.collection.fixtures import fixture_document
 from market_intelligence.models import Direction, EventSignal, EventType, ExtractionMethod, SignalCategory
 from market_intelligence.operations import RunManifest, RunStatus
+from market_intelligence.retrieval import ProviderAttempt
 from market_intelligence.storage.store import IntelligenceStore
 
 BASE = datetime(2026, 9, 1, 14, 0, tzinfo=timezone.utc)
@@ -87,6 +88,11 @@ def small_store(path: Path, *, confidence: float = 0.35) -> Path:
                 status=RunStatus.DEGRADED,
                 provider_ids=("fixture",),
             )
+        )
+        store.put_provider_attempts(
+            "run-1",
+            [ProviderAttempt(provider_id="fixture", query_id="fixture", success=True, attempts=1, latency_ms=1.0)],
+            BASE + timedelta(hours=18),
         )
     finally:
         store.close()

@@ -21,19 +21,21 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime, timedelta, timezone
+from collections.abc import Sequence
+from datetime import datetime, time, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
 from .collection.clustering import EventCluster, cluster_events
 from .collection.corpus import CorpusCatalog
+from .collection.coverage import collection_coverage, span_coverage, successful_days, utc_day
 from .collection.feeds import NEWS_API_DECLARATION, SYNDICATION_DECLARATION
-from .collection.readiness import assess_entities, assess_family, assess_whale_contexts
+from .collection.readiness import FamilyReadiness, assess_family
 from .collection.statements import STATEMENT_DECLARATION
 from .collection.status import CorpusStatus, build_status
 from .collection.whales import WHALE_DECLARATION
 from .extractors import CURRENT_RULE_EXTRACTOR_VERSION
-from .models import EventType
+from .models import EventType, TransferContext
 from .ops.backup import backup_age
 from .ops.integrity import verify as ops_verify
 from .ops.paths import StoragePaths
@@ -70,12 +72,25 @@ def corpus_status(store: IntelligenceStore, extractor_version: str, entities: li
                 by_context.setdefault(event.transfer_context.value, []).append(cluster)
                 break
 
+    # Coverage per family, over the family's own span, from the one definition in
+    # collection/coverage.py -- the same one B5's Gate 1 audit reads. Before B5.1
+    # no coverage was passed here at all, and every family read 0%.
+    success = successful_days(store.connection, as_of=horizon)
+
+    def family(name: str, members: Sequence[EventCluster]) -> FamilyReadiness:
+        coverage = None
+        if members:
+            starts = sorted(cluster.first_available_at for cluster in members)
+            coverage = span_coverage(success, utc_day(starts[0]), utc_day(starts[-1]))
+        return assess_family(name, members, coverage_fraction=coverage)
+
+    named = [entity.strip() for entity in entities if entity.strip()]
     families = [
-        assess_family(f"event_type:{name}", [c for c in clusters if c.event_type == name])
+        family(f"event_type:{name}", [c for c in clusters if c.event_type == name])
         for name in sorted({cluster.event_type for cluster in clusters}) or ["REGULATION"]
     ]
-    families.extend(assess_entities(clusters, [entity.strip() for entity in entities if entity.strip()]))
-    families.extend(assess_whale_contexts(by_context))
+    families.extend(family(f"entity:{name}", [c for c in clusters if (c.entity or "") == name]) for name in named)
+    families.extend(family(f"whale:{context.value}", by_context.get(context.value, [])) for context in TransferContext)
 
     latest = CorpusCatalog(store.connection).latest()
     return build_status(
@@ -86,8 +101,10 @@ def corpus_status(store: IntelligenceStore, extractor_version: str, entities: li
         generated_at=horizon,
         corpus_id=latest.corpus_id if latest else None,
         expected_event_types=[member.value for member in EventType],
-        expected_entities=[entity.strip() for entity in entities if entity.strip()],
+        expected_entities=named,
         providers_enabled=len({document.provider for document in documents}),
+        successful_run_days=[datetime.combine(day, time(), tzinfo=timezone.utc) for day in success],
+        collection=collection_coverage(store.connection, as_of=horizon),
     )
 
 

@@ -52,6 +52,7 @@ from market_intelligence.models import (
     TransferContext,
 )
 from market_intelligence.operations import RunManifest, RunStatus
+from market_intelligence.retrieval import ProviderAttempt
 from market_intelligence.storage.store import IntelligenceStore
 
 BASE = datetime(2026, 1, 5, 14, 30, tzinfo=timezone.utc)
@@ -188,6 +189,13 @@ class Corpus:
             store.put_signals(self.events)
             for manifest in self.runs:
                 store.put_run(manifest)
+                # Coverage is read from provider attempts (collection/coverage.py), which a
+                # real cycle records beside its run; a FAILED run's attempts all failed.
+                store.put_provider_attempts(
+                    manifest.run_id,
+                    [ProviderAttempt(provider_id="fixture", query_id="fixture", success=manifest.status is not RunStatus.FAILED, attempts=1, latency_ms=1.0)],
+                    manifest.started_at,
+                )
             if self.corrections:
                 store.put_corrections(self.corrections)
         finally:

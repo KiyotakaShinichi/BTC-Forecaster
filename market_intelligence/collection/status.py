@@ -25,6 +25,7 @@ from pydantic import BaseModel, ConfigDict
 
 from ..models import Document, EventSignal, TransferContext
 from .clustering import EventCluster
+from .coverage import CollectionCoverage
 from .readiness import FamilyReadiness, Readiness, overall_readiness
 
 
@@ -102,6 +103,9 @@ class CorpusStatus(BaseModel):
     readiness: Readiness
     families: tuple[FamilyReadiness, ...]
     storage: StorageGrowth | None = None
+    #: What collection did and how much of the elapsed time it covered, from
+    #: coverage.py. None only in a report written before B5.1.
+    collection: CollectionCoverage | None = None
 
     def human_readable(self) -> str:
         """B4.1.34. The same facts, for a terminal."""
@@ -111,6 +115,7 @@ class CorpusStatus(BaseModel):
             f"documents    {self.documents}   events {self.events}   clusters {self.clusters}",
             f"primary src  {self.primary_source_documents} documents from the party the news is about",
             f"gaps         {self.collection_gap_days} day(s) with no successful provider",
+            f"collection   {self.collection.describe() if self.collection is not None else 'not reported'}",
             "",
             f"READINESS    {self.readiness.value}",
         ]
@@ -235,6 +240,7 @@ def build_status(
     providers_enabled: int = 0,
     successful_run_days: Sequence[datetime] = (),
     raw_evidence_bytes: int = 0,
+    collection: CollectionCoverage | None = None,
 ) -> CorpusStatus:
     """Assemble the status report. Absences are listed, never implied."""
     provider_coverage = _counts(document.provider for document in documents)
@@ -284,6 +290,7 @@ def build_status(
         readiness=overall_readiness(families),
         families=tuple(families),
         storage=measure_storage(documents, events, raw_evidence_bytes),
+        collection=collection,
     )
 
 

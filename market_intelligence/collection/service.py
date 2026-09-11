@@ -20,7 +20,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, time, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable, Sequence
 
@@ -34,6 +34,7 @@ from ..retrieval import MultiProviderRetriever
 from ..storage import IntelligenceStore
 from .clustering import ClusterStore, cluster_events
 from .corpus import CorpusCatalog, CorpusSnapshot, build_snapshot
+from .coverage import successful_days
 from .evidence import EvidenceStore, RawEvidence
 from .policy import redact_mapping
 
@@ -264,17 +265,15 @@ class ForwardCollector:
         return ForwardCollectionResult(manifest=manifest, report=report, snapshot=snapshot)
 
     def successful_run_days(self) -> list[datetime]:
-        """Days on which at least one provider succeeded (B4.1.23)."""
-        rows = self.store.connection.execute(
-            "SELECT payload FROM watermarks"
-        ).fetchall()
-        days: list[datetime] = []
-        for (payload,) in rows:
-            record = json.loads(payload)
-            moment = record.get("last_retrieval_time")
-            if moment:
-                days.append(datetime.fromisoformat(moment).astimezone(timezone.utc))
-        return days
+        """Days on which at least one provider attempt succeeded (B4.1.23), as UTC midnights.
+
+        Read through collection/coverage.py, the one definition. This used to read
+        each watermark's latest retrieval, and so forgot every earlier day.
+        """
+        return [
+            datetime.combine(day, time(), tzinfo=timezone.utc)
+            for day in successful_days(self.store.connection, as_of=self._now())
+        ]
 
     def _document_count(self) -> int:
         row = self.store.connection.execute("SELECT count(*) FROM documents").fetchone()

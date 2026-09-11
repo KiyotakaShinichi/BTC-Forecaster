@@ -27,6 +27,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 from ..models import TransferContext
 from .clustering import EventCluster, effective_non_overlapping
+from .coverage import span_coverage, utc_day
 
 
 class Readiness(str, Enum):
@@ -74,7 +75,9 @@ class FamilyReadiness(BaseModel):
     publishers: int
     providers: int
     span_days: int
-    coverage_fraction: float
+    #: None when coverage could not be measured -- no span, or no collection record.
+    #: Never 0.0 standing in for "unknown".
+    coverage_fraction: float | None
     readiness: Readiness
     #: Every clause that is not yet met, so "not ready" is actionable rather
     #: than a verdict to argue with.
@@ -90,9 +93,14 @@ def assess_family(
     clusters: Sequence[EventCluster],
     *,
     policy: AdequacyPolicy = DEFAULT_POLICY,
-    coverage_fraction: float = 0.0,
+    coverage_fraction: float | None = None,
 ) -> FamilyReadiness:
-    """Judge one family. Reports every unmet clause, not just the first."""
+    """Judge one family. Reports every unmet clause, not just the first.
+
+    `coverage_fraction` is None when it was not measured. That fails the
+    coverage clause just as a low figure does, but says why, instead of
+    reporting an unmeasured family as having been collected on 0% of days.
+    """
     events = len(clusters)
     effective = effective_non_overlapping(clusters, policy.horizon_hours)
     # Source diversity is a property of the *family*, not of its best-covered
@@ -123,7 +131,10 @@ def assess_family(
         unmet.append(f"{providers} providers, need {policy.minimum_providers}")
     if span_days < policy.minimum_span_days:
         unmet.append(f"{span_days} day span, need {policy.minimum_span_days}")
-    if coverage_fraction < policy.minimum_coverage_fraction:
+    if coverage_fraction is None:
+        if policy.minimum_coverage_fraction > 0:
+            unmet.append("collection coverage not measured: no span, or no collection record for it")
+    elif coverage_fraction < policy.minimum_coverage_fraction:
         unmet.append(
             f"collection covered {coverage_fraction:.0%} of days, need "
             f"{policy.minimum_coverage_fraction:.0%}"
@@ -159,7 +170,7 @@ def assess_entities(
     entities: Sequence[str],
     *,
     policy: AdequacyPolicy = DEFAULT_POLICY,
-    coverage_fraction: float = 0.0,
+    coverage_fraction: float | None = None,
 ) -> list[FamilyReadiness]:
     """B4.1.31. Every named entity, including the ones with nothing.
 
@@ -182,7 +193,7 @@ def assess_whale_contexts(
     clusters_by_context: Mapping[str, Sequence[EventCluster]],
     *,
     policy: AdequacyPolicy = DEFAULT_POLICY,
-    coverage_fraction: float = 0.0,
+    coverage_fraction: float | None = None,
 ) -> list[FamilyReadiness]:
     """B4.1.32. Each transfer context separately. Never pooled to reach N."""
     return [
@@ -201,7 +212,7 @@ def assess_sentiment(
     composites: Sequence[str],
     *,
     policy: AdequacyPolicy = DEFAULT_POLICY,
-    coverage_fraction: float = 0.0,
+    coverage_fraction: float | None = None,
 ) -> list[FamilyReadiness]:
     """B4.1.33. Whether the predefined composites have evidence to be built on.
 
@@ -233,16 +244,18 @@ def overall_readiness(families: Sequence[FamilyReadiness]) -> Readiness:
 
 
 def coverage_fraction(collection_days: Sequence[datetime], span_start: datetime, span_end: datetime) -> float:
-    """B4.1.23. Days with at least one successful run, over days in the span.
+    """B4.1.23. Days with successful collection, over days in the span.
 
-    Distinct calendar days, not run count: ten runs on one day is one day of
+    Distinct UTC calendar days, not run count: ten runs on one day is one day of
     coverage, and counting runs would let a busy afternoon disguise a silent week.
+
+    Only days *inside* the span count, both ends inclusive. Until B5.1 every day
+    passed in counted and the result was capped at 1.0, so runs from other months
+    could report a family whose span saw no collection as fully covered; and a
+    one-day span read 0% however much collection it saw. `coverage.py` defines
+    what a successful day is and is the one implementation of the arithmetic.
     """
-    if span_end <= span_start:
-        return 0.0
-    total_days = max(1, (span_end - span_start).days + 1)
-    covered = {moment.date() for moment in collection_days}
-    return min(1.0, len(covered) / total_days)
+    return span_coverage((utc_day(moment) for moment in collection_days), utc_day(span_start), utc_day(span_end))
 
 
 def days_until_ready(family: FamilyReadiness, events_per_day: float, policy: AdequacyPolicy) -> int | None:
