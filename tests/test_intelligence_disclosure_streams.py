@@ -23,7 +23,7 @@ from xml.etree import ElementTree
 
 import pytest
 
-from market_intelligence.collection.backoff import FailureClass, RetryPolicy
+from market_intelligence.collection.backoff import FailureClass, ProviderFailure, RetryPolicy
 from market_intelligence.collection.feeds import OFFICIAL_FEEDS, RETIRED_FEED_IDS, feeds_by_id
 from market_intelligence.collection.fixtures import fixture_document
 from market_intelligence.collection.syndication import (
@@ -361,7 +361,11 @@ class TestAParseFailureIsNoLongerSilent:
             retry=RetryPolicy(max_attempts=1),
             opener=lambda url, timeout: b"<rss><channel><item><title>x</channel></rss>",
         )
-        assert provider.search("SEC", NOW - timedelta(days=1), NOW) == []
+        # B5.1: nor does it return an empty list that the retrieval layer would
+        # record as a successful attempt. A search that could read no feed fails.
+        with pytest.raises(ProviderFailure) as raised:
+            provider.search("SEC", NOW - timedelta(days=1), NOW)
+        assert raised.value.failure_class is FailureClass.SCHEMA
         assert provider.last_attempts["sec-admin-proceedings"].failures == (FailureClass.SCHEMA,)
 
     def test_a_repaired_feed_is_reported_as_repaired(self) -> None:

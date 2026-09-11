@@ -87,7 +87,10 @@ class MultiProviderRetriever:
                         # was re-sent twice more per query -- which is how a key
                         # gets suspended, and it could never have succeeded.
                         failure = classify_exception(exc)
-                        if failure not in RETRYABLE:
+                        # Nor what the provider already retried under its own
+                        # policy: two layers of retries multiply the load on a
+                        # source that is already failing.
+                        if failure not in RETRYABLE or getattr(exc, "retries_exhausted", False):
                             break
                         if used <= self.max_retries:
                             self.sleep((2 ** (used - 1)) + self.jitter())

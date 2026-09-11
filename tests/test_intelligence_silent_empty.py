@@ -285,7 +285,10 @@ def test_10_an_http_failure_is_not_swallowed() -> None:
     provider = SyndicationProvider(
         feeds_by_id("sec-press"), now=lambda: NOW, retry=RetryPolicy(max_attempts=1), opener=dead
     )
-    assert provider.search("bitcoin", *WINDOW) == []
+    # B5.1: nor into an empty list the retrieval layer would record as a
+    # successful attempt. A search that could read no feed fails.
+    with pytest.raises(ProviderFailure, match="no feed could be read"):
+        provider.search("bitcoin", *WINDOW)
     assert provider.last_attempts["sec-press"].failures, "the failure was swallowed"
 
 
@@ -313,7 +316,9 @@ def test_11b_an_unrepairable_feed_records_a_schema_failure() -> None:
         retry=RetryPolicy(max_attempts=1),
         opener=lambda url, timeout: b"<rss><channel><item><title>x</channel></rss>",
     )
-    assert provider.search("bitcoin", *WINDOW) == []
+    with pytest.raises(ProviderFailure) as raised:
+        provider.search("bitcoin", *WINDOW)
+    assert raised.value.failure_class is FailureClass.SCHEMA
     assert provider.last_attempts["sec-press"].failures == (FailureClass.SCHEMA,)
 
 
@@ -435,7 +440,13 @@ class TestQuietIsDistinguishableFromBroken:
             retry=RetryPolicy(max_attempts=1),
             opener=opener,
         )
-        provider.search(query, NOW - timedelta(hours=24), NOW)
+        if isinstance(payload_or_error, bytes):
+            provider.search(query, NOW - timedelta(hours=24), NOW)
+        else:
+            # B5.1: a search that could read no feed fails rather than returning
+            # an empty list; the feed's diagnosis is recorded either way.
+            with pytest.raises(ProviderFailure):
+                provider.search(query, NOW - timedelta(hours=24), NOW)
         return provider.diagnostics()[0]
 
     def test_a_dead_endpoint_reads_as_broken(self) -> None:

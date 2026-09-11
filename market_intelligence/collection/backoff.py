@@ -77,9 +77,12 @@ class RetryPolicy:
 class ProviderFailure(ProviderUnavailableError):
     """A classified provider failure."""
 
-    def __init__(self, failure_class: FailureClass, message: str) -> None:
+    def __init__(self, failure_class: FailureClass, message: str, *, retries_exhausted: bool = False) -> None:
         super().__init__(message)
         self.failure_class = failure_class
+        #: True when the provider already retried under its own policy. A caller
+        #: retrying again would only multiply the load on a source that is failing.
+        self.retries_exhausted = retries_exhausted
 
 
 def classify_http_status(status: int) -> FailureClass:

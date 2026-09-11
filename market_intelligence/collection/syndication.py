@@ -387,6 +387,7 @@ class SyndicationProvider(SearchProvider):
         self.last_attempts = {}
         self.last_repairs = {}
         self.last_yield = {}
+        read: list[str] = []
 
         for feed in self.feeds:
             log = AttemptLog()
@@ -430,8 +431,11 @@ class SyndicationProvider(SearchProvider):
                 # for indefinitely.
                 self.last_repairs[feed.feed_id] = repairs
 
+            read.append(feed.feed_id)
             documents.extend(self._documents_for(feed, entries, terms, query, retrieved, start))
 
+        if self.feeds and not read:
+            raise nothing_read(self.last_attempts)
         return deduplicate_documents(documents)
 
     def _documents_for(
@@ -513,6 +517,28 @@ class SyndicationProvider(SearchProvider):
 #: blocked, so a deployment sets `user_agent` to something a publisher can write
 #: to. This default is honest about what it is and carries no false contact.
 DEFAULT_USER_AGENT = "btc-intel-research/1.0 (research collector; contact not configured)"
+
+
+def nothing_read(attempts: dict[str, AttemptLog]) -> ProviderFailure:
+    """B5.1. A search that could read no feed at all is a failed attempt.
+
+    Until B5.1 it returned an empty list, and the retrieval layer recorded a
+    *successful* attempt with nothing in it. A cycle in which every feed was down
+    looked like a quiet news day, and collection coverage -- days with a
+    successful attempt -- would have counted it as collected. One unreadable feed
+    still costs only itself (B4.1.17); the search fails only when none could be
+    read, fetched and parsed.
+
+    The class is the feeds' own when they agree, and TRANSIENT when they do not
+    (classify_exception's rule: wrongly transient costs a retry, wrongly permanent
+    hides a provider). Each feed was already retried under its own policy, so
+    the failure says so and the retrieval layer does not retry the search again.
+    """
+    last = {feed_id: log.failures[-1] for feed_id, log in sorted(attempts.items()) if log.failures}
+    classes = set(last.values())
+    failure = classes.pop() if len(classes) == 1 else FailureClass.TRANSIENT
+    detail = ", ".join(f"{feed_id}={cls.value}" for feed_id, cls in last.items())
+    return ProviderFailure(failure, f"no feed could be read on this search ({detail})", retries_exhausted=True)
 
 
 def _default_opener(url: str, timeout: float, user_agent: str = DEFAULT_USER_AGENT) -> bytes:
