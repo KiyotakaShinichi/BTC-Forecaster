@@ -145,9 +145,11 @@ class TestNothingSecretReachesALog:
         assert "api_key" not in record
 
     def test_every_declared_secret_variable_is_covered(self) -> None:
-        """`.env.example` documents four secret-ish variables for the collector;
-        all four have to be scrubbed, not just the one that broke first."""
+        """`.env.example` documents five secret-ish variables for the collector;
+        all five have to be scrubbed, not just the one that broke first. The
+        fifth, B5.2's alert command, can carry a webhook token in its text."""
         assert set(logs.SECRET_ENV_VARIABLES) == {
+            "BTC_INTEL_ALERT_COMMAND",
             "BTC_INTEL_CONTACT",
             "BTC_INTEL_SEARCH_API_KEY",
             "BTC_INTEL_STATEMENTS_API_KEY",
