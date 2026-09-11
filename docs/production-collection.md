@@ -339,7 +339,7 @@ timer — outside this repository by design.
 Test the path end to end after installing:
 
 ```sh
-sudo systemctl start btc-intel-alert@test.service
+sudo systemctl start btc-intel-alert@manual_test.service
 ```
 
 ## 11. Logs
@@ -403,7 +403,7 @@ correct through the append-only ledger (`corrections/README.md`). Never delete.
   uses it; nothing else changes, because no manifest records the address itself.
   Then `ops-config-check` and `ops-probe`.
 - **Alert command or its token.** Edit `BTC_INTEL_ALERT_COMMAND`; test with
-  `systemctl start btc-intel-alert@test.service`.
+  `systemctl start btc-intel-alert@manual_test.service`.
 - **Licensed-provider credentials.** None are in use. If a contract ever adds
   one, it goes in the env file, and naming it does not enable the provider — the
   profile must too.
@@ -441,7 +441,7 @@ off-host copy bounds the loss to a day.
 - [ ] `btc-intel-as-service ops-probe --profile …` — every feed readable
 - [ ] `btc-intel-as-service ops-smoke --profile …` — no check `FAIL` (`NOT_OBSERVED` on a quiet week is fine)
 - [ ] `systemctl list-timers 'btc-intel-*'` — four timers scheduled
-- [ ] `systemctl start btc-intel-alert@test.service` — the alert arrives
+- [ ] `systemctl start btc-intel-alert@manual_test.service` — the alert arrives
 - [ ] off-host `rsync` of `backups/` scheduled
 
 **Daily** — nothing, unless an alert arrives.
@@ -508,6 +508,6 @@ What a dry run cannot show, and the first things to check on a real host:
 - that the host's systemd accepts the units -- `systemctl daemon-reload`,
   `systemctl list-timers 'btc-intel-*'`;
 - that a real cycle stores, extracts and backs up on the host -- `ops-smoke`;
-- that an alert reaches a person -- `systemctl start btc-intel-alert@test.service`;
+- that an alert reaches a person -- `systemctl start btc-intel-alert@manual_test.service`;
 - that collection runs for 180 days at 80% coverage -- which only running it can
   show, and which has not begun.
