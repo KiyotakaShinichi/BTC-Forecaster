@@ -377,6 +377,9 @@ class TestPointInTimeAttacks:
         assert canonical_json(audit(without).model_dump(mode="json")) == canonical_json(audit(with_future).model_dump(mode="json"))
 
     def test_a_later_re_extraction_cannot_change_what_an_earlier_audit_counted(self, tmp_path: Path) -> None:
+        """A re-extraction is a second version beside the first. An earlier audit is
+        untouched; a later one refuses to pool the two versions, and pinned to the
+        original version counts exactly what the original store counts."""
         base = sufficient(tmp_path / "v1.duckdb").write()
         corpus = sufficient(tmp_path / "v2.duckdb")
         original = corpus.events[0]
@@ -385,9 +388,18 @@ class TestPointInTimeAttacks:
         )
         path = corpus.write()
         assert audit(path).catalog == audit(base).catalog
-        later = {r.event_id: r for r in audit(path, as_of=AS_OF + timedelta(days=4)).catalog}
-        assert later[original.event_id] == {r.event_id: r for r in audit(base).catalog}[original.event_id]
-        assert later["event-o0-0-rules-v2"].event_type == "MONETARY_POLICY"
+        later = AS_OF + timedelta(days=4)
+        with pytest.raises(ValueError, match="pin one with --extractor-version"):
+            audit(path, as_of=later)
+        connection = open_read_only(path)
+        try:
+            pinned_v1 = audit_corpus(connection, as_of=later, extractor_version="rules-v1")
+            pinned_v2 = audit_corpus(connection, as_of=later, extractor_version="rules-v2")
+        finally:
+            connection.close()
+        assert pinned_v1.catalog == audit(base, as_of=later).catalog
+        assert [r.event_id for r in pinned_v2.catalog] == ["event-o0-0-rules-v2"]
+        assert pinned_v2.catalog[0].event_type == "MONETARY_POLICY"
 
 
 class TestTheAuditItself:

@@ -48,6 +48,11 @@ def build_parser() -> argparse.ArgumentParser:
     audit.add_argument("--input-label", required=True, help="a name for the input; recorded instead of its path")
     audit.add_argument("--output", required=True)
     audit.add_argument("--preregistration", default=str(DEFAULT_PREREGISTRATION))
+    audit.add_argument(
+        "--extractor-version",
+        default=None,
+        help="the one extractor version to count; required when the store holds several",
+    )
 
     verify = commands.add_parser("verify", help="recompute every hash of a written Gate 1 result")
     verify.add_argument("path")
@@ -81,7 +86,12 @@ def main(argv: list[str] | None = None) -> int:
         print(f"INTEGRITY FAILURE: {exc}", file=sys.stderr)
         return EXIT_INTEGRITY
     try:
-        result = audit_corpus(connection, as_of=as_of, policy=plan.policy)
+        result = audit_corpus(
+            connection, as_of=as_of, policy=plan.policy, extractor_version=args.extractor_version
+        )
+    except ValueError as exc:
+        print(f"INTEGRITY FAILURE: {exc}", file=sys.stderr)
+        return EXIT_INTEGRITY
     finally:
         connection.close()
 
@@ -89,6 +99,7 @@ def main(argv: list[str] | None = None) -> int:
     print("B5 Gate 1 -- corpus sufficiency (research evidence; no trading signal)")
     print(f"  as of     {manifest['as_of']}")
     print(f"  input     {args.input_label}, sha256 {manifest['input']['file_sha256'][:16]}")
+    print(f"  version   {manifest['input']['extractor_version']}")
     print(f"  funnel    {result.audit.funnel}")
     for clause in result.gate.clauses:
         print(f"  {'met  ' if clause.met else 'UNMET'}     {clause.name}: {clause.observed}")

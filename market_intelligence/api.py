@@ -19,6 +19,7 @@ from .collection.corpus import CorpusCatalog, CorpusSnapshot
 from .collection.status import CorpusStatus
 from .context import request_id_context
 from .errors import FeatureContractError, IntelligenceError, ReplayIntegrityError, SnapshotMismatchError, StorageError
+from .extractors import CURRENT_RULE_EXTRACTOR_VERSION
 from .feature_matrix import DEFAULT_CHUNK_SIZE
 from .features import FEATURE_CONTRACT_VERSION, FEATURE_DEFINITIONS, FeatureDefinition
 from .historical import HistoricalDatasetService
@@ -387,7 +388,7 @@ def create_app(db_path: str | Path | None = None, store: IntelligenceStore | Non
 
     @app.get("/corpus/status", response_model=CorpusStatus)
     def corpus_status(
-        extractor_version: str = "rules-v1",
+        extractor_version: str = CURRENT_RULE_EXTRACTOR_VERSION,
         entities: str = "Donald Trump,Elon Musk,Jerome Powell,Michael Saylor,SEC,CFTC",
     ) -> CorpusStatus:
         """B4.1.35. What the corpus holds and whether B4 can be re-run.

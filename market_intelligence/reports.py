@@ -32,6 +32,7 @@ from .collection.readiness import assess_entities, assess_family, assess_whale_c
 from .collection.statements import STATEMENT_DECLARATION
 from .collection.status import CorpusStatus, build_status
 from .collection.whales import WHALE_DECLARATION
+from .extractors import CURRENT_RULE_EXTRACTOR_VERSION
 from .models import EventType
 from .ops.backup import backup_age
 from .ops.integrity import verify as ops_verify
@@ -133,7 +134,7 @@ def ops_report(store: IntelligenceStore, database: Path, state_root: str | None)
     moment = datetime.now(timezone.utc)
     paths = StoragePaths.from_environment(state_root or database.parent)
     checked = storage_validate(paths)
-    status = corpus_status(store, "rules-v1", list(OPERATIONS_ENTITIES))
+    status = corpus_status(store, CURRENT_RULE_EXTRACTOR_VERSION, list(OPERATIONS_ENTITIES))
     integrity = ops_verify(store, as_of=moment)
     last_run, last_success = last_run_times(store)
 

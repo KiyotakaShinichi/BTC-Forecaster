@@ -19,7 +19,7 @@ from typing import Any
 
 from ..configuration import ProviderConfig, ProviderRegistry, QueryPlanner, WatchEntity
 from ..cycle import run_intelligence_cycle
-from ..extractors import RuleBasedExtractor
+from ..extractors import EvidenceRuleExtractor
 from ..ops.paths import StoragePaths
 from ..providers import JsonSearchApiProvider, RssSearchProvider
 from ..retrieval import MultiProviderRetriever
@@ -32,6 +32,14 @@ def load_config(path: str) -> tuple[list[ProviderConfig], list[WatchEntity], dic
         [ProviderConfig.model_validate(p) for p in raw["providers"]],
         [WatchEntity.model_validate(e) for e in raw["watchlist"]],
         raw,
+    )
+
+
+def watchlist_extractor(watchlist: list[WatchEntity]) -> EvidenceRuleExtractor:
+    """rules-v2, with each watched entity's aliases and declared event types."""
+    return EvidenceRuleExtractor(
+        {entity.canonical_name: entity.aliases for entity in watchlist},
+        {entity.canonical_name: entity.expected_event_types for entity in watchlist},
     )
 
 
@@ -52,11 +60,10 @@ def collect(ctx: CommandContext) -> int:
     providers = registry().build(configs)
     planner = QueryPlanner()
     queries = planner.plan(watchlist, ctx.args.origin)
-    entity_aliases = {e.canonical_name: e.aliases for e in watchlist}
     run_report = run_intelligence_cycle(
         queries,
         MultiProviderRetriever(providers, {c.id: c for c in configs}),
-        RuleBasedExtractor(entity_aliases),
+        watchlist_extractor(watchlist),
         ctx.store,
         raw,
         ctx.args.origin,
@@ -68,7 +75,7 @@ def collect(ctx: CommandContext) -> int:
 
 def extract(ctx: CommandContext) -> int:
     documents = ctx.store.documents_as_of(ctx.args.origin)
-    events = RuleBasedExtractor().extract(documents)
+    events = EvidenceRuleExtractor().extract(documents)
     ctx.store.put_signals(events)
     print(json.dumps({"events_created": len(events)}))
     return 0
@@ -94,7 +101,7 @@ def backfill(ctx: CommandContext) -> int:
     configs, watchlist, raw = load_config(args.config)
     providers = registry().build(configs)
     retriever = MultiProviderRetriever(providers, {c.id: c for c in configs})
-    aliases = {e.canonical_name: e.aliases for e in watchlist}
+    extractor = watchlist_extractor(watchlist)
     manifests_dir = Path(args.manifests_dir)
 
     def collect_window(start: datetime, end: datetime) -> None:
@@ -104,7 +111,7 @@ def backfill(ctx: CommandContext) -> int:
         run_intelligence_cycle(
             planned,
             retriever,
-            RuleBasedExtractor(aliases),
+            extractor,
             ctx.store,
             raw,
             end,

@@ -128,6 +128,10 @@ class CorpusAudit(BaseModel):
     as_of: datetime
     schema_version: int
     content_fingerprint: str
+    #: The one extractor version the audit counted, and every version the store
+    #: held at the audit instant. Two versions of one document are one document.
+    extractor_version: str | None
+    extractor_versions_present: tuple[str, ...]
     # documents
     documents: int
     unique_contents: int
@@ -360,16 +364,40 @@ def content_fingerprint(documents: Sequence[Document], events: Sequence[EventSig
     return hashlib.sha256(canonical_json(material).encode("utf-8")).hexdigest()
 
 
+def pinned_extractor_version(events: Sequence[EventSignal], requested: str | None) -> str | None:
+    """The one extractor version an audit may count.
+
+    Event identity carries the extractor version, so re-extracting a document
+    under a new version adds a second event beside the first. Counting both
+    would count one document once per version -- pseudoreplication that grows
+    with every extractor release. So an audit counts exactly one version: the
+    one requested, or the only one present. With several present and none
+    requested it refuses rather than choosing.
+    """
+    if requested is not None:
+        return requested
+    present = sorted({event.extractor_version for event in events})
+    if len(present) > 1:
+        raise ValueError(
+            f"the store holds events from extractor versions {present}; pin one with --extractor-version, "
+            "because counting several would count one document once per version"
+        )
+    return present[0] if present else None
+
+
 def audit_corpus(
     connection: duckdb.DuckDBPyConnection,
     *,
     as_of: datetime,
     policy: SufficiencyPolicy = DEFAULT_SUFFICIENCY,
+    extractor_version: str | None = None,
 ) -> AuditResult:
-    """Measure the corpus as it stood at `as_of`, and decide Gate 1."""
+    """Measure the corpus as it stood at `as_of`, counting one extractor version, and decide Gate 1."""
     as_of = _utc(as_of)
     documents = queries.documents_as_of(connection, as_of)
-    raw_events = queries.signals_as_of(connection, as_of)
+    every_event = queries.signals_as_of(connection, as_of)
+    version = pinned_extractor_version(every_event, extractor_version)
+    raw_events = [event for event in every_event if event.extractor_version == version]
     corrections = queries.corrections(connection)
     resolution = resolve(corrections)
     by_id = {document.document_id: document for document in documents}
@@ -425,6 +453,8 @@ def audit_corpus(
         as_of=as_of,
         schema_version=schema_version(connection),
         content_fingerprint=content_fingerprint(documents, raw_events, corrections, as_of),
+        extractor_version=version,
+        extractor_versions_present=tuple(sorted({event.extractor_version for event in every_event})),
         documents=len(documents),
         unique_contents=len({document.text_hash for document in documents}),
         retrieved_copies=copies,
@@ -566,4 +596,5 @@ __all__ = [
     "file_sha256",
     "judge_event",
     "open_read_only",
+    "pinned_extractor_version",
 ]

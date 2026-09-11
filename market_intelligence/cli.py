@@ -20,6 +20,7 @@ from datetime import datetime, timezone
 
 from .commands import command_names, dispatch
 from .errors import IntelligenceError
+from .extractors import CURRENT_RULE_EXTRACTOR_VERSION
 from .ops.scheduled import EXIT_FAILED
 from .origins import parse_origin
 
@@ -116,7 +117,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     corpus_status.add_argument("--json", action="store_true", help="machine-readable output")
     corpus_status.add_argument("--output", default=None, help="also write the JSON report here")
-    corpus_status.add_argument("--extractor-version", default="rules-v1")
+    corpus_status.add_argument("--extractor-version", default=CURRENT_RULE_EXTRACTOR_VERSION)
     corpus_status.add_argument(
         "--entities",
         default="Donald Trump,Elon Musk,Jerome Powell,Michael Saylor,SEC,CFTC",

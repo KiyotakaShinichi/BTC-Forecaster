@@ -46,7 +46,8 @@ from ..configuration import (
     configuration_fingerprint,
 )
 from ..errors import ConfigurationError
-from ..extractors import RuleBasedExtractor
+from ..extractors import EvidenceRuleExtractor
+from ..models import EventType
 from ..retrieval import MultiProviderRetriever
 from .paths import StoragePaths
 from .scheduled import ScheduledOutcome, run_scheduled
@@ -208,8 +209,12 @@ class CollectionProfile:
     def aliases(self) -> dict[str, tuple[str, ...]]:
         return {entity.canonical_name: entity.aliases for entity in self.entities}
 
-    def extractor(self) -> RuleBasedExtractor:
-        return RuleBasedExtractor(self.aliases())
+    def expected_types(self) -> dict[str, tuple[EventType, ...]]:
+        return {entity.canonical_name: entity.expected_event_types for entity in self.entities}
+
+    def extractor(self) -> EvidenceRuleExtractor:
+        """rules-v2, told what each watched entity is declared to produce."""
+        return EvidenceRuleExtractor(self.aliases(), self.expected_types())
 
     def build_queries(self, moment: datetime) -> list[QuerySpec]:
         return QueryPlanner().plan(list(self.entities), moment)

@@ -377,7 +377,9 @@ class TestCorpusStatusSurfaces:
         store.close()
 
         client = TestClient(create_app(database))
-        served = client.get("/corpus/status", params={"entities": "SEC"}).json()
+        # The same question of both: the corpus was extracted with rules-v1, and the
+        # API's default is now the collector's current version.
+        served = client.get("/corpus/status", params={"entities": "SEC", "extractor_version": "rules-v1"}).json()
         assert served["documents"] == direct.documents
         assert served["events"] == direct.events
         assert served["clusters"] == direct.clusters
