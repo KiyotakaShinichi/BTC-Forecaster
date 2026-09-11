@@ -415,6 +415,7 @@ A promoted research run without its manifest is an anecdote.
 - [`docs/quant-research-status.md`](docs/quant-research-status.md) — the quantitative freeze: A2 → A6 → A7 lineage, the promotion policy, the live-trading gate, the provenance audit
 - [`docs/quant-research-handoff.md`](docs/quant-research-handoff.md) — what the quant research established, where its evidence stops, and what would justify reopening it
 - [`docs/b5-event-study.md`](docs/b5-event-study.md) — Track B5: is there a point-in-time intelligence corpus to study? Preregistered Gate 1, and why the answer is not yet
+- [`docs/b5-collection-readiness.md`](docs/b5-collection-readiness.md) — Track B5.1: what Gate 1 needed repaired before it could ever pass honestly, the re-run, and why the corpus is still not sufficient
 - [`DEPLOYMENT.md`](DEPLOYMENT.md), [`AWS_BACKEND_API.md`](AWS_BACKEND_API.md) — deployment
 - [`DEPENDENCIES.md`](DEPENDENCIES.md) — the one dependency contract, and why the other files exist
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — how to build it, what CI enforces, and the four rules that are about the science rather than the code
@@ -505,6 +506,25 @@ collection coverage, so its readiness report cannot say `READY_FOR_VALIDATION`
 however long collection runs. Both are recorded, neither is changed by B5. See
 [`docs/b5-event-study.md`](docs/b5-event-study.md) and the committed result in
 [`research/market_intelligence/b5/gate1/`](research/market_intelligence/b5/gate1/).
+
+### Collection readiness (B5.1): repaired, still insufficient
+
+B5.1 repaired what B5 found would keep Gate 1 shut however long collection ran,
+without touching its thresholds. The collector now extracts with `rules-v2`,
+whose confidence is derived from the evidence for each event — how its type was
+determined, whether its context agrees, where its entity was found, how reliable
+its source is, how certain its timestamp is — rather than fixed at 0.35, and
+never from market data. Collection coverage has one definition, days with a
+successful provider attempt, read by `corpus-status`, `ops-status` and the Gate 1
+audit alike; an empty store says "not measurable" rather than 0%.
+Publication-to-collection lag is reported and never used to move a timestamp. The
+CFTC rule that `rules-v1` typed as monetary policy has an append-only correction.
+
+Gate 1, re-run on the same corpus under the same preregistration: still
+**`INTELLIGENCE_CORPUS_INSUFFICIENT`** — two of ten elapsed days collected, and
+nothing since 2026-09-03. The next step is a persistent host, not another study.
+See [`docs/b5-collection-readiness.md`](docs/b5-collection-readiness.md) and
+[`research/market_intelligence/b51/gate1-rerun/`](research/market_intelligence/b51/gate1-rerun/).
 
 ---
 

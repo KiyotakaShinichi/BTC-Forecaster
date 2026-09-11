@@ -19,6 +19,30 @@ what was added describes a project that never learned anything.
 
 ---
 
+## 2026-09-11 — Collection readiness repaired; the corpus is still insufficient (Track B5.1)
+
+- **Gate 1 re-run: `INTELLIGENCE_CORPUS_INSUFFICIENT`, again.** Same corpus, same
+  preregistration (`70777f0e…`), same thresholds. Nothing was enriched, no event
+  study was run, and B5's result is not reinterpreted.
+- Extraction confidence is evidence-derived. `rules-v2` weighs type evidence,
+  context agreement, entity certainty, source reliability and timestamp
+  certainty — deterministic, bounded, and blind to market data by construction.
+  `rules-v1` and its events are unchanged; versions are never pooled, and the
+  Gate 1 audit counts exactly one.
+- Collection coverage is computed once, from successful provider attempts per
+  UTC day. It had read 0% for every family in `corpus-status`, could count days
+  outside a span, and read an empty store as 0% rather than unmeasured. A
+  syndication search that could read no feed was recorded as a successful
+  attempt; it is now a failed one.
+- Collection lag — first seen minus published — is reported by `corpus-status`,
+  `ops-status` and the audit, and moves no timestamp.
+- The `rules-v1` event that typed a CFTC swaps-clearing rule as monetary policy
+  has an append-only correction. The original stays as written; the corrected
+  classification is `rules-v2`'s separate event. Committed, not applied.
+- The collector is operationally capable and not deployed: two of ten elapsed
+  days collected, nothing since 2026-09-03. The next step is a persistent host.
+  No Track B5.2.
+
 ## 2026-09-11 — Point-in-time event study stops at Gate 1 (Track B5)
 
 - **`INTELLIGENCE_CORPUS_INSUFFICIENT`.** B5 asked whether independently
