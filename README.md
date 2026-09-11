@@ -416,6 +416,7 @@ A promoted research run without its manifest is an anecdote.
 - [`docs/quant-research-handoff.md`](docs/quant-research-handoff.md) — what the quant research established, where its evidence stops, and what would justify reopening it
 - [`docs/b5-event-study.md`](docs/b5-event-study.md) — Track B5: is there a point-in-time intelligence corpus to study? Preregistered Gate 1, and why the answer is not yet
 - [`docs/b5-collection-readiness.md`](docs/b5-collection-readiness.md) — Track B5.1: what Gate 1 needed repaired before it could ever pass honestly, the re-run, and why the corpus is still not sufficient
+- [`docs/production-collection.md`](docs/production-collection.md) — Track B5.2: running the collector on a host — the runbook, and why it is repository-ready and not deployed
 - [`DEPLOYMENT.md`](DEPLOYMENT.md), [`AWS_BACKEND_API.md`](AWS_BACKEND_API.md) — deployment
 - [`DEPENDENCIES.md`](DEPENDENCIES.md) — the one dependency contract, and why the other files exist
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — how to build it, what CI enforces, and the four rules that are about the science rather than the code
@@ -525,6 +526,21 @@ Gate 1, re-run on the same corpus under the same preregistration: still
 nothing since 2026-09-03. The next step is a persistent host, not another study.
 See [`docs/b5-collection-readiness.md`](docs/b5-collection-readiness.md) and
 [`research/market_intelligence/b51/gate1-rerun/`](research/market_intelligence/b51/gate1-rerun/).
+
+### Production collection (B5.2): ready to deploy, not deployed
+
+B5.2 packaged the collector for a small always-on Linux host: systemd units for
+collection, verification, a backup that proves itself by restoring, and an
+hourly health check; an alert on any failed unit; a configuration check the
+installer runs before enabling anything; a provider probe; a deterministic
+collection-readiness status built on Gate 1's own audit; and a bounded smoke
+test. A cycle that reads nothing from any provider now fails loudly instead of
+reporting success.
+
+**It is not deployed.** No host, SSH access or operator contact address was
+available, so the verdict is `DEPLOYMENT_BLOCKED_EXTERNALLY`, the package was
+dry-run instead, and the 180-day accumulation Gate 1 needs has not started. See
+[`docs/production-collection.md`](docs/production-collection.md).
 
 ---
 

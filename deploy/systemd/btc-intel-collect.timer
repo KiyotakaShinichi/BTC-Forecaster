@@ -9,15 +9,17 @@ Documentation=file:///opt/btc-intel/deploy/DEPLOYMENT.md
 # study can place an announcement, and a corpus collected coarsely cannot be
 # re-collected finely.
 #
-#   at 12h: mean lag 6.0h, worst 12h -- 25% of a 24h horizon, 14 fetches/day
-#   at  6h: mean lag 3.0h, worst  6h -- 12.5%,                  28 fetches/day
-#   at  3h: mean lag 1.5h, worst  3h -- 6.2%,                   56 fetches/day
+#   at 12h: mean lag 6.0h, worst 12h -- 25% of a 24h horizon
+#   at  6h: mean lag 3.0h, worst  6h -- 12.5%
+#   at  3h: mean lag 1.5h, worst  3h -- 6.2%
 #
 # A 168h horizon tolerates any of these. A 24h horizon does not: at 12 hours a
-# quarter of the horizon is retrieval lag. 56 requests a day across seven
-# government feeds is a rounding error to the publishers and well inside the
-# 900s floor the provider declares, so the politeness argument does not buy
-# anything the coarser setting costs.
+# quarter of the horizon is retrieval lag. Each cycle searches every feed once
+# per watchlist query -- 78 requests with the deployed profile, 624 a day, 208 of
+# them to the SEC (measured in B5.2; this comment once said 56). That is far
+# inside every publisher's published limits and the 900s floor the provider
+# declares, so the politeness argument does not buy anything the coarser
+# setting costs.
 OnCalendar=*-*-* 00/3:07:00
 
 # Seven minutes past, then up to five more: nothing is gained by arriving at the

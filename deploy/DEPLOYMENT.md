@@ -13,6 +13,11 @@ the evidence it needed, and nothing about the resulting dataset looks wrong.
 
 That asymmetry drives every choice below.
 
+This file is the short version. The full production runbook -- configuration
+check, provider probe, health check and alerting, verified backups, restore,
+upgrade, rollback, secret rotation, disaster recovery and an operator checklist
+-- is [`docs/production-collection.md`](../docs/production-collection.md).
+
 ---
 
 ## What you need before starting
@@ -97,7 +102,7 @@ The exit code is the entire interface between the collector and the scheduler.
 | Code | Meaning | Is it a problem? |
 |---|---|---|
 | `0` | A cycle ran. | No |
-| `2` | The cycle failed. | **Yes** |
+| `2` | The cycle failed -- including one that ran and read nothing from any provider. | **Yes** |
 | `3` | Another cycle holds the lock. | No |
 | `4` | Nothing was due yet. | No |
 
@@ -112,28 +117,39 @@ the mail — and the one night it matters, they will not read that one either.
 |---|---|---|
 | `btc-intel-collect.timer` | every 3h, at :07 | one collection cycle |
 | `btc-intel-verify.timer` | daily, 05:20 | corpus integrity, fails closed |
-| `btc-intel-backup.timer` | daily, 05:40 | verifiable archive |
+| `btc-intel-backup.timer` | daily, 05:40 | archive, proved by restoring it; keeps the newest 30 |
+| `btc-intel-watch.timer` | hourly, :37 | health check; a critical raises an alert |
 
-All three carry `Persistent=true`, so a host that was off when a timer should
-have fired runs it on the way back up instead of skipping the day.
+All four carry `Persistent=true`, so a host that was off when a timer should
+have fired runs it on the way back up instead of skipping the day. Every
+service raises `btc-intel-alert@.service` when it fails, which writes the
+alert to the journal and runs `BTC_INTEL_ALERT_COMMAND` if one is set.
 
 ### Why three hours
 
 The cadence is decided once and cannot be revisited, because it sets a floor
 under how sharply any future event study can place an announcement:
 
-| cadence | mean lag | worst | share of a 24h horizon | fetches/day |
-|---|---|---|---|---|
-| 12h | 6.0h | 12h | 25% | 14 |
-| 6h | 3.0h | 6h | 12.5% | 28 |
-| **3h** | **1.5h** | **3h** | **6.2%** | **56** |
-| 1h | 0.5h | 1h | 2.1% | 168 |
+| cadence | mean lag | worst | share of a 24h horizon | cycles/day | requests/day |
+|---|---|---|---|---|---|
+| 12h | 6.0h | 12h | 25% | 2 | 156 |
+| 6h | 3.0h | 6h | 12.5% | 4 | 312 |
+| **3h** | **1.5h** | **3h** | **6.2%** | **8** | **624** |
+| 1h | 0.5h | 1h | 2.1% | 24 | 1,872 |
 
 A 168-hour horizon tolerates any of these. A 24-hour horizon does not: at twelve
-hours a quarter of the horizon is retrieval lag. Fifty-six requests a day spread
-across seven government feeds is a rounding error to the publishers and sits
-well inside the 900-second floor the provider declares, so the politeness
-argument does not buy back what the coarser setting costs.
+hours a quarter of the horizon is retrieval lag.
+
+Each cycle searches every feed once per watchlist query: the deployed profile's
+13 queries against its 6 feeds are 78 requests a cycle, 26 of them to
+`www.sec.gov` -- measured, not estimated (B5.2). Earlier versions of this table
+counted one fetch per feed per cycle and said 56 a day; the true figure is
+thirteen times that. It remains far inside every publisher's published limits --
+the SEC's fair-access limit is ten requests a *second* -- and inside the
+900-second floor the provider declares, so the politeness argument still does
+not buy back what a coarser cadence costs. Fetching each feed once per cycle
+would cut it thirteen-fold without changing what is collected; that is a change
+to the frozen collection path and has not been made.
 
 To change it, edit `OnCalendar` in `btc-intel-collect.timer` and re-run the
 installer. Going *below* 900 seconds is refused — the provider declaration is

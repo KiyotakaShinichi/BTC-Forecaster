@@ -19,6 +19,32 @@ what was added describes a project that never learned anything.
 
 ---
 
+## 2026-09-11 — Production collection packaged; deployment blocked externally (Track B5.2)
+
+- **`DEPLOYMENT_BLOCKED_EXTERNALLY`.** No always-on host, SSH access or operator
+  contact address was available, so nothing was deployed and no production
+  collection is running. The package was dry-run instead, offline and against a
+  copy of the collected store. The 180-day accumulation Gate 1 needs has not
+  started; Gate 1 is unchanged and still `INTELLIGENCE_CORPUS_INSUFFICIENT`.
+- A cycle that ran and read nothing from any provider exited 0; it now exits 2,
+  as `deploy/DEPLOYMENT.md` always said, and the health check calls a failed
+  last run `ALL_PROVIDERS_FAILED` at once.
+- The health check gained low disk, an unloadable configuration and a failed
+  last backup, and runs hourly under systemd; every unit that can fail raises
+  an alert, to the journal and to an operator-configured command.
+- Backups carry a content fingerprint and a `.sha256`, are proved by a restore
+  rehearsal before anything is pruned, keep the newest 30, and never prune an
+  archive named by hand.
+- New operator commands: `ops-config-check`, `ops-probe`, `ops-backup`,
+  `corpus-backup-verify`, `ops-alert`, `ops-smoke`, and `python -m
+  market_intelligence.b5 status` -- read-only, deterministic, and restating no
+  Gate 1 threshold.
+- Measured, and corrected in the docs: each cycle makes 78 requests (every feed
+  once per query), 624 a day, not the 56 earlier documentation claimed. Still
+  far inside every publisher's limits; fetching once per cycle is recommended,
+  not done.
+- Nothing trades, live trading remains disabled, and no research was run.
+
 ## 2026-09-11 — Collection readiness repaired; the corpus is still insufficient (Track B5.1)
 
 - **Gate 1 re-run: `INTELLIGENCE_CORPUS_INSUFFICIENT`, again.** Same corpus, same
