@@ -14,6 +14,7 @@ on:
       - "tests/test_intelligence_*.py"
       - "tests/test_market_intelligence.py"
       - "research/market_intelligence/b5/**"
+      - "research/market_intelligence/b51/**"
       - "btc-intel*.py"
       - "scripts/profile_replay.py"
       - "scripts/bench_replay.py"
@@ -29,6 +30,7 @@ on:
       - "tests/test_intelligence_*.py"
       - "tests/test_market_intelligence.py"
       - "research/market_intelligence/b5/**"
+      - "research/market_intelligence/b51/**"
       - "btc-intel*.py"
       - "requirements-market-intelligence*.txt"
 
@@ -363,3 +365,29 @@ jobs:
         run: |
           python -m market_intelligence.b5 verify research/market_intelligence/b5/gate1
           python -c "from market_intelligence.b5.contracts import Preregistration, default_preregistration; p = Preregistration.read('research/market_intelligence/b5/preregistration.json'); assert p == default_preregistration(), 'the committed plan differs from the code'; print('B5 preregistration', p.content_hash()[:16])"
+
+      # B5.1: Gate 1 re-run on the same collected corpus after the readiness
+      # repair. Reads a few kilobytes; no store, no network. Every hash must
+      # recompute, the preregistration must be the one B5 applied -- Gate 1's
+      # thresholds unchanged -- one extractor version must be counted, and the
+      # corpus must still be reported insufficient with the canonical coverage and
+      # lag records in the audit. The repaired contracts themselves are pinned by
+      # tests/test_intelligence_b51_*.py in the Tests step above.
+      - name: B5.1 Gate 1 re-run
+        run: |
+          python -m market_intelligence.b5 verify research/market_intelligence/b51/gate1-rerun
+          python - <<'PY'
+          import json, pathlib
+          run = pathlib.Path("research/market_intelligence/b51/gate1-rerun")
+          manifest = json.loads((run / "manifest.json").read_text(encoding="utf-8"))
+          audit = json.loads((run / "corpus_audit.json").read_text(encoding="utf-8"))
+          b5 = json.loads(pathlib.Path("research/market_intelligence/b5/gate1/manifest.json").read_text(encoding="utf-8"))
+          assert manifest["preregistration_hash"] == b5["preregistration_hash"], "Gate 1 thresholds changed"
+          assert manifest["decision"] == "INTELLIGENCE_CORPUS_INSUFFICIENT" and not manifest["gate1_passed"]
+          assert manifest["input"]["extractor_version"] == "rules-v1"
+          assert audit["extractor_versions_present"] == ["rules-v1"]
+          assert audit["collection_coverage"]["contract"] == "coverage-v2-provider-success-days"
+          assert audit["collection_lag"]["contract"] == "collection-lag-v1-first-seen-minus-published"
+          assert manifest["produces_trading_signal"] is False and manifest["live_trading_enabled"] is False
+          print("B5.1 Gate 1 re-run OK:", manifest["decision"], manifest["result_digest"][:16])
+          PY
