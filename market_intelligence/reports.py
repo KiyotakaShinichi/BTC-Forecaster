@@ -30,6 +30,7 @@ from .collection.clustering import EventCluster, cluster_events
 from .collection.corpus import CorpusCatalog
 from .collection.coverage import collection_coverage, span_coverage, successful_days, utc_day
 from .collection.feeds import NEWS_API_DECLARATION, SYNDICATION_DECLARATION
+from .collection.lag import lag_summary
 from .collection.readiness import FamilyReadiness, assess_family
 from .collection.statements import STATEMENT_DECLARATION
 from .collection.status import CorpusStatus, build_status
@@ -105,6 +106,7 @@ def corpus_status(store: IntelligenceStore, extractor_version: str, entities: li
         providers_enabled=len({document.provider for document in documents}),
         successful_run_days=[datetime.combine(day, time(), tzinfo=timezone.utc) for day in success],
         collection=collection_coverage(store.connection, as_of=horizon),
+        collection_lag=lag_summary(store.connection, documents),
     )
 
 

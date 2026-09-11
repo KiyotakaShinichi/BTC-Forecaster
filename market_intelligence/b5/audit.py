@@ -38,6 +38,7 @@ from pydantic import BaseModel, ConfigDict
 from ..collection.clustering import EventCluster, cluster_events, effective_non_overlapping
 from ..collection.corpus import membership_hash
 from ..collection.coverage import CollectionCoverage, collection_coverage, span_coverage, successful_days, utc_day
+from ..collection.lag import LagSummary, lag_summary
 from ..collection.readiness import FamilyReadiness, Readiness, assess_family
 from ..corrections import CorrectionStatus, EventCorrection, resolve
 from ..errors import StorageError
@@ -173,6 +174,10 @@ class CorpusAudit(BaseModel):
     #: The canonical collection record (collection/coverage.py), shared with corpus-status.
     #: None only in an audit written before B5.1.
     collection_coverage: CollectionCoverage | None = None
+    #: Collection lag, first seen minus published (collection/lag.py). Descriptive
+    #: only; `retrieval_lag_hours` above, per event, is unchanged. None only in an
+    #: audit written before B5.1.
+    collection_lag: LagSummary | None = None
     # adequacy, per family, including the empty ones
     families: tuple[FamilyReadiness, ...]
 
@@ -511,6 +516,7 @@ def audit_corpus(
         last_collection=collection.last_success,
         days_since_last_collection=collection.days_since_last_success,
         collection_coverage=collection,
+        collection_lag=lag_summary(connection, documents),
         families=families,
     )
     return AuditResult(audit=audit, catalog=catalog, gate=decide(audit, policy))
