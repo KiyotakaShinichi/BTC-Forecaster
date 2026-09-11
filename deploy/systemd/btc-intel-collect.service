@@ -3,6 +3,9 @@ Description=BTC intelligence: one point-in-time collection cycle
 Documentation=file:///opt/btc-intel/deploy/DEPLOYMENT.md
 After=network-online.target
 Wants=network-online.target
+# Exit 2 -- including a cycle that read nothing from any provider -- raises an
+# alert. 3 and 4 are not failures and raise nothing.
+OnFailure=btc-intel-alert@%n.service
 
 [Service]
 Type=oneshot

@@ -69,6 +69,11 @@ jobs:
       - name: Diff integrity
         run: git diff --check
 
+      # The installer runs as root on a host nobody is watching; a syntax error
+      # there is found at install time, on the host, unless it is found here.
+      - name: Deployment installer parses
+        run: bash -n deploy/install.sh
+
       # No credential and no contact address may enter source control. The
       # deployment's contact was configured into the host environment on that
       # explicit condition, and this is the check that keeps it true.

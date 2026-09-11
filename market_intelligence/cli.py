@@ -228,6 +228,12 @@ def build_parser() -> argparse.ArgumentParser:
     which.add_argument("--latest", action="store_true", help="the newest archive in the backup directory")
     backup_verify.add_argument("--state-root", default=None)
 
+    alert = sub.add_parser(
+        "ops-alert",
+        help="record an alert for a failed unit, and run BTC_INTEL_ALERT_COMMAND if set",
+    )
+    alert.add_argument("--unit", required=True, help="the unit that failed, as systemd names it")
+
     demo = sub.add_parser("demo")
     demo.add_argument("--output-dir", default="market-intelligence-demo")
     gold = sub.add_parser("gold-report")

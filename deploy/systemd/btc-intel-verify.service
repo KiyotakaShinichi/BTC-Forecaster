@@ -1,6 +1,7 @@
 [Unit]
 Description=BTC intelligence: corpus integrity check
 Documentation=file:///opt/btc-intel/deploy/DEPLOYMENT.md
+OnFailure=btc-intel-alert@%n.service
 
 [Service]
 Type=oneshot

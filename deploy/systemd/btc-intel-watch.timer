@@ -1,0 +1,12 @@
+[Unit]
+Description=BTC intelligence: health check hourly
+
+[Timer]
+# Half past the collection hour's seven minutes, so the check and a cycle do
+# not reach for the database together: DuckDB allows one writer per file.
+OnCalendar=*-*-* *:37:00
+RandomizedDelaySec=120
+Persistent=true
+
+[Install]
+WantedBy=timers.target

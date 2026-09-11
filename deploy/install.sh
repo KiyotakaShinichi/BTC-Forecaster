@@ -81,10 +81,27 @@ if ! sudo -u "$SERVICE_USER" env BTC_INTEL_STATE_ROOT="$STATE_ROOT" PYTHONPATH="
     exit 1
 fi
 
+echo "==> configuration check"
+# The same check `ops-config-check` gives an operator: the profile loads, the
+# contact is set, no retired feed is enabled, the state root is usable. Without
+# a contact every cycle would fail on its first line, so no timer is enabled
+# until there is one. The address is read from the env file here and never
+# printed.
+set -a
+# shellcheck disable=SC1090
+. "$ENV_FILE"
+set +a
+if ! sudo -u "$SERVICE_USER" env BTC_INTEL_CONTACT="${BTC_INTEL_CONTACT:-}" BTC_INTEL_STATE_ROOT="$STATE_ROOT" PYTHONPATH="$PREFIX" \
+        "$PREFIX/.venv/bin/python" "$PREFIX/btc-intel.py" ops-config-check --profile "$PREFIX/deploy/collection-profile.json"; then
+    echo "configuration not deployable; set BTC_INTEL_CONTACT in $ENV_FILE and re-run. timers NOT enabled" >&2
+    exit 1
+fi
+
 echo "==> timers"
 systemctl enable --now btc-intel-collect.timer
 systemctl enable --now btc-intel-verify.timer
 systemctl enable --now btc-intel-backup.timer
+systemctl enable --now btc-intel-watch.timer
 
 echo
 echo "installed. next runs:"

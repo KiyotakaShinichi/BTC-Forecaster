@@ -1,6 +1,7 @@
 [Unit]
 Description=BTC intelligence: back up the accumulated corpus
 Documentation=file:///opt/btc-intel/deploy/DEPLOYMENT.md
+OnFailure=btc-intel-alert@%n.service
 
 [Service]
 Type=oneshot
@@ -15,7 +16,16 @@ WorkingDirectory=/opt/btc-intel
 # again and a host reinstalled; a document that was available at 09:00 on a
 # Tuesday in March can never be re-collected with that availability, because
 # `available_at` is when we retrieved it and we cannot retrieve it then again.
-ExecStart=/bin/sh -c '/opt/btc-intel/.venv/bin/python /opt/btc-intel/btc-intel.py --db %S/btc-intel/intelligence.duckdb corpus-backup --output %S/btc-intel/backups/corpus-$(date -u +%%Y%%m%%dT%%H%%M%%SZ).tar.gz'
+#
+# ops-backup takes the collector's run lock -- waiting up to ten minutes for a
+# running cycle -- archives, proves the archive by restoring it into a
+# scratch location and checking it, and only then prunes to the newest 30.
+# Every attempt is recorded where the health check reads it. 3 means a cycle
+# held the lock for the whole wait; tomorrow's run takes the backup, and a
+# backup older than seven days is a warning either way.
+ExecStart=/opt/btc-intel/.venv/bin/python /opt/btc-intel/btc-intel.py ops-backup --retain 30 --wait-seconds 600
+SuccessExitStatus=3
+TimeoutStartSec=1800
 
 NoNewPrivileges=yes
 PrivateTmp=yes

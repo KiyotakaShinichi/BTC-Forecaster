@@ -190,6 +190,11 @@ def watch(paths: StoragePaths, capsys: pytest.CaptureFixture[str], *extra: str) 
 
 
 class TestTheHealthCheck:
+    @pytest.fixture(autouse=True)
+    def ample_disk(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """The host's own free space must not decide these tests; the disk tests set their own."""
+        monkeypatch.setattr(ops_paths, "_free_bytes", lambda path: 64 * 1024**3)
+
     def test_a_fresh_healthy_deployment_passes(
         self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
     ) -> None:

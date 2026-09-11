@@ -74,6 +74,7 @@ def _registry() -> tuple[dict[str, StorelessHandler], dict[str, StoreHandler]]:
         # opens the database, and the rehearsal never opens the live one at all.
         "ops-backup": corpus.ops_backup,
         "corpus-backup-verify": corpus.corpus_backup_verify,
+        "ops-alert": ops.ops_alert,
     }
     with_store: dict[str, StoreHandler] = {
         "collect": collection.collect,

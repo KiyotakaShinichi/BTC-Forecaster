@@ -173,8 +173,25 @@ def ops_probe(args: argparse.Namespace) -> int:
     return 1 if readable else 2
 
 
+def ops_alert(args: argparse.Namespace) -> int:
+    """Raise an alert for a failed unit: the journal always, the operator's command if set.
+
+    0 recorded (and delivered, if a command is configured), 2 the command
+    failed. Run by btc-intel-alert@.service; also safe to run by hand to test
+    that alerts arrive.
+    """
+    from ..logs import configure
+    from ..ops.alert import raise_alert
+
+    configure()
+    outcome = raise_alert(args.unit)
+    print(json.dumps(outcome.as_dict(), indent=2))
+    return 0 if outcome.delivered else 2
+
+
 __all__ = [
     "health",
+    "ops_alert",
     "ops_config_check",
     "ops_paths",
     "ops_probe",

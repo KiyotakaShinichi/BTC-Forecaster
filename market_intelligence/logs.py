@@ -61,6 +61,8 @@ SENSITIVE_NAME_FRAGMENTS = (
 #: field somebody named `contact`.
 SECRET_ENV_VARIABLES = (
     "BTC_INTEL_CONTACT",
+    # An alert command can carry a webhook token in its text.
+    "BTC_INTEL_ALERT_COMMAND",
     "BTC_INTEL_SEARCH_API_KEY",
     "BTC_INTEL_STATEMENTS_API_KEY",
     "BTC_INTEL_WHALE_API_KEY",
