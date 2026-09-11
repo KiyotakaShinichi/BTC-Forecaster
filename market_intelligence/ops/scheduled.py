@@ -21,7 +21,9 @@ run is the recovery.
 
 Exit codes: 0 ran, 3 skipped because another collector holds the lock (not a
 failure — the scheduler fired while a long cycle was still going), 4 nothing was
-due, 2 a real failure.
+due, 2 a real failure -- including, since B5.2, a cycle that ran and read nothing
+from any provider. Its run is recorded FAILED and it adds no coverage, and a
+scheduler that heard 0 would never tell anyone.
 """
 
 from __future__ import annotations
@@ -38,6 +40,7 @@ from ..collection.service import ForwardCollectionResult, ForwardCollector, cade
 from ..configuration import QuerySpec
 from ..extractors import EventExtractor
 from ..logs import get_logger
+from ..operations import RunStatus
 from ..retrieval import MultiProviderRetriever
 from ..storage import IntelligenceStore
 from .paths import StoragePaths, looks_ephemeral, require_usable
@@ -68,6 +71,8 @@ class ScheduledOutcome:
     skipped_providers: tuple[str, ...] = ()
     stale_lock_broken: bool = False
     warnings: tuple[str, ...] = ()
+    #: The recorded status of the run this invocation made, when it made one.
+    run_status: str | None = None
 
     def as_dict(self) -> dict[str, Any]:
         payload: dict[str, Any] = {
@@ -78,6 +83,7 @@ class ScheduledOutcome:
             "skipped_providers": list(self.skipped_providers),
             "stale_lock_broken": self.stale_lock_broken,
             "warnings": list(self.warnings),
+            "run_status": self.run_status,
         }
         if self.manifest_path:
             payload["manifest"] = str(self.manifest_path)
@@ -209,8 +215,16 @@ def run_scheduled(
                     provider_id=provider_id,
                     succeeded=succeeded,
                 )
+            # B5.2. A run that read nothing from any provider is recorded FAILED --
+            # it adds no coverage and advances no watermark -- and until now it
+            # still exited 0, so the unit reported success and nobody was told.
+            # The documented contract always said 2.
+            run_status = result.report.manifest.status
+            exit_code = EXIT_FAILED if run_status is RunStatus.FAILED else EXIT_OK
             _log.emit(
                 "collection_finished",
+                severity=logging.ERROR if exit_code == EXIT_FAILED else logging.INFO,
+                run_status=run_status.value,
                 run_id=result.manifest.run_id,
                 origin=moment,
                 documents_retrieved=result.manifest.documents_retrieved,
@@ -220,12 +234,17 @@ def run_scheduled(
                 corpus_id=result.manifest.corpus_id,
                 due_providers=list(due),
                 skipped_providers=list(skipped),
-                exit_code=EXIT_OK,
+                exit_code=exit_code,
             )
             return ScheduledOutcome(
-                exit_code=EXIT_OK,
-                reason="collection cycle completed",
+                exit_code=exit_code,
+                reason=(
+                    "collection cycle ran and read nothing from any provider"
+                    if exit_code == EXIT_FAILED
+                    else "collection cycle completed"
+                ),
                 ran=True,
+                run_status=run_status.value,
                 manifest_path=manifest_path,
                 result=result,
                 due_providers=tuple(due),

@@ -45,7 +45,7 @@ from .ops.scheduled import last_run_times
 from .ops.summary import project_storage
 from .ops.watchdog import assess as watchdog_assess
 from .ops.watchdog import from_status
-from .storage import IntelligenceStore
+from .storage import IntelligenceStore, queries
 
 #: The entities the operations report asks about. Named here rather than at the
 #: call site so the CLI and the API cannot ask different questions and compare
@@ -144,7 +144,9 @@ def provider_report() -> list[dict[str, object]]:
     return rows
 
 
-def ops_report(store: IntelligenceStore, database: Path, state_root: str | None) -> dict[str, Any]:
+def ops_report(
+    store: IntelligenceStore, database: Path, state_root: str | None, profile: str | None = None
+) -> dict[str, Any]:
     """O11. Everything an operator asks, answered from one place.
 
     Shared by the CLI and the API so the two cannot drift, exactly as the corpus
@@ -156,6 +158,47 @@ def ops_report(store: IntelligenceStore, database: Path, state_root: str | None)
     status = corpus_status(store, CURRENT_RULE_EXTRACTOR_VERSION, list(OPERATIONS_ENTITIES))
     integrity = ops_verify(store, as_of=moment)
     last_run, last_success = last_run_times(store)
+
+    # B5.2. What the most recent run actually did -- its status, its counts and
+    # which providers failed -- rather than only when a provider last succeeded.
+    latest = queries.latest_run_as_of(store.connection, moment)
+    last_run_record: dict[str, Any] | None = None
+    if latest is not None:
+        failed = store.connection.execute(
+            "SELECT DISTINCT provider_id FROM provider_attempts WHERE run_id = ? AND NOT success ORDER BY 1",
+            [latest.run_id],
+        ).fetchall()
+        last_run_record = {
+            "run_id": latest.run_id,
+            "started_at": latest.started_at.isoformat(),
+            "finished_at": latest.finished_at.isoformat(),
+            "status": latest.status.value,
+            "providers_attempted": latest.providers_attempted,
+            "queries_attempted": latest.queries_attempted,
+            "documents_accepted": latest.documents_accepted,
+            "documents_rejected": latest.documents_rejected,
+            "events_accepted": latest.events_accepted,
+            "events_rejected": latest.events_rejected,
+            "failed_providers": [row[0] for row in failed],
+        }
+
+    # B5.2. The deployed configuration, checked the way the next cycle will load it.
+    configuration: dict[str, Any] | None = None
+    if profile is not None:
+        from .errors import ConfigurationError
+        from .ops.profile import CollectionProfile
+
+        try:
+            loaded = CollectionProfile.load(profile)
+        except ConfigurationError as error:
+            configuration = {"profile": profile, "valid": False, "error": str(error)}
+        else:
+            configuration = {
+                "profile": profile,
+                "valid": True,
+                "error": None,
+                "contact_user_agent_configured": loaded.user_agent is not None,
+            }
 
     provider_last_success: dict[str, datetime | None] = {}
     for row in store.connection.execute("SELECT payload FROM watermarks").fetchall():
@@ -181,6 +224,11 @@ def ops_report(store: IntelligenceStore, database: Path, state_root: str | None)
             # Previously left at its default of zero, which meant the watchdog's
             # quarantine check could never fire however bad things got.
             quarantined_last_24h=store.quarantine_count(since=moment - timedelta(hours=24)),
+            last_run_status=latest.status.value if latest is not None else None,
+            free_bytes=checked.free_bytes,
+            configuration_error=(
+                configuration["error"] if configuration is not None and not configuration["valid"] else None
+            ),
         )
     )
     storage = project_storage(status)
@@ -191,6 +239,9 @@ def ops_report(store: IntelligenceStore, database: Path, state_root: str | None)
         [
             f"last collection        {last_run.isoformat() if last_run else '(never)'}",
             f"last successful        {last_success.isoformat() if last_success else '(never)'}",
+            f"last run               {_last_run_line(last_run_record)}",
+            f"configuration          {_configuration_line(configuration)}",
+            f"free disk              {f'{checked.free_bytes:,} B' if checked.free_bytes is not None else '(unknown)'}",
             f"providers              {len(provider_last_success)} seen, "
             f"{sum(1 for value in provider_last_success.values() if value)} healthy",
             f"documents last 24h     {sum(row.documents for row in recent)}",
@@ -215,6 +266,9 @@ def ops_report(store: IntelligenceStore, database: Path, state_root: str | None)
         "storage_ok": checked.ok,
         "last_collection": last_run.isoformat() if last_run else None,
         "last_successful_collection": last_success.isoformat() if last_success else None,
+        "last_run": last_run_record,
+        "configuration": configuration,
+        "free_bytes": checked.free_bytes,
         "providers_seen": len(provider_last_success),
         "providers_healthy": sum(1 for value in provider_last_success.values() if value),
         "documents_last_24h": sum(row.documents for row in recent),
@@ -236,5 +290,24 @@ def ops_report(store: IntelligenceStore, database: Path, state_root: str | None)
         "exit_code": watchdog.exit_code,
         "human": human,
     }
+
+def _last_run_line(record: dict[str, Any] | None) -> str:
+    if record is None:
+        return "(no run recorded)"
+    failed = ", ".join(record["failed_providers"]) or "none"
+    return (
+        f"{record['status']} at {record['finished_at']}; documents {record['documents_accepted']} accepted, "
+        f"{record['documents_rejected']} rejected; events {record['events_accepted']} accepted, "
+        f"{record['events_rejected']} rejected; failed providers: {failed}"
+    )
+
+
+def _configuration_line(configuration: dict[str, Any] | None) -> str:
+    if configuration is None:
+        return "(not checked; pass --profile)"
+    if not configuration["valid"]:
+        return f"INVALID: {configuration['error']}"
+    return "ok" if configuration["contact_user_agent_configured"] else "ok, but no contact User-Agent"
+
 
 __all__ = ["OPERATIONS_ENTITIES", "corpus_status", "ops_report", "provider_report"]

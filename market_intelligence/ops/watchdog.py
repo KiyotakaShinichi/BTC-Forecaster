@@ -51,6 +51,8 @@ class AlertCode(str, Enum):
     QUARANTINE_SPIKE = "QUARANTINE_SPIKE"
     IMPLAUSIBLE_ZERO_COLLECTION = "IMPLAUSIBLE_ZERO_COLLECTION"
     LOCK_STALE_BROKEN = "LOCK_STALE_BROKEN"
+    DISK_LOW = "DISK_LOW"
+    CONFIGURATION_INVALID = "CONFIGURATION_INVALID"
     COLLECTION_HEALTHY = "COLLECTION_HEALTHY"
 
 
@@ -84,6 +86,11 @@ class WatchdogPolicy:
     implausible_zero_days: int = 14
     backup_stale_after: timedelta = timedelta(days=7)
     quarantine_spike: int = 25
+    #: Free space on the state root. The collector itself refuses to start below
+    #: 64 MiB; these lines are set well above that so an operator hears first.
+    #: The corpus grows by megabytes a month, so a warning is days of notice.
+    disk_warning_free_bytes: int = 1024 * 1024 * 1024
+    disk_critical_free_bytes: int = 256 * 1024 * 1024
 
 
 #: Built once; a caller wanting different thresholds passes them explicitly.
@@ -114,6 +121,14 @@ class WatchdogInput:
     last_backup_at: datetime | None
     consecutive_zero_days_with_success: int
     stale_lock_broken: bool = False
+    #: The recorded status of the most recent run, from the runs table. Unlike
+    #: provider_last_success, which remembers every past success, this says
+    #: what happened last.
+    last_run_status: str | None = None
+    #: Free bytes on the state root; None when it could not be measured.
+    free_bytes: int | None = None
+    #: Why the deployed configuration would not load, if it would not.
+    configuration_error: str | None = None
 
 
 @dataclass(frozen=True)
@@ -187,6 +202,32 @@ def assess(state: WatchdogInput, policy: WatchdogPolicy | None = None) -> Watchd
             )
         )
 
+    if state.configuration_error is not None:
+        alerts.append(
+            Alert(
+                AlertCode.CONFIGURATION_INVALID,
+                Severity.CRITICAL,
+                "the deployed configuration does not load; the next cycle will fail before collecting",
+                {"detail": state.configuration_error},
+            )
+        )
+
+    if state.free_bytes is not None and state.free_bytes < policy.disk_warning_free_bytes:
+        critical = state.free_bytes < policy.disk_critical_free_bytes
+        alerts.append(
+            Alert(
+                AlertCode.DISK_LOW,
+                Severity.CRITICAL if critical else Severity.WARNING,
+                f"{state.free_bytes:,} bytes free on the state root",
+                {
+                    "free_bytes": state.free_bytes,
+                    "threshold_bytes": (
+                        policy.disk_critical_free_bytes if critical else policy.disk_warning_free_bytes
+                    ),
+                },
+            )
+        )
+
     if state.last_successful_run_at is None:
         alerts.append(
             Alert(
@@ -218,6 +259,21 @@ def assess(state: WatchdogInput, policy: WatchdogPolicy | None = None) -> Watchd
                 Severity.CRITICAL,
                 f"all {state.providers_enabled} enabled provider(s) are failing",
                 {"providers_enabled": state.providers_enabled},
+            )
+        )
+
+    # B5.2. provider_last_success remembers every past success, so the check
+    # above can only fire on a deployment that has never collected. The last
+    # run's own status is what says every provider is failing *now*.
+    if state.last_run_status == "FAILED" and not any(
+        alert.code is AlertCode.ALL_PROVIDERS_FAILED for alert in alerts
+    ):
+        alerts.append(
+            Alert(
+                AlertCode.ALL_PROVIDERS_FAILED,
+                Severity.CRITICAL,
+                "the last collection cycle read nothing from any provider",
+                {"last_run_status": state.last_run_status},
             )
         )
 
@@ -342,6 +398,9 @@ def from_status(
     last_backup_at: datetime | None,
     quarantined_last_24h: int = 0,
     stale_lock_broken: bool = False,
+    last_run_status: str | None = None,
+    free_bytes: int | None = None,
+    configuration_error: str | None = None,
 ) -> WatchdogInput:
     """Build watchdog input from a corpus status report.
 
@@ -372,6 +431,9 @@ def from_status(
             documents_by_day, successful_days, now.astimezone(timezone.utc).date()
         ),
         stale_lock_broken=stale_lock_broken,
+        last_run_status=last_run_status,
+        free_bytes=free_bytes,
+        configuration_error=configuration_error,
     )
 
 

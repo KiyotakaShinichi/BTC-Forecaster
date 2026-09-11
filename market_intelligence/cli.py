@@ -162,10 +162,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     ops_status.add_argument("--json", action="store_true")
     ops_status.add_argument("--state-root", default=None)
+    ops_status.add_argument(
+        "--profile", default=None, help="also check the deployed collection profile loads"
+    )
 
     watch = sub.add_parser("ops-watch", help="watchdog assessment; exit 0 ok, 1 warning, 2 critical")
     watch.add_argument("--json", action="store_true")
     watch.add_argument("--state-root", default=None)
+    watch.add_argument(
+        "--profile", default=None, help="also check the deployed collection profile loads"
+    )
 
     scheduled = sub.add_parser(
         "collect-scheduled",

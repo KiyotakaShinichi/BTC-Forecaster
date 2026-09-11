@@ -55,13 +55,13 @@ def ops_paths(ctx: CommandContext) -> int:
 
 
 def ops_status(ctx: CommandContext) -> int:
-    payload = build_ops_report(ctx.store, Path(ctx.args.db), ctx.args.state_root)
+    payload = build_ops_report(ctx.store, Path(ctx.args.db), ctx.args.state_root, ctx.args.profile)
     print(json.dumps(payload, indent=2) if ctx.args.json else payload["human"])
     return 0
 
 
 def ops_watch(ctx: CommandContext) -> int:
-    payload = build_ops_report(ctx.store, Path(ctx.args.db), ctx.args.state_root)
+    payload = build_ops_report(ctx.store, Path(ctx.args.db), ctx.args.state_root, ctx.args.profile)
     if ctx.args.json:
         print(json.dumps(payload["watchdog"], indent=2))
     else:
