@@ -3,6 +3,7 @@
     python -m market_intelligence.b5 audit --db <store.duckdb> --as-of 2026-09-11T00:00:00+00:00 \\
         --input-label <label> --output research/market_intelligence/b5/gate1
     python -m market_intelligence.b5 verify research/market_intelligence/b5/gate1
+    python -m market_intelligence.b5 status --db <store.duckdb> --as-of 2026-09-11T00:00:00+00:00
 
 `audit` opens the store read-only, applies the policy in the committed
 preregistration (checked against its own hash first), and writes one canonical
@@ -56,6 +57,15 @@ def build_parser() -> argparse.ArgumentParser:
 
     verify = commands.add_parser("verify", help="recompute every hash of a written Gate 1 result")
     verify.add_argument("path")
+
+    status = commands.add_parser(
+        "status", help="how far a store is from Gate 1, read-only, at an instant; writes nothing"
+    )
+    status.add_argument("--db", required=True, help="intelligence store (DuckDB); opened read-only")
+    status.add_argument("--as-of", required=True, help="the instant, ISO 8601 with a timezone")
+    status.add_argument("--preregistration", default=str(DEFAULT_PREREGISTRATION))
+    status.add_argument("--extractor-version", default=None)
+    status.add_argument("--json", action="store_true")
     return parser
 
 
@@ -64,6 +74,29 @@ def _as_of(text: str) -> datetime:
     if moment.tzinfo is None:
         raise ValueError(f"--as-of {text!r} has no timezone; an audit instant must be unambiguous")
     return moment
+
+
+def _status(args: argparse.Namespace) -> int:
+    """B5.2. Collection progress toward Gate 1. 0 reported, whatever it says; 2 integrity failure."""
+    from .status import readiness_status
+
+    try:
+        as_of = _as_of(args.as_of)
+        plan = Preregistration.read(args.preregistration)
+        connection = open_read_only(args.db)
+    except (ValueError, FileNotFoundError, StorageError) as exc:
+        print(f"INTEGRITY FAILURE: {exc}", file=sys.stderr)
+        return EXIT_INTEGRITY
+    try:
+        result = audit_corpus(connection, as_of=as_of, policy=plan.policy, extractor_version=args.extractor_version)
+    except ValueError as exc:
+        print(f"INTEGRITY FAILURE: {exc}", file=sys.stderr)
+        return EXIT_INTEGRITY
+    finally:
+        connection.close()
+    status = readiness_status(result, plan)
+    print(status.model_dump_json(indent=2) if args.json else status.human_readable())
+    return EXIT_OK
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -77,6 +110,9 @@ def main(argv: list[str] | None = None) -> int:
             return EXIT_INTEGRITY
         print(json.dumps(verification, indent=2, sort_keys=True))
         return EXIT_OK if verification["verified"] else EXIT_INTEGRITY
+
+    if args.command == "status":
+        return _status(args)
 
     try:
         as_of = _as_of(args.as_of)
