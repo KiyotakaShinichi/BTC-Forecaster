@@ -67,6 +67,9 @@ def _registry() -> tuple[dict[str, StorelessHandler], dict[str, StoreHandler]]:
         "demo": demos.demo,
         "gold-report": demos.gold_report,
         "collect-scheduled": collection.collect_scheduled,
+        # B5.2. Neither reads the corpus, and neither may create one.
+        "ops-config-check": ops.ops_config_check,
+        "ops-probe": ops.ops_probe,
     }
     with_store: dict[str, StoreHandler] = {
         "collect": collection.collect,

@@ -38,6 +38,10 @@ COMMANDS_BEFORE_THE_SPLIT = frozenset({
     "providers", "quality", "replay", "replay-dataset",
 })
 
+#: Added deliberately by B5.2 -- operations commands for a production host. Each
+#: manages its own storage or reads none, so none of them is handed a store.
+COMMANDS_ADDED_IN_B52 = frozenset({"ops-config-check", "ops-probe"})
+
 
 def parser_commands() -> frozenset[str]:
     parser = cli.build_parser()
@@ -59,7 +63,7 @@ class TestEveryCommandSurvived:
         assert parser_commands() == frozenset(command_names())
 
     def test_no_command_was_added_unannounced(self) -> None:
-        added = parser_commands() - COMMANDS_BEFORE_THE_SPLIT
+        added = parser_commands() - COMMANDS_BEFORE_THE_SPLIT - COMMANDS_ADDED_IN_B52
         assert not added, f"new commands, update the frozen list deliberately: {sorted(added)}"
 
     def test_the_help_still_lists_them_in_one_place(self, capsys: pytest.CaptureFixture) -> None:
@@ -78,7 +82,7 @@ class TestTheStoreLifecycleIsUnchanged:
         run on fixtures, and one that left a stray empty corpus in the current
         directory would be a demo with a side effect."""
         storeless, with_store = _registry()
-        assert set(storeless) == {"demo", "gold-report", "collect-scheduled"}
+        assert set(storeless) == {"demo", "gold-report", "collect-scheduled"} | COMMANDS_ADDED_IN_B52
         assert not set(storeless) & set(with_store)
 
     def test_a_storeless_command_creates_no_database(self, tmp_path: Path) -> None:

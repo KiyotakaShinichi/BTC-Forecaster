@@ -185,6 +185,22 @@ def build_parser() -> argparse.ArgumentParser:
         "ops-paths", help="resolved persistent paths and whether they are usable"
     )
     paths_parser.add_argument("--state-root", default=None)
+
+    config_check = sub.add_parser(
+        "ops-config-check",
+        help="is this host's configuration deployable; exit 0 yes, 2 no. Prints no secret",
+    )
+    config_check.add_argument("--profile", required=True, help="path to a collection profile")
+    config_check.add_argument("--state-root", default=None)
+    config_check.add_argument("--json", action="store_true")
+
+    probe = sub.add_parser(
+        "ops-probe",
+        help="fetch each configured feed once, storing nothing; exit 0 all readable, 1 some, 2 none",
+    )
+    probe.add_argument("--profile", required=True, help="path to a collection profile")
+    probe.add_argument("--json", action="store_true")
+
     demo = sub.add_parser("demo")
     demo.add_argument("--output-dir", default="market-intelligence-demo")
     gold = sub.add_parser("gold-report")

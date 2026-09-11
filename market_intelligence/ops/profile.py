@@ -33,8 +33,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from ..collection.backoff import RetryPolicy
-from ..collection.feeds import NEWS_API_DECLARATION, SYNDICATION_DECLARATION, feeds_by_id
+from ..collection.backoff import RETRYABLE, RetryPolicy
+from ..collection.feeds import NEWS_API_DECLARATION, RETIRED_FEED_IDS, SYNDICATION_DECLARATION, feeds_by_id
 from ..collection.policy import ProviderDeclaration
 from ..collection.syndication import FeedSource, SyndicationProvider
 from ..configuration import (
@@ -137,6 +137,9 @@ class CollectionProfile:
     timeout: float = 20.0
     user_agent: str | None = None
     max_attempts: int = 3
+    #: The profile's user_agent before the contact was substituted, kept so the
+    #: configuration can be shown without the address in it.
+    user_agent_template: str | None = None
 
     @classmethod
     def load(
@@ -202,6 +205,7 @@ class CollectionProfile:
             timeout=float(raw.get("timeout_seconds", 20.0)),
             user_agent=user_agent,
             max_attempts=int(raw.get("max_attempts", 3)),
+            user_agent_template=str(raw["user_agent"]) if raw.get("user_agent") else None,
         )
 
     # ------------------------------------------------------------------ wiring
@@ -236,6 +240,22 @@ class CollectionProfile:
             timeout=self.timeout,
         )
 
+    def syndication_provider(
+        self, *, now: Callable[[], datetime] = lambda: datetime.now(timezone.utc)
+    ) -> SyndicationProvider:
+        """The provider a cycle collects with -- and the one `ops-probe` asks.
+
+        One construction, so a probe that succeeds says something about the
+        collector: the same feeds, User-Agent, timeout and retry policy.
+        """
+        return SyndicationProvider(
+            self.feeds,
+            timeout=self.timeout,
+            retry=RetryPolicy(max_attempts=self.max_attempts),
+            user_agent=self.user_agent,
+            now=now,
+        )
+
     def build_retriever(
         self,
         due: Sequence[str],
@@ -250,13 +270,7 @@ class CollectionProfile:
         """
         if SYNDICATION not in due:
             return MultiProviderRetriever({}, {})
-        provider = SyndicationProvider(
-            self.feeds,
-            timeout=self.timeout,
-            retry=RetryPolicy(max_attempts=self.max_attempts),
-            user_agent=self.user_agent,
-            now=now,
-        )
+        provider = self.syndication_provider(now=now)
         return MultiProviderRetriever({SYNDICATION: provider}, {SYNDICATION: self.provider_config()})
 
     # ----------------------------------------------------------- reportability
@@ -307,6 +321,50 @@ class CollectionProfile:
             "providers": [SYNDICATION],
             "minimum_interval_seconds": self.minimum_interval_seconds,
             "contact_user_agent_configured": self.user_agent is not None,
+        }
+
+    def describe(self) -> dict[str, Any]:
+        """What this profile makes a host do, safe to print anywhere.
+
+        The contact address is the one value an operator must supply and the one
+        that must never be published, so the User-Agent is shown in its committed
+        shape with the address redacted -- enough to check what a publisher will
+        see, never the address itself.
+        """
+        policy = RetryPolicy(max_attempts=self.max_attempts)
+        shown: str | None = None
+        if self.user_agent_template is not None:
+            shown = (
+                self.user_agent_template.replace(CONTACT_PLACEHOLDER, "<redacted>")
+                if CONTACT_PLACEHOLDER in self.user_agent_template
+                else "<set in the profile itself; not shown>"
+            )
+        return {
+            "profile": self.name,
+            "feeds": [
+                {
+                    "feed_id": feed.feed_id,
+                    "url": feed.url,
+                    "publisher": feed.publisher,
+                    "disclosure_stream": feed.disclosure_stream.value,
+                    "retired": feed.feed_id in RETIRED_FEED_IDS,
+                }
+                for feed in self.feeds
+            ],
+            "entities": sorted(entity.canonical_name for entity in self.entities),
+            "user_agent": shown,
+            "contact_user_agent_configured": self.user_agent is not None,
+            "minimum_interval_seconds": self.minimum_interval_seconds,
+            "declared_floor_seconds": SYNDICATION_DECLARATION.minimum_interval_seconds,
+            "timeout_seconds": self.timeout,
+            "retry": {
+                "max_attempts": policy.max_attempts,
+                "retried_failure_classes": sorted(failure.value for failure in RETRYABLE),
+                "base_delay_seconds": policy.base_delay_seconds,
+                "max_delay_seconds": policy.max_delay_seconds,
+                "rate_limit_multiplier": policy.rate_limit_multiplier,
+                "jitter": policy.jitter,
+            },
         }
 
 

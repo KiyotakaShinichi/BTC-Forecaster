@@ -32,6 +32,7 @@ system first saw a minute ago became usable a minute ago.
 from __future__ import annotations
 
 import re
+import time
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ElementTree
@@ -319,6 +320,39 @@ def _atom_entry(entry: ElementTree.Element) -> FeedEntry:
     )
 
 
+@dataclass(frozen=True)
+class FeedProbe:
+    """One feed, fetched once and parsed, for an operator checking a deployment.
+
+    Nothing is stored and nothing is extracted. A probe answers "can this host
+    read this feed, as configured", which a collection cycle answers only
+    indirectly and only on its own schedule.
+    """
+
+    feed_id: str
+    url: str
+    ok: bool
+    entries: int
+    newest_published_at: datetime | None
+    failure_class: str | None
+    detail: str
+    repairs: tuple[str, ...]
+    latency_ms: float
+
+    def as_dict(self) -> dict[str, object]:
+        return {
+            "feed_id": self.feed_id,
+            "url": self.url,
+            "ok": self.ok,
+            "entries": self.entries,
+            "newest_published_at": self.newest_published_at.isoformat() if self.newest_published_at else None,
+            "failure_class": self.failure_class,
+            "detail": self.detail,
+            "repairs": list(self.repairs),
+            "latency_ms": self.latency_ms,
+        }
+
+
 class SyndicationProvider(SearchProvider):
     """Collect from operator-configured RSS/Atom feeds.
 
@@ -378,6 +412,54 @@ class SyndicationProvider(SearchProvider):
             )
             for feed in sorted(self.feeds, key=lambda item: item.feed_id)
         ]
+
+    def probe(self, clock: Callable[[], float] | None = None) -> list[FeedProbe]:
+        """Fetch and parse every configured feed exactly once, storing nothing.
+
+        One attempt per feed and no retries: a probe is a question an operator
+        asks by hand, and retrying it would multiply requests to a publisher to
+        answer it. The request is the collector's own -- the same opener, the same
+        User-Agent, the same timeout -- so a probe that succeeds says the
+        configured collector can read the feed, not that some other client could.
+        """
+        tick = clock or time.monotonic
+        once = RetryPolicy(max_attempts=1)
+        results: list[FeedProbe] = []
+        for feed in self.feeds:
+            began = tick()
+            try:
+                payload = call_with_retry(
+                    lambda feed=feed: self._opener(feed.url, self.timeout),  # type: ignore[misc]
+                    once,
+                    sleep=self._sleep,
+                )
+            except ProviderFailure as failure:
+                results.append(
+                    FeedProbe(
+                        feed.feed_id, feed.url, False, 0, None, failure.failure_class.value, str(failure), (),
+                        round((tick() - began) * 1000, 1),
+                    )
+                )
+                continue
+            try:
+                entries, repairs = parse_feed_with_repairs(payload)
+            except ElementTree.ParseError as error:
+                results.append(
+                    FeedProbe(
+                        feed.feed_id, feed.url, False, 0, None, FailureClass.SCHEMA.value, f"unparseable: {error}", (),
+                        round((tick() - began) * 1000, 1),
+                    )
+                )
+                continue
+            newest = max((entry.published_at for entry in entries if entry.published_at is not None), default=None)
+            results.append(
+                FeedProbe(
+                    feed.feed_id, feed.url, True, len(entries), newest, None,
+                    "readable" if entries else "readable, and carries no entries", tuple(repairs),
+                    round((tick() - began) * 1000, 1),
+                )
+            )
+        return results
 
     def search(self, query: str, start: datetime, end: datetime) -> list[Document]:
         retrieved = self._now()
@@ -556,6 +638,7 @@ __all__ = [
     "DEFAULT_MATCH_POLICY",
     "DEFAULT_USER_AGENT",
     "STREAM_MATCH_POLICIES",
+    "FeedProbe",
     "FeedYield",
     "StreamMatchPolicy",
     "diagnose",
