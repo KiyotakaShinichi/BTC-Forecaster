@@ -189,12 +189,45 @@ def ops_alert(args: argparse.Namespace) -> int:
     return 0 if outcome.delivered else 2
 
 
+def ops_smoke(args: argparse.Namespace) -> int:
+    """The bounded smoke test for a deployed host: one real cycle, then everything it should leave.
+
+    0 no check failed -- NOT_OBSERVED, a quiet week, is not a failure -- 2 a
+    check failed or the profile does not load. Run it once after installing and
+    after every upgrade, not on a timer.
+    """
+    import os
+
+    from ..errors import ConfigurationError
+    from ..logs import configure
+    from ..ops.profile import CollectionProfile
+    from ..ops.smoke import run_smoke
+
+    configure()
+    try:
+        profile = CollectionProfile.load(args.profile)
+    except ConfigurationError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+    report = run_smoke(
+        StoragePaths.from_environment(args.state_root),
+        profile,
+        profile_path=args.profile,
+        require_free_bytes=max(0, args.require_free_mb) * 1024 * 1024,
+        source_sha=os.environ.get("BTC_INTEL_SOURCE_SHA"),
+        backup=not args.no_backup,
+    )
+    print(json.dumps(report.as_dict(), indent=2) if args.json else report.human_readable())
+    return 0 if report.ok else 2
+
+
 __all__ = [
     "health",
     "ops_alert",
     "ops_config_check",
     "ops_paths",
     "ops_probe",
+    "ops_smoke",
     "ops_status",
     "ops_watch",
     "providers",

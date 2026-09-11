@@ -90,6 +90,14 @@ def process_alive(pid: int) -> bool:
     """
     if pid <= 0:
         return False
+    if os.name == "nt":
+        # `os.kill(pid, 0)` is a liveness probe on POSIX, where the collector is
+        # deployed. On Windows signal 0 is CTRL_C_EVENT: the call delivers Ctrl+C
+        # to a console process group instead of asking about one, and reads a
+        # dead pid as alive. There is no safe probe in the standard library, so
+        # Windows answers "alive" and the heartbeat's stale window decides --
+        # the same rule a lock held from another host already follows.
+        return True
     try:
         os.kill(pid, 0)
     except ProcessLookupError:

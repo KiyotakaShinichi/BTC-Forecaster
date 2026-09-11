@@ -234,6 +234,16 @@ def build_parser() -> argparse.ArgumentParser:
     )
     alert.add_argument("--unit", required=True, help="the unit that failed, as systemd names it")
 
+    smoke = sub.add_parser(
+        "ops-smoke",
+        help="bounded post-deployment smoke test: one real cycle, then every check; exit 0 no failure, 2 a failure",
+    )
+    smoke.add_argument("--profile", required=True, help="path to a collection profile")
+    smoke.add_argument("--state-root", default=None)
+    smoke.add_argument("--require-free-mb", type=int, default=64)
+    smoke.add_argument("--no-backup", action="store_true", help="skip the backup and restore checks")
+    smoke.add_argument("--json", action="store_true")
+
     demo = sub.add_parser("demo")
     demo.add_argument("--output-dir", default="market-intelligence-demo")
     gold = sub.add_parser("gold-report")

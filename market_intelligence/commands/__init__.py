@@ -75,6 +75,7 @@ def _registry() -> tuple[dict[str, StorelessHandler], dict[str, StoreHandler]]:
         "ops-backup": corpus.ops_backup,
         "corpus-backup-verify": corpus.corpus_backup_verify,
         "ops-alert": ops.ops_alert,
+        "ops-smoke": ops.ops_smoke,
     }
     with_store: dict[str, StoreHandler] = {
         "collect": collection.collect,
