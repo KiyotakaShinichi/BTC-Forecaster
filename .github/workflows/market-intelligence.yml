@@ -13,6 +13,7 @@ on:
       - "market_intelligence/**"
       - "tests/test_intelligence_*.py"
       - "tests/test_market_intelligence.py"
+      - "research/market_intelligence/b5/**"
       - "btc-intel*.py"
       - "scripts/profile_replay.py"
       - "scripts/bench_replay.py"
@@ -27,6 +28,7 @@ on:
       - "market_intelligence/**"
       - "tests/test_intelligence_*.py"
       - "tests/test_market_intelligence.py"
+      - "research/market_intelligence/b5/**"
       - "btc-intel*.py"
       - "requirements-market-intelligence*.txt"
 
@@ -352,3 +354,12 @@ jobs:
       - name: B4 bootstrap determinism
         run: |
           python -c "from market_intelligence.b4.stats import BootstrapConfig, block_bootstrap; c=BootstrapConfig(replicates=200,block_length=5,seed=42); v=[(i*7%13)/100.0 for i in range(200)]; a=block_bootstrap(v,c); b=block_bootstrap(v,c); assert (a.lower,a.upper,a.p_value)==(b.lower,b.upper,b.p_value); print('B4 bootstrap deterministic')"
+
+      # B5 Gate 1: the committed corpus-sufficiency result, and the preregistered
+      # plan it applied. Reads a few kilobytes. The store that was audited is not
+      # in the repository and is not needed: every file's sha256 and the result
+      # digest recompute from what is committed.
+      - name: B5 preregistration and committed Gate 1 result
+        run: |
+          python -m market_intelligence.b5 verify research/market_intelligence/b5/gate1
+          python -c "from market_intelligence.b5.contracts import Preregistration, default_preregistration; p = Preregistration.read('research/market_intelligence/b5/preregistration.json'); assert p == default_preregistration(), 'the committed plan differs from the code'; print('B5 preregistration', p.content_hash()[:16])"
