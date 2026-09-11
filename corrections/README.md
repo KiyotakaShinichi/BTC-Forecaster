@@ -138,3 +138,49 @@ every invariant it always satisfied.
 **Why deletion was rejected.** See above — and specifically here, the three rows
 are the only remaining evidence of what the defect did. They are data about the
 collector as well as artefacts of it.
+
+### `2026-09-11-rules-v1-cftc-misclassification.json` — 1 event
+
+**Defect.** `rules-v1` types a document by the first rule, in a fixed order, any
+of whose terms occurs as a raw substring of its casefolded title. "interest rate"
+in *CFTC Issues Final Rule to Modify Clearing Requirement for Canadian Dollar-
+and Mexican Peso-Denominated Interest Rate Swaps* made a derivatives-clearing
+rulemaking a `MONETARY_POLICY` event. Found by B5's Gate 1 forensics.
+
+**Made knowable by** `be5886ba0a3de0c2dde04263ea9cb6c6173d400c`, which added
+`rules-v2`: whole words and phrases, every rule weighed, and the entity's
+declared event types consulted. The CFTC declares `REGULATION`, and `rules-v2`
+types the same document `REGULATION`.
+
+**Original extraction and corrected classification.** The correction
+invalidates the original `rules-v1` event and does nothing else: the row stays
+exactly as written, and research stops counting it. The corrected
+classification is a *different event*, not a field of the correction —
+`rules-v2`'s, with its own id, because event identity carries the extractor
+version. It exists only where an operator re-extracts the document under
+`rules-v2`, and no audit pools the two versions.
+
+| Event | Extractor | Type | Standing |
+|---|---|---|---|
+| `6579615b1873c979…` | `rules-v1` | `MONETARY_POLICY` | invalidated by this file |
+| `2262b65a8dc36182…` | `rules-v2` | `REGULATION` | written only on re-extraction |
+
+Both come from source document `17bf2ca82fc4…`, first seen 2026-09-03 09:15Z.
+
+**Why the set is complete.** At 2026-09-11 the collected store holds seven
+`rules-v1` events. This is the only one typed `MONETARY_POLICY`, and the only
+one whose type came from "interest rate". The other six are SEC `REGULATION`
+events, three of them already invalidated above; the CFTC no-action letter and
+the BLS release produced no `rules-v1` event.
+
+**No lookahead.** Like the first correction, this says something about the
+software, not the market. It was decided from the document's title and the two
+extractors' rules, never from anything that happened afterwards.
+
+**Effect on research.** B5's recorded verdict is not reinterpreted, and could
+not change: the event was below the confidence floor and Gate 1 counted
+nothing. Applied, a `rules-v1` audit offers three events instead of four.
+
+**Not applied by this repository.** It is committed for an operator to apply to
+the host store with `corpus-correct`; the collected store was read, never
+written. `2026-09-03-rediscovery-duplicates.json` above is unchanged.

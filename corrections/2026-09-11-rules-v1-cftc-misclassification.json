@@ -1,0 +1,21 @@
+{
+  "_readme": [
+    "An append-only correction. Applying it records rows in the",
+    "event_corrections ledger; it never edits or deletes an observation.",
+    "The affected ids are written out literally and not recomputed from a",
+    "rule: a correction that can match new events on its own is not a",
+    "correction, it is a filter, and it would keep excluding things forever.",
+    "Applying this file twice is a no-op -- correction ids are content-",
+    "addressed, so the second run writes nothing."
+  ],
+  "reason": "MISCLASSIFIED_EVENT_TYPE_RULES_V1",
+  "invalidated_at": "2026-09-11T00:00:00Z",
+  "invalidated_by_version": "be5886ba0a3de0c2dde04263ea9cb6c6173d400c",
+  "source_bug": "rules-v1 types a document by the first rule, in a fixed order, any of whose terms occurs as a raw substring of its casefolded title. 'interest rate' in 'CFTC Issues Final Rule to Modify Clearing Requirement for Canadian Dollar- and Mexican Peso-Denominated Interest Rate Swaps' made a derivatives-clearing rulemaking MONETARY_POLICY. rules-v2, added in be5886b, matches whole words and phrases, weighs every rule and consults the entity's declared event types -- the CFTC declares REGULATION -- and types the same document REGULATION.",
+  "notes": "This invalidates the original extraction only. The rules-v1 event stays in the store exactly as written, and research stops counting it. The corrected classification is a different event, not a field of this correction: rules-v2's REGULATION event for the same document, 2262b65a8dc36182c9127d2a470b4642bf71d89508e73be553727a0dc4191917, which exists only where an operator re-extracts under rules-v2 and is never pooled with rules-v1. The set is closed: at 2026-09-11 the collected store holds seven rules-v1 events, and this is the only one typed MONETARY_POLICY and the only one whose type came from 'interest rate'. The other six are SEC REGULATION events; the CFTC no-action letter and the BLS release produced no rules-v1 event. Decided from the document's title and the two extractors' rules alone, never from any market outcome.",
+  "corrections": [
+    {
+      "event_id": "6579615b1873c979e48cd506b911d5338ddcb06cdccaeddd2333904ae9402cda"
+    }
+  ]
+}
