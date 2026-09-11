@@ -70,6 +70,10 @@ def _registry() -> tuple[dict[str, StorelessHandler], dict[str, StoreHandler]]:
         # B5.2. Neither reads the corpus, and neither may create one.
         "ops-config-check": ops.ops_config_check,
         "ops-probe": ops.ops_probe,
+        # Each manages its own storage: the backup takes the run lock before it
+        # opens the database, and the rehearsal never opens the live one at all.
+        "ops-backup": corpus.ops_backup,
+        "corpus-backup-verify": corpus.corpus_backup_verify,
     }
     with_store: dict[str, StoreHandler] = {
         "collect": collection.collect,

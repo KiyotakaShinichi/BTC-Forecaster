@@ -20,19 +20,39 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import shutil
 import tarfile
+import tempfile
+import zlib
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+import duckdb
+
+from ..collection.corpus import membership_hash
 from ..collection.evidence import EvidenceStore
 from ..errors import IntelligenceError
 from ..storage import IntelligenceStore
 
 BACKUP_MANIFEST_NAME = "backup_manifest.json"
-BACKUP_VERSION = "b41-ops-backup-v1"
+#: v2 (B5.2) adds a content fingerprint and counts taken from the archived copy
+#: itself. A v1 archive still parses and restores; it simply has no fingerprint
+#: to check.
+BACKUP_VERSION = "b52-ops-backup-v2"
+
+#: `sha256sum -c` reads this, so an archive copied off the host can be checked
+#: with standard tools and without this code.
+CHECKSUM_SUFFIX = ".sha256"
+
+#: Where `ops-backup` records its last attempt, for the health check to read.
+BACKUP_STATUS_NAME = "backup-status.json"
+
+#: The only archives retention may ever delete: the scheduled job's own,
+#: timestamped names. An archive an operator named by hand is never pruned.
+SCHEDULED_ARCHIVE = re.compile(r"^corpus-\d{8}T\d{6}Z\.tar\.gz$")
 
 
 class BackupError(IntelligenceError):
@@ -55,6 +75,9 @@ class BackupManifest:
     members: dict[str, str] = field(default_factory=dict)
     omitted: dict[str, int] = field(default_factory=dict)
     notes: tuple[str, ...] = ()
+    #: Document ids, event ids and correction ids of the archived copy, hashed.
+    #: None in a v1 archive.
+    content_fingerprint: str | None = None
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -70,6 +93,7 @@ class BackupManifest:
             "members": dict(sorted(self.members.items())),
             "omitted": dict(sorted(self.omitted.items())),
             "notes": list(self.notes),
+            "content_fingerprint": self.content_fingerprint,
         }
 
     def content_hash(self) -> str:
@@ -90,6 +114,7 @@ class BackupManifest:
             members=dict(payload.get("members", {})),
             omitted=dict(payload.get("omitted", {})),
             notes=tuple(payload.get("notes", ())),
+            content_fingerprint=payload.get("content_fingerprint"),
         )
 
 
@@ -127,7 +152,6 @@ def create_backup(
         raise BackupError(f"{destination} already exists; backups are never overwritten")
     destination.parent.mkdir(parents=True, exist_ok=True)
 
-    counts = _counts(store)
     evidence_counts = EvidenceStore(store.connection).counts_by_retention()
     restricted = sum(
         count for retention, count in evidence_counts.items() if retention != "FULL"
@@ -148,6 +172,14 @@ def create_backup(
         database_copy = staging / "intelligence.duckdb"
         _export_database(store, database, database_copy)
         members["intelligence.duckdb"] = _hash_file(database_copy)
+        # Counted from the copy, not the live store, so the manifest describes
+        # exactly what the archive holds even if a writer committed in between.
+        copy = duckdb.connect(str(database_copy), read_only=True)
+        try:
+            counts = _counts(copy)
+            fingerprint = _fingerprint(copy)
+        finally:
+            copy.close()
 
         if manifest_dir and manifest_dir.exists():
             target = staging / "manifests"
@@ -174,6 +206,7 @@ def create_backup(
             sightings=counts["sightings"],
             members=members,
             omitted=omitted,
+            content_fingerprint=fingerprint,
             notes=(
                 "credentials are never included: they live in the environment, not in state",
                 "licence-restricted raw payloads travel as hashes only; the hash still lets a "
@@ -229,9 +262,9 @@ def _excluded(path: Path) -> bool:
     return path.name in EXCLUDED_NAMES or path.suffix in EXCLUDED_SUFFIXES
 
 
-def _counts(store: IntelligenceStore) -> dict[str, int]:
+def _counts(connection: Any) -> dict[str, int]:
     def scalar(sql: str) -> int:
-        row = store.connection.execute(sql).fetchone()
+        row = connection.execute(sql).fetchone()
         return int(row[0]) if row and row[0] is not None else 0
 
     return {
@@ -243,6 +276,22 @@ def _counts(store: IntelligenceStore) -> dict[str, int]:
     }
 
 
+def _fingerprint(connection: Any) -> str:
+    """What the corpus holds, independent of how DuckDB laid it out on disk.
+
+    The database file's own hash changes with every checkpoint; this does not.
+    Two copies with the same documents, events and corrections have the same
+    fingerprint however they were written.
+    """
+    documents = [row[0] for row in connection.execute("SELECT document_id FROM documents").fetchall()]
+    events = [row[0] for row in connection.execute("SELECT event_id FROM signals").fetchall()]
+    corrections = sorted(row[0] for row in connection.execute("SELECT correction_id FROM event_corrections").fetchall())
+    material = json.dumps(
+        {"membership": membership_hash(documents, events), "corrections": corrections}, sort_keys=True
+    )
+    return hashlib.sha256(material.encode("utf-8")).hexdigest()
+
+
 @dataclass(frozen=True)
 class RestoreResult:
     destination: Path
@@ -251,6 +300,8 @@ class RestoreResult:
     counts: dict[str, int]
     matches_manifest: bool
     findings: tuple[str, ...]
+    #: None when the archive predates fingerprints (v1).
+    fingerprint_matches: bool | None = None
 
     @property
     def ok(self) -> bool:
@@ -264,6 +315,7 @@ class RestoreResult:
             "counts": self.counts,
             "matches_manifest": self.matches_manifest,
             "findings": list(self.findings),
+            "fingerprint_matches": self.fingerprint_matches,
         }
 
 
@@ -304,13 +356,19 @@ def restore(archive: Path, destination: Path, *, allow_existing: bool = False) -
 
     counts: dict[str, int] = {}
     matches = False
+    fingerprint_matches: bool | None = None
     database = destination / "intelligence.duckdb"
     if database.exists() and not findings:
         store = IntelligenceStore(database)
         try:
-            counts = _counts(store)
+            counts = _counts(store.connection)
+            restored_fingerprint = _fingerprint(store.connection)
         finally:
             store.close()
+        if manifest.content_fingerprint is not None:
+            fingerprint_matches = restored_fingerprint == manifest.content_fingerprint
+            if not fingerprint_matches:
+                findings.append("the restored corpus's content fingerprint does not match the manifest")
         matches = (
             counts.get("documents") == manifest.documents
             and counts.get("events") == manifest.events
@@ -330,6 +388,7 @@ def restore(archive: Path, destination: Path, *, allow_existing: bool = False) -
         counts=counts,
         matches_manifest=matches,
         findings=tuple(findings),
+        fingerprint_matches=fingerprint_matches,
     )
 
 
@@ -371,14 +430,156 @@ def backup_age(directory: Path, now: datetime) -> tuple[Path, datetime] | None:
     return newest, manifest.created_at
 
 
+def write_checksum(archive: Path) -> Path:
+    """`<archive>.sha256`, in the format `sha256sum -c` reads."""
+    target = archive.with_name(archive.name + CHECKSUM_SUFFIX)
+    target.write_text(f"{_hash_file(archive)}  {archive.name}\n", encoding="utf-8")
+    return target
+
+
+@dataclass(frozen=True)
+class BackupVerification:
+    """A restore rehearsal: what was checked, and everything that was wrong."""
+
+    archive: Path
+    sha256: str | None
+    checksum_matches: bool | None
+    restore: RestoreResult | None
+    integrity_status: str | None
+    integrity_detail: str
+    findings: tuple[str, ...]
+
+    @property
+    def ok(self) -> bool:
+        return self.restore is not None and not self.findings
+
+    def as_dict(self) -> dict[str, Any]:
+        return {
+            "archive": str(self.archive),
+            "ok": self.ok,
+            "sha256": self.sha256,
+            "checksum_matches": self.checksum_matches,
+            "restore": self.restore.as_dict() if self.restore is not None else None,
+            "integrity_status": self.integrity_status,
+            "integrity_detail": self.integrity_detail,
+            "findings": list(self.findings),
+        }
+
+
+def verify_backup(archive: Path, *, work_dir: Path | None = None) -> BackupVerification:
+    """Prove an archive restores to a sound corpus, without touching the live one.
+
+    The rehearsal an operator should run and usually does not: check the
+    archive against its `.sha256`, restore it into a new, empty location, check
+    every member against its hash, open the restored corpus and run the
+    integrity check on it, compare its counts and content fingerprint with the
+    manifest -- then delete the rehearsal. The live corpus is never opened.
+    """
+    from .integrity import IntegrityStatus
+    from .integrity import verify as verify_integrity
+
+    archive = Path(archive)
+    if not archive.is_file():
+        return BackupVerification(archive, None, None, None, None, "", (f"{archive} does not exist",))
+    findings: list[str] = []
+    digest = _hash_file(archive)
+    checksum_matches: bool | None = None
+    sidecar = archive.with_name(archive.name + CHECKSUM_SUFFIX)
+    if sidecar.exists():
+        recorded = sidecar.read_text(encoding="utf-8").split()
+        checksum_matches = bool(recorded) and recorded[0] == digest
+        if not checksum_matches:
+            findings.append(f"the archive's sha256 does not match {sidecar.name}")
+
+    workspace = Path(tempfile.mkdtemp(prefix="btc-intel-restore-check-", dir=str(work_dir) if work_dir else None))
+    restored: RestoreResult | None = None
+    integrity_status: str | None = None
+    integrity_detail = ""
+    try:
+        try:
+            restored = restore(archive, workspace / "corpus")
+        # A truncated or corrupted gzip raises EOFError or zlib.error, neither of
+        # which is an OSError: a damaged archive must be a finding, not a crash.
+        except (BackupError, tarfile.TarError, OSError, EOFError, zlib.error, ValueError, KeyError) as error:
+            findings.append(f"the archive could not be restored: {error}")
+        else:
+            findings.extend(restored.findings)
+            database = workspace / "corpus" / "intelligence.duckdb"
+            if restored.ok and database.exists():
+                store = IntelligenceStore(database)
+                try:
+                    report = verify_integrity(store, as_of=datetime.now(timezone.utc))
+                finally:
+                    store.close()
+                integrity_status = report.status.value
+                integrity_detail = report.human_readable().splitlines()[0]
+                if report.status is IntegrityStatus.CORRUPT:
+                    findings.append(f"the restored corpus fails its integrity check: {integrity_detail}")
+    finally:
+        shutil.rmtree(workspace, ignore_errors=True)
+    return BackupVerification(
+        archive, digest, checksum_matches, restored, integrity_status, integrity_detail, tuple(findings)
+    )
+
+
+def prune_backups(directory: Path, retain: int) -> list[Path]:
+    """Keep the newest `retain` scheduled archives; delete older ones, with their checksums.
+
+    Only the scheduled job's own timestamped archives are considered, the newest
+    is never deleted, and the caller prunes only after the newest archive has
+    been verified: retention must never be what leaves an operator with no good
+    backup.
+    """
+    if retain < 1:
+        raise ValueError("retain at least one backup; pruning the last one is never what anyone meant")
+    archives = sorted(path for path in Path(directory).glob("corpus-*.tar.gz") if SCHEDULED_ARCHIVE.match(path.name))
+    doomed = archives[:-retain] if len(archives) > retain else []
+    for archive in doomed:
+        archive.unlink()
+        sidecar = archive.with_name(archive.name + CHECKSUM_SUFFIX)
+        if sidecar.exists():
+            sidecar.unlink()
+    return doomed
+
+
+def write_backup_status(directory: Path, payload: dict[str, Any]) -> Path:
+    """Record the last backup attempt where the health check reads it. Atomic."""
+    target = Path(directory) / BACKUP_STATUS_NAME
+    target.parent.mkdir(parents=True, exist_ok=True)
+    temporary = target.with_suffix(".json.tmp")
+    temporary.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    temporary.replace(target)
+    return target
+
+
+def read_backup_status(directory: Path) -> dict[str, Any] | None:
+    """The last recorded attempt, or None if none has been. Unreadable reads as failed."""
+    target = Path(directory) / BACKUP_STATUS_NAME
+    if not target.exists():
+        return None
+    try:
+        payload = json.loads(target.read_text(encoding="utf-8"))
+    except (OSError, ValueError) as error:
+        return {"ok": False, "findings": [f"{BACKUP_STATUS_NAME} is unreadable: {error}"]}
+    return dict(payload) if isinstance(payload, dict) else {"ok": False, "findings": ["malformed backup status"]}
+
+
 __all__ = [
     "BACKUP_MANIFEST_NAME",
+    "BACKUP_STATUS_NAME",
     "BACKUP_VERSION",
+    "CHECKSUM_SUFFIX",
     "BackupError",
     "BackupManifest",
+    "BackupVerification",
     "RestoreResult",
     "backup_age",
     "create_backup",
     "latest_backup",
+    "prune_backups",
+    "read_backup_status",
     "restore",
+    "verify_backup",
+    "write_backup_status",
+    "write_checksum",
 ]

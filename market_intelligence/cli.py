@@ -207,6 +207,27 @@ def build_parser() -> argparse.ArgumentParser:
     probe.add_argument("--profile", required=True, help="path to a collection profile")
     probe.add_argument("--json", action="store_true")
 
+    scheduled_backup = sub.add_parser(
+        "ops-backup",
+        help="scheduled backup: lock, archive, verify by restoring, prune; exit 0 ok, 2 failed, 3 lock held",
+    )
+    scheduled_backup.add_argument("--state-root", default=None)
+    scheduled_backup.add_argument(
+        "--retain", type=int, default=30, help="scheduled archives to keep, newest first (default 30)"
+    )
+    scheduled_backup.add_argument(
+        "--wait-seconds", type=int, default=600, help="how long to wait for a running cycle's lock (default 600)"
+    )
+
+    backup_verify = sub.add_parser(
+        "corpus-backup-verify",
+        help="restore an archive into a scratch location and verify it; exit 0 sound, 2 not",
+    )
+    which = backup_verify.add_mutually_exclusive_group(required=True)
+    which.add_argument("--archive", default=None)
+    which.add_argument("--latest", action="store_true", help="the newest archive in the backup directory")
+    backup_verify.add_argument("--state-root", default=None)
+
     demo = sub.add_parser("demo")
     demo.add_argument("--output-dir", default="market-intelligence-demo")
     gold = sub.add_parser("gold-report")

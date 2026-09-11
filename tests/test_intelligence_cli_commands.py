@@ -40,7 +40,7 @@ COMMANDS_BEFORE_THE_SPLIT = frozenset({
 
 #: Added deliberately by B5.2 -- operations commands for a production host. Each
 #: manages its own storage or reads none, so none of them is handed a store.
-COMMANDS_ADDED_IN_B52 = frozenset({"ops-config-check", "ops-probe"})
+COMMANDS_ADDED_IN_B52 = frozenset({"ops-config-check", "ops-probe", "ops-backup", "corpus-backup-verify"})
 
 
 def parser_commands() -> frozenset[str]:

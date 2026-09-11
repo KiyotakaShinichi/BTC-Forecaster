@@ -129,6 +129,8 @@ class WatchdogInput:
     free_bytes: int | None = None
     #: Why the deployed configuration would not load, if it would not.
     configuration_error: str | None = None
+    #: Why the last recorded backup attempt failed, if it did.
+    backup_failure: str | None = None
 
 
 @dataclass(frozen=True)
@@ -321,6 +323,16 @@ def assess(state: WatchdogInput, policy: WatchdogPolicy | None = None) -> Watchd
             )
         )
 
+    if state.backup_failure is not None:
+        alerts.append(
+            Alert(
+                AlertCode.BACKUP_FAILURE,
+                Severity.CRITICAL,
+                "the last backup attempt failed; the newest good archive is older than it looks",
+                {"detail": state.backup_failure},
+            )
+        )
+
     if state.last_backup_at is None:
         alerts.append(
             Alert(AlertCode.BACKUP_STALE, Severity.WARNING, "no backup has been taken", {})
@@ -401,6 +413,7 @@ def from_status(
     last_run_status: str | None = None,
     free_bytes: int | None = None,
     configuration_error: str | None = None,
+    backup_failure: str | None = None,
 ) -> WatchdogInput:
     """Build watchdog input from a corpus status report.
 
@@ -434,6 +447,7 @@ def from_status(
         last_run_status=last_run_status,
         free_bytes=free_bytes,
         configuration_error=configuration_error,
+        backup_failure=backup_failure,
     )
 
 

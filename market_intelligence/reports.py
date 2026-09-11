@@ -37,7 +37,7 @@ from .collection.status import CorpusStatus, build_status
 from .collection.whales import WHALE_DECLARATION
 from .extractors import CURRENT_RULE_EXTRACTOR_VERSION
 from .models import EventType, TransferContext
-from .ops.backup import backup_age
+from .ops.backup import backup_age, read_backup_status
 from .ops.integrity import verify as ops_verify
 from .ops.paths import StoragePaths
 from .ops.paths import validate as storage_validate
@@ -209,6 +209,14 @@ def ops_report(
             provider_last_success[provider] = datetime.fromisoformat(retrieval).astimezone(timezone.utc)
 
     found = backup_age(paths.backups, moment) if paths.backups.exists() else None
+    # B5.2. The scheduled backup records every attempt, so a failure is an alert
+    # the day it happens rather than a stale archive noticed a week later.
+    backup_attempt = read_backup_status(paths.backups)
+    backup_failure = (
+        "; ".join(str(item) for item in backup_attempt.get("findings", [])) or "failed"
+        if backup_attempt is not None and not backup_attempt.get("ok")
+        else None
+    )
     watchdog = watchdog_assess(
         from_status(
             status,
@@ -226,6 +234,7 @@ def ops_report(
             quarantined_last_24h=store.quarantine_count(since=moment - timedelta(hours=24)),
             last_run_status=latest.status.value if latest is not None else None,
             free_bytes=checked.free_bytes,
+            backup_failure=backup_failure,
             configuration_error=(
                 configuration["error"] if configuration is not None and not configuration["valid"] else None
             ),
@@ -283,6 +292,7 @@ def ops_report(
         ),
         "latest_corpus_id": status.corpus_id,
         "backup_age_seconds": backup_age_seconds,
+        "last_backup_attempt": backup_attempt,
         "corpus_integrity": integrity.status.value,
         "storage": storage.as_dict(),
         "b4_readiness": status.readiness.value,
