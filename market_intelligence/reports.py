@@ -196,6 +196,10 @@ def ops_report(store: IntelligenceStore, database: Path, state_root: str | None)
             f"documents last 24h     {sum(row.documents for row in recent)}",
             f"events last 24h        {sum(row.events for row in recent)}",
             f"coverage gap days      {status.collection_gap_days}",
+            f"collection coverage    "
+            f"{status.collection.describe() if status.collection is not None else 'not reported'}",
+            f"collection lag         "
+            f"{status.collection_lag.describe() if status.collection_lag is not None else 'not reported'}",
             f"latest corpus          {status.corpus_id or '(none registered)'}",
             f"backup age             {backup_age_seconds if backup_age_seconds is not None else '(no backup)'}",
             f"corpus integrity       {integrity.status.value}",
@@ -216,6 +220,13 @@ def ops_report(store: IntelligenceStore, database: Path, state_root: str | None)
         "documents_last_24h": sum(row.documents for row in recent),
         "events_last_24h": sum(row.events for row in recent),
         "coverage_gap_days": status.collection_gap_days,
+        # B5.1: the collection record and the lag, as corpus-status and Gate 1
+        # compute them. coverage_gap_days counts only days between the first and
+        # last document, so a collector that stopped last week shows no gap there.
+        "collection": status.collection.model_dump(mode="json") if status.collection is not None else None,
+        "collection_lag": (
+            status.collection_lag.model_dump(mode="json") if status.collection_lag is not None else None
+        ),
         "latest_corpus_id": status.corpus_id,
         "backup_age_seconds": backup_age_seconds,
         "corpus_integrity": integrity.status.value,
