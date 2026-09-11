@@ -19,6 +19,30 @@ what was added describes a project that never learned anything.
 
 ---
 
+## 2026-09-11 — Point-in-time event study stops at Gate 1 (Track B5)
+
+- **`INTELLIGENCE_CORPUS_INSUFFICIENT`.** B5 asked whether independently
+  timestamped external information is associated with BTC behaviour beyond price.
+  Its first, preregistered gate — is there a point-in-time corpus to ask it of —
+  failed, so no event study was run, no category tested and no signal mined.
+- The corpus that exists: six documents and seven events from two days of
+  collection in September, three of the events invalidated as pre-fix
+  rediscovery duplicates. None of the four left clears B4's extraction-confidence
+  floor. The historical corpus is empty, as B4 found, and cannot be filled after
+  the fact.
+- The thresholds are B4's own — 30 events, 20 effective, 3 publishers, 180 days,
+  80% coverage — held as the readiness gate's policy object and preregistered
+  (hash `70777f0e…`) before the audit ran, plus clauses that only tighten. At the
+  threshold a study could detect only effects 2.5 times B4's practical floors;
+  the bar is a floor on power, not a comfortable level.
+- Found in forensics: the collector's rule-based extractor gives every event
+  confidence 0.35 by construction, so it can never produce a countable event; and
+  `corpus-status` never supplies collection coverage, so the readiness report can
+  never open. Both are recorded; neither is changed here.
+- `python -m market_intelligence.b5 audit` measures a store read-only and writes a
+  canonical, verifiable result, and CI verifies the committed one. Nothing trades,
+  live trading remains disabled, and quantitative research stays frozen.
+
 ## 2026-09-11 — Quantitative research frozen (Track A7.1)
 
 - **`QUANT_RESEARCH_FROZEN`.** A2, A6 and A7 each found, under its own design,

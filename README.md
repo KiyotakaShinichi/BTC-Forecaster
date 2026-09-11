@@ -414,6 +414,7 @@ A promoted research run without its manifest is an anecdote.
 - [`docs/walk-forward.md`](docs/walk-forward.md) — Track A7: A6's question from 1,417 origins at four horizons, preregistered, and why nothing survived
 - [`docs/quant-research-status.md`](docs/quant-research-status.md) — the quantitative freeze: A2 → A6 → A7 lineage, the promotion policy, the live-trading gate, the provenance audit
 - [`docs/quant-research-handoff.md`](docs/quant-research-handoff.md) — what the quant research established, where its evidence stops, and what would justify reopening it
+- [`docs/b5-event-study.md`](docs/b5-event-study.md) — Track B5: is there a point-in-time intelligence corpus to study? Preregistered Gate 1, and why the answer is not yet
 - [`DEPLOYMENT.md`](DEPLOYMENT.md), [`AWS_BACKEND_API.md`](AWS_BACKEND_API.md) — deployment
 - [`DEPENDENCIES.md`](DEPENDENCIES.md) — the one dependency contract, and why the other files exist
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — how to build it, what CI enforces, and the four rules that are about the science rather than the code
@@ -487,6 +488,23 @@ change without leaving evidence is not evidence.
 while writing nothing, which is the failure mode this layer is most prone to
 because its output is *plausible* — a green run with zero documents looks exactly
 like a quiet news day.
+
+### Point-in-time event study (B5): stopped at Gate 1
+
+B5 asked whether independently timestamped external information is associated
+with BTC behaviour beyond what price alone shows. Its first gate, preregistered
+with B4's own thresholds, asked whether there is a point-in-time corpus to study —
+and there is not: six documents and seven events from two days of collection,
+none of which clears B4's extraction-confidence floor. Decision
+**`INTELLIGENCE_CORPUS_INSUFFICIENT`**; no event study was run.
+
+Two things block it besides elapsed time. The collector's rule-based extractor
+assigns every event confidence 0.35 by construction, below the 0.5 floor, so it
+can never produce a countable event. And `corpus-status` never supplies
+collection coverage, so its readiness report cannot say `READY_FOR_VALIDATION`
+however long collection runs. Both are recorded, neither is changed by B5. See
+[`docs/b5-event-study.md`](docs/b5-event-study.md) and the committed result in
+[`research/market_intelligence/b5/gate1/`](research/market_intelligence/b5/gate1/).
 
 ---
 
